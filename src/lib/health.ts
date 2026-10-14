@@ -1,32 +1,37 @@
 import { addDays, daysBetween } from "./breeding";
+import type { I18n } from "./i18n/core";
 import type { HealthRecord, HealthRecordType } from "./types";
 
-export const healthTypeOptions: { value: HealthRecordType; label: string }[] = [
-  { value: "vaccination", label: "Vaccination" },
-  { value: "parasite_control", label: "Pest control" },
-  { value: "deworming", label: "Deworming" },
-  { value: "treatment", label: "Treatment" },
-  { value: "checkup", label: "Check-up" },
+export const healthTypes: HealthRecordType[] = [
+  "vaccination",
+  "parasite_control",
+  "deworming",
+  "treatment",
+  "checkup",
 ];
+
+/** Label/value pairs for a <select>, translated. */
+export function healthTypeOptions(e: I18n["e"]) {
+  return healthTypes.map((value) => ({ value, label: e(value) }));
+}
 
 /** Common products with a usual repeat interval. Farmers can edit both. */
 export const healthPresets: {
   id: string;
-  label: string;
   type: HealthRecordType;
   product: string;
   intervalDays: number;
 }[] = [
-  { id: "fmd", label: "FMD vaccine (every 6 months)", type: "vaccination", product: "FMD", intervalDays: 180 },
-  { id: "hs", label: "HS vaccine (yearly)", type: "vaccination", product: "HS (Haemorrhagic Septicaemia)", intervalDays: 365 },
-  { id: "bq", label: "BQ vaccine (yearly)", type: "vaccination", product: "BQ (Black Quarter)", intervalDays: 365 },
-  { id: "anthrax", label: "Anthrax vaccine (yearly)", type: "vaccination", product: "Anthrax", intervalDays: 365 },
-  { id: "lsd", label: "Lumpy skin disease vaccine (yearly)", type: "vaccination", product: "LSD (Lumpy Skin Disease)", intervalDays: 365 },
-  { id: "rabies", label: "Rabies vaccine (yearly)", type: "vaccination", product: "Rabies", intervalDays: 365 },
-  { id: "brucella", label: "Brucellosis vaccine (once)", type: "vaccination", product: "Brucellosis", intervalDays: 0 },
-  { id: "deworm", label: "Deworming (every 3 months)", type: "deworming", product: "Dewormer", intervalDays: 90 },
-  { id: "tick-spray", label: "Tick / fly spray (every 3 weeks)", type: "parasite_control", product: "Tick & fly spray", intervalDays: 21 },
-  { id: "pour-on", label: "Pour-on / injectable ectoparasiticide (every 2 months)", type: "parasite_control", product: "Ivermectin", intervalDays: 60 },
+  { id: "fmd", type: "vaccination", product: "FMD", intervalDays: 180 },
+  { id: "hs", type: "vaccination", product: "HS (Haemorrhagic Septicaemia)", intervalDays: 365 },
+  { id: "bq", type: "vaccination", product: "BQ (Black Quarter)", intervalDays: 365 },
+  { id: "anthrax", type: "vaccination", product: "Anthrax", intervalDays: 365 },
+  { id: "lsd", type: "vaccination", product: "LSD (Lumpy Skin Disease)", intervalDays: 365 },
+  { id: "rabies", type: "vaccination", product: "Rabies", intervalDays: 365 },
+  { id: "brucella", type: "vaccination", product: "Brucellosis", intervalDays: 0 },
+  { id: "deworm", type: "deworming", product: "Dewormer", intervalDays: 90 },
+  { id: "tick-spray", type: "parasite_control", product: "Tick & fly spray", intervalDays: 21 },
+  { id: "pour-on", type: "parasite_control", product: "Ivermectin", intervalDays: 60 },
 ];
 
 export const trackedTypes: HealthRecordType[] = ["vaccination", "parasite_control", "deworming"];
@@ -66,9 +71,9 @@ export function nextDue(recordDate: string, intervalDays: number | null) {
   return intervalDays && intervalDays > 0 ? addDays(recordDate, intervalDays) : null;
 }
 
-export function dueLabel(daysUntilDue: number) {
-  if (daysUntilDue < 0) return `${-daysUntilDue} day${daysUntilDue === -1 ? "" : "s"} overdue`;
-  if (daysUntilDue === 0) return "Due today";
-  if (daysUntilDue === 1) return "Due tomorrow";
-  return `Due in ${daysUntilDue} days`;
+export function dueLabel(t: I18n["t"], daysUntilDue: number) {
+  if (daysUntilDue < 0) return t("health.overdueDays", { n: -daysUntilDue });
+  if (daysUntilDue === 0) return t("health.dueToday");
+  if (daysUntilDue === 1) return t("health.dueTomorrow");
+  return t("health.dueIn", { n: daysUntilDue });
 }

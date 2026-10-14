@@ -3,14 +3,16 @@
 import { revalidatePath } from "next/cache";
 import { requireFarm } from "@/lib/auth";
 import { dbError, int, num, str } from "@/lib/form";
+import { getI18n } from "@/lib/i18n/server";
 import type { ActionState } from "@/lib/types";
 
 export async function addFlock(_: ActionState, formData: FormData): Promise<ActionState> {
   const { supabase, farm } = await requireFarm();
+  const { t } = await getI18n();
   const name = str(formData, "name");
   const initialCount = int(formData, "initial_count");
-  if (!name) return { error: "Give the flock a name." };
-  if (!initialCount || initialCount <= 0) return { error: "Enter how many birds were placed." };
+  if (!name) return { error: t("flocks.giveName") };
+  if (!initialCount || initialCount <= 0) return { error: t("flocks.enterBirds") };
 
   const { error } = await supabase.from("flocks").insert({
     farm_id: farm.id,
@@ -22,31 +24,33 @@ export async function addFlock(_: ActionState, formData: FormData): Promise<Acti
     initial_count: initialCount,
     notes: str(formData, "notes"),
   });
-  if (error) return { error: dbError(error) };
+  if (error) return { error: dbError(t, error) };
 
   revalidatePath("/dashboard", "layout");
-  return { success: `Flock “${name}” added.` };
+  return { success: t("flocks.added", { name }) };
 }
 
 export async function updateFlockStatus(_: ActionState, formData: FormData): Promise<ActionState> {
   const { supabase, farm } = await requireFarm();
+  const { t } = await getI18n();
   const id = str(formData, "id");
   const status = str(formData, "status");
-  if (!id || !status) return { error: "Missing flock." };
+  if (!id || !status) return { error: t("flocks.missing") };
 
   const { error } = await supabase.from("flocks").update({ status }).eq("id", id).eq("farm_id", farm.id);
-  if (error) return { error: dbError(error) };
+  if (error) return { error: dbError(t, error) };
 
   revalidatePath("/dashboard", "layout");
-  return { success: "Status updated." };
+  return { success: t("flocks.statusUpdated") };
 }
 
 /** One log per flock per day; saving the same day again overwrites it. */
 export async function saveDailyLog(_: ActionState, formData: FormData): Promise<ActionState> {
   const { supabase, farm } = await requireFarm();
+  const { t } = await getI18n();
   const flockId = str(formData, "flock_id");
   const logDate = str(formData, "log_date");
-  if (!flockId || !logDate) return { error: "Choose a date." };
+  if (!flockId || !logDate) return { error: t("flocks.chooseDate") };
 
   const { error } = await supabase.from("flock_daily_logs").upsert(
     {
@@ -63,8 +67,8 @@ export async function saveDailyLog(_: ActionState, formData: FormData): Promise<
     },
     { onConflict: "flock_id,log_date" },
   );
-  if (error) return { error: dbError(error) };
+  if (error) return { error: dbError(t, error) };
 
   revalidatePath("/dashboard", "layout");
-  return { success: "Daily log saved." };
+  return { success: t("flocks.logSaved") };
 }

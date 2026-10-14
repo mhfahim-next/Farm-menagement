@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { SUPABASE_KEY, SUPABASE_URL } from "./env";
 
-const PROTECTED_PREFIXES = ["/dashboard", "/onboarding"];
+const PROTECTED_PREFIXES = ["/dashboard", "/onboarding", "/admin", "/suspended"];
 const AUTH_PAGES = ["/login", "/signup"];
 
 export async function updateSession(request: NextRequest) {
@@ -39,10 +39,19 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (isSignedIn && AUTH_PAGES.includes(pathname)) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
-    url.search = "";
-    return NextResponse.redirect(url);
+    // The token's signature can stay valid after the session was revoked (e.g.
+    // an admin suspended the user), so confirm with the auth server before
+    // bouncing to the dashboard. Otherwise a revoked session loops forever:
+    // dashboard → login (revoked) → dashboard (token still "valid").
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/dashboard";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
   }
 
   return response;

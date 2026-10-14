@@ -3,12 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { requireFarm } from "@/lib/auth";
 import { dbError, num, str } from "@/lib/form";
+import { getI18n } from "@/lib/i18n/server";
 import type { ActionState } from "@/lib/types";
 
 export async function addCattle(_: ActionState, formData: FormData): Promise<ActionState> {
   const { supabase, farm } = await requireFarm();
+  const { t } = await getI18n();
   const tag = str(formData, "tag_number");
-  if (!tag) return { error: "Tag number is required." };
+  if (!tag) return { error: t("cattle.tagRequired") };
 
   const { error } = await supabase.from("cattle").insert({
     farm_id: farm.id,
@@ -24,18 +26,19 @@ export async function addCattle(_: ActionState, formData: FormData): Promise<Act
   });
   if (error) {
     return {
-      error: error.code === "23505" ? `Tag ${tag} is already used on this farm.` : dbError(error),
+      error: error.code === "23505" ? t("cattle.dupTag", { tag }) : dbError(t, error),
     };
   }
 
   revalidatePath("/dashboard", "layout");
-  return { success: `Added ${tag}.` };
+  return { success: t("cattle.added", { tag }) };
 }
 
 export async function updateCattle(_: ActionState, formData: FormData): Promise<ActionState> {
   const { supabase, farm } = await requireFarm();
+  const { t } = await getI18n();
   const id = str(formData, "id");
-  if (!id) return { error: "Missing animal." };
+  if (!id) return { error: t("cattle.missing") };
 
   const { error } = await supabase
     .from("cattle")
@@ -49,9 +52,9 @@ export async function updateCattle(_: ActionState, formData: FormData): Promise<
     })
     .eq("id", id)
     .eq("farm_id", farm.id);
-  if (error) return { error: dbError(error) };
+  if (error) return { error: dbError(t, error) };
 
   revalidatePath(`/dashboard/cattle/${id}`);
   revalidatePath("/dashboard/cattle");
-  return { success: "Saved." };
+  return { success: t("cattle.saved") };
 }

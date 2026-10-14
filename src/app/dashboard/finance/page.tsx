@@ -2,12 +2,17 @@ import type { Metadata } from "next";
 import { ActionForm } from "@/components/action-form";
 import { Badge, Card, EmptyState, Field, Input, PageHeader, Select, StatCard, Table, Td } from "@/components/ui";
 import { requireFarm } from "@/lib/auth";
-import { formatDate, formatMoney, label, today } from "@/lib/format";
+import { today } from "@/lib/format";
+import { getI18n } from "@/lib/i18n/server";
 import type { Transaction } from "@/lib/types";
 import { addTransaction } from "./actions";
 
-export const metadata: Metadata = { title: "Finance" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t("finance.meta") };
+}
 
+// Categories are stored in English; `cat.<name>` translates them for display.
 const categories = [
   "Milk sales", "Egg sales", "Animal sales", "Manure sales", "Other income",
   "Feed", "Medicine & vet", "Labour", "Electricity & water", "Animal purchase",
@@ -16,6 +21,7 @@ const categories = [
 
 export default async function FinancePage({ searchParams }: PageProps<"/dashboard/finance">) {
   const { supabase, farm } = await requireFarm();
+  const { t, e, f, maybe } = await getI18n();
   const sp = await searchParams;
   const month = typeof sp.month === "string" && /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : today().slice(0, 7);
   const [y, m] = month.split("-").map(Number);
@@ -33,45 +39,46 @@ export default async function FinancePage({ searchParams }: PageProps<"/dashboar
   if (error) throw new Error(error.message);
   const txns = (data ?? []) as Transaction[];
 
-  const sum = (pred: (t: Transaction) => boolean) =>
-    txns.filter(pred).reduce((s, t) => s + Number(t.amount), 0);
-  const income = sum((t) => t.txn_type === "income");
-  const expense = sum((t) => t.txn_type === "expense");
+  const sum = (pred: (x: Transaction) => boolean) =>
+    txns.filter(pred).reduce((s, x) => s + Number(x.amount), 0);
+  const income = sum((x) => x.txn_type === "income");
+  const expense = sum((x) => x.txn_type === "expense");
+  const categoryLabel = (c: string) => maybe(`cat.${c}`) ?? c;
 
   const modules = [
     ...(farm.has_dairy ? ["dairy"] : []),
     ...(farm.has_layer ? ["layer"] : []),
     "general",
-  ] as const;
+  ];
 
   return (
     <>
       <PageHeader
-        title="Finance"
-        description="Income and expenses by month."
+        title={t("finance.title")}
+        description={t("finance.desc")}
         action={
           <form className="flex items-end gap-2">
             <Input name="month" type="month" defaultValue={month} className="w-auto" />
-            <button className="rounded-lg border border-stone-300 px-3 py-2 text-sm hover:bg-stone-50">Show</button>
+            <button className="rounded-lg border border-stone-300 px-3 py-2 text-sm hover:bg-stone-50">{t("common.show")}</button>
           </form>
         }
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Income" value={formatMoney(income, farm.currency)} tone="good" />
-        <StatCard label="Expenses" value={formatMoney(expense, farm.currency)} tone="bad" />
-        <StatCard label="Profit" value={formatMoney(income - expense, farm.currency)} tone={income >= expense ? "good" : "bad"} />
+        <StatCard label={t("finance.income")} value={f.money(income, farm.currency)} tone="good" />
+        <StatCard label={t("finance.expenses")} value={f.money(expense, farm.currency)} tone="bad" />
+        <StatCard label={t("finance.profit")} value={f.money(income - expense, farm.currency)} tone={income >= expense ? "good" : "bad"} />
       </div>
 
       {modules.length > 2 && (
         <div className="mt-4 grid gap-4 sm:grid-cols-3">
           {modules.map((mod) => {
-            const p = sum((t) => t.module === mod && t.txn_type === "income") - sum((t) => t.module === mod && t.txn_type === "expense");
+            const p = sum((x) => x.module === mod && x.txn_type === "income") - sum((x) => x.module === mod && x.txn_type === "expense");
             return (
               <StatCard
                 key={mod}
-                label={`${label(mod)} profit`}
-                value={formatMoney(p, farm.currency)}
+                label={t("finance.moduleProfit", { module: e(mod) })}
+                value={f.money(p, farm.currency)}
                 tone={p >= 0 ? "good" : "bad"}
               />
             );
@@ -80,22 +87,30 @@ export default async function FinancePage({ searchParams }: PageProps<"/dashboar
       )}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_340px]">
-        <Card title="Transactions">
+        <Card title={t("finance.txnTitle")}>
           {txns.length === 0 ? (
-            <EmptyState title="No transactions this month" />
+            <EmptyState title={t("finance.txnEmpty")} />
           ) : (
-            <Table head={["Date", "Category", "Module", "Description", "Amount"]}>
-              {txns.map((t) => (
-                <tr key={t.id}>
-                  <Td>{formatDate(t.txn_date)}</Td>
-                  <Td>{t.category}</Td>
+            <Table
+              head={[
+                t("finance.colDate"),
+                t("finance.colCategory"),
+                t("finance.colModule"),
+                t("finance.colDescription"),
+                t("finance.colAmount"),
+              ]}
+            >
+              {txns.map((x) => (
+                <tr key={x.id}>
+                  <Td>{f.date(x.txn_date)}</Td>
+                  <Td>{categoryLabel(x.category)}</Td>
                   <Td>
-                    <Badge>{label(t.module)}</Badge>
+                    <Badge>{e(x.module)}</Badge>
                   </Td>
-                  <Td>{t.description ?? "—"}</Td>
-                  <Td className={`text-right font-medium tabular-nums ${t.txn_type === "income" ? "text-emerald-700" : "text-red-600"}`}>
-                    {t.txn_type === "income" ? "+" : "−"}
-                    {formatMoney(Number(t.amount), farm.currency)}
+                  <Td>{x.description ?? "—"}</Td>
+                  <Td className={`text-right font-medium tabular-nums ${x.txn_type === "income" ? "text-emerald-700" : "text-red-600"}`}>
+                    {x.txn_type === "income" ? "+" : "−"}
+                    {f.money(Number(x.amount), farm.currency)}
                   </Td>
                 </tr>
               ))}
@@ -103,34 +118,34 @@ export default async function FinancePage({ searchParams }: PageProps<"/dashboar
           )}
         </Card>
 
-        <Card title="Add transaction">
-          <ActionForm action={addTransaction} submitLabel="Save">
+        <Card title={t("finance.addTitle")}>
+          <ActionForm action={addTransaction} submitLabel={t("common.save")}>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Type">
+              <Field label={t("finance.type")}>
                 <Select
                   name="txn_type"
                   options={[
-                    { value: "expense", label: "Expense" },
-                    { value: "income", label: "Income" },
+                    { value: "expense", label: e("expense") },
+                    { value: "income", label: e("income") },
                   ]}
                 />
               </Field>
-              <Field label="Date">
+              <Field label={t("common.date")}>
                 <Input name="txn_date" type="date" defaultValue={today()} required />
               </Field>
             </div>
-            <Field label="Category">
-              <Select name="category" options={categories.map((c) => ({ value: c, label: c }))} />
+            <Field label={t("common.category")}>
+              <Select name="category" options={categories.map((c) => ({ value: c, label: categoryLabel(c) }))} />
             </Field>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Module">
-                <Select name="module" options={modules.map((m) => ({ value: m, label: label(m) }))} />
+              <Field label={t("finance.module")}>
+                <Select name="module" options={modules.map((x) => ({ value: x, label: e(x) }))} />
               </Field>
-              <Field label={`Amount (${farm.currency})`}>
+              <Field label={t("finance.amountWith", { cur: farm.currency })}>
                 <Input name="amount" type="number" min="0.01" step="0.01" inputMode="decimal" required />
               </Field>
             </div>
-            <Field label="Description">
+            <Field label={t("finance.description")}>
               <Input name="description" />
             </Field>
           </ActionForm>

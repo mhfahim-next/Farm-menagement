@@ -1,51 +1,60 @@
-import { DashboardNav, type NavItem } from "@/components/dashboard-nav";
-import { Logo } from "@/components/logo";
-import { requireFarm } from "@/lib/auth";
-import { label } from "@/lib/format";
+import { AppShell } from "@/components/app-shell";
+import type { NavItem } from "@/components/dashboard-nav";
+import { getProfile, requireFarm } from "@/lib/auth";
+import { getI18n } from "@/lib/i18n/server";
 
 export default async function DashboardLayout({ children }: LayoutProps<"/dashboard">) {
-  const { farm, user, role } = await requireFarm();
+  const { farm, user, role, supabase } = await requireFarm();
+  const profile = await getProfile();
+  const { t, e, locale } = await getI18n();
 
-  const items: NavItem[] = [
-    { href: "/dashboard", label: "Overview" },
+  const { data: settings } = await supabase
+    .from("system_settings")
+    .select("announcement_en, announcement_bn, announcement_active")
+    .eq("id", 1)
+    .maybeSingle();
+  const announcement = settings?.announcement_active
+    ? ((locale === "bn" ? settings.announcement_bn : settings.announcement_en) ??
+      settings.announcement_en ??
+      settings.announcement_bn)
+    : null;
+
+  const nav: NavItem[] = [
+    { href: "/dashboard", label: t("nav.overview") },
     ...(farm.has_dairy
       ? [
-          { href: "/dashboard/cattle", label: "Cattle" },
-          { href: "/dashboard/milk", label: "Milk" },
-          { href: "/dashboard/health", label: "Health" },
-          { href: "/dashboard/breeding", label: "Breeding" },
+          { href: "/dashboard/cattle", label: t("nav.cattle") },
+          { href: "/dashboard/milk", label: t("nav.milk") },
+          { href: "/dashboard/health", label: t("nav.health") },
+          { href: "/dashboard/breeding", label: t("nav.breeding") },
         ]
       : []),
-    ...(farm.has_layer ? [{ href: "/dashboard/flocks", label: "Layer flocks" }] : []),
-    { href: "/dashboard/finance", label: "Finance" },
-    { href: "/dashboard/settings", label: "Settings" },
+    ...(farm.has_layer ? [{ href: "/dashboard/flocks", label: t("nav.flocks") }] : []),
+    { href: "/dashboard/finance", label: t("nav.finance") },
+    { href: "/dashboard/settings", label: t("nav.settings") },
   ];
 
   return (
-    <div className="flex flex-1 flex-col lg:flex-row">
-      <aside className="border-b border-stone-200 bg-white lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-60 lg:flex-col lg:border-b-0 lg:border-r">
-        <div className="flex items-center justify-between gap-4 px-4 py-4 lg:block">
-          <Logo href="/dashboard" />
-          <div className="mt-0 text-right lg:mt-5 lg:text-left">
-            <p className="truncate text-sm font-semibold text-stone-900">{farm.name}</p>
-            <p className="text-xs text-stone-500">{label(role)}</p>
+    <AppShell
+      logoHref="/dashboard"
+      title={farm.name}
+      subtitle={e(role)}
+      nav={nav}
+      user={{
+        name: profile?.full_name ?? null,
+        email: user.email ?? null,
+        avatarUrl: profile?.avatar_url ?? null,
+        isSuperAdmin: profile?.is_super_admin ?? false,
+      }}
+      banner={
+        announcement ? (
+          <div role="status" className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-sm text-amber-900">
+            📢 {announcement}
           </div>
-        </div>
-        <div className="px-3 pb-3 lg:flex-1">
-          <DashboardNav items={items} />
-        </div>
-        <div className="hidden border-t border-stone-200 px-4 py-4 lg:block">
-          <p className="truncate text-xs text-stone-500">{user.email}</p>
-          <form action="/auth/signout" method="post">
-            <button className="mt-1 text-sm font-medium text-stone-700 hover:text-red-600">
-              Sign out
-            </button>
-          </form>
-        </div>
-      </aside>
-      <main className="flex-1 px-4 py-6 sm:px-8 sm:py-8">
-        <div className="mx-auto max-w-6xl">{children}</div>
-      </main>
-    </div>
+        ) : null
+      }
+    >
+      {children}
+    </AppShell>
   );
 }

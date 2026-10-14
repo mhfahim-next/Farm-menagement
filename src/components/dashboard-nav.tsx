@@ -12,8 +12,8 @@ export function DashboardNav({ items }: { items: NavItem[] }) {
     <nav className="flex gap-1 overflow-x-auto lg:flex-col">
       {items.map((item) => {
         const active =
-          item.href === "/dashboard"
-            ? pathname === "/dashboard"
+          item.href === "/dashboard" || item.href === "/admin"
+            ? pathname === item.href
             : pathname.startsWith(item.href);
         return (
           <Link

@@ -1,15 +1,61 @@
 @import "tailwindcss";
 
+/* Dark mode is toggled by a `dark` class on <html> (see ThemeToggle). */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme inline {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-geist-sans), var(--font-bengali), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
 :root {
   color-scheme: light;
+  --app-bg: #fafaf9;
+  --app-fg: #1c1917;
 }
 
 body {
-  background: #fafaf9;
-  color: #1c1917;
+  background: var(--app-bg);
+  color: var(--app-fg);
 }
+
+/*
+ * Dark theme. The app is styled with Tailwind's stone/emerald/red/amber/sky
+ * palette, so dark mode re-maps those colors instead of touching every
+ * component: the neutral scale is inverted, tinted backgrounds become deep
+ * tints, and tinted text becomes light.
+ */
+.dark {
+  color-scheme: dark;
+  --app-bg: #0c0a09;
+  --app-fg: #f5f5f4;
+
+  --color-stone-50: #262220;
+  --color-stone-100: #2e2a28;
+  --color-stone-200: #3d3835;
+  --color-stone-300: #57514d;
+  --color-stone-400: #78716c;
+  --color-stone-500: #a8a29e;
+  --color-stone-600: #bdb8b4;
+  --color-stone-700: #d6d3d1;
+  --color-stone-800: #e7e5e4;
+  --color-stone-900: #f5f5f4;
+
+  --color-emerald-50: #0f2a22;
+  --color-emerald-100: #14392c;
+  --color-red-50: #2a1214;
+  --color-red-100: #3a1a1d;
+  --color-amber-50: #2b2110;
+  --color-amber-100: #3a2c12;
+  --color-sky-100: #0f2a3d;
+}
+
+.dark .bg-white { background-color: #1c1917; }
+.dark .text-emerald-700 { color: #6ee7b7; }
+.dark .text-emerald-800 { color: #a7f3d0; }
+.dark .text-red-600 { color: #f87171; }
+.dark .text-red-700 { color: #fca5a5; }
+.dark .text-amber-700 { color: #fbbf24; }
+.dark .text-amber-800,
+.dark .text-amber-900 { color: #fcd34d; }
+.dark .text-sky-800 { color: #7dd3fc; }

@@ -2,13 +2,17 @@ import type { Metadata } from "next";
 import { ActionForm } from "@/components/action-form";
 import { Badge, Button, Card, Field, Input, PageHeader, Select, Table, Td } from "@/components/ui";
 import { requireFarm } from "@/lib/auth";
-import { label } from "@/lib/format";
+import { getI18n } from "@/lib/i18n/server";
 import { updateFarm } from "./actions";
 
-export const metadata: Metadata = { title: "Settings" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t("settings.meta") };
+}
 
 export default async function SettingsPage() {
   const { supabase, farm, role, user } = await requireFarm();
+  const { t, e } = await getI18n();
   const canEdit = role === "owner" || role === "manager";
 
   const { data: members } = await supabase
@@ -24,33 +28,33 @@ export default async function SettingsPage() {
 
   return (
     <>
-      <PageHeader title="Settings" />
+      <PageHeader title={t("settings.title")} />
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card title="Farm">
-          <ActionForm action={updateFarm} submitLabel="Save settings">
+        <Card title={t("settings.farmTitle")}>
+          <ActionForm action={updateFarm} submitLabel={t("settings.saveSettings")}>
             <fieldset disabled={!canEdit} className="grid gap-4 disabled:opacity-70">
-              <Field label="Farm name">
+              <Field label={t("settings.farmName")}>
                 <Input name="name" defaultValue={farm.name} required />
               </Field>
-              <Field label="Location">
+              <Field label={t("common.location")}>
                 <Input name="location" defaultValue={farm.location ?? ""} />
               </Field>
-              <Field label="Currency">
+              <Field label={t("common.currency")}>
                 <Select
                   name="currency"
                   defaultValue={farm.currency}
-                  options={["BDT", "INR", "PKR", "USD", "EUR"].map((c) => ({ value: c, label: c }))}
+                  options={(["BDT", "INR", "PKR", "USD", "EUR"] as const).map((c) => ({ value: c, label: c }))}
                 />
               </Field>
               <div className="flex flex-wrap gap-4 text-sm">
                 <label className="flex items-center gap-2">
                   <input type="checkbox" name="has_dairy" defaultChecked={farm.has_dairy} className="accent-emerald-700" />
-                  Cattle & dairy
+                  {t("settings.dairy")}
                 </label>
                 <label className="flex items-center gap-2">
                   <input type="checkbox" name="has_layer" defaultChecked={farm.has_layer} className="accent-emerald-700" />
-                  Layer chickens
+                  {t("settings.layer")}
                 </label>
               </div>
             </fieldset>
@@ -58,32 +62,30 @@ export default async function SettingsPage() {
         </Card>
 
         <div className="grid content-start gap-6">
-          <Card title="Team" description="Inviting team members is coming soon.">
-            <Table head={["Name", "Role"]}>
+          <Card title={t("settings.teamTitle")} description={t("settings.teamDesc")}>
+            <Table head={[t("common.name"), t("common.role")]}>
               {(members ?? []).map((m) => (
                 <tr key={m.user_id}>
                   <Td>
                     {names.get(m.user_id) ?? "—"}
-                    {m.user_id === user.id && <span className="text-stone-500"> (you)</span>}
+                    {m.user_id === user.id && <span className="text-stone-500"> {t("common.you")}</span>}
                   </Td>
                   <Td>
-                    <Badge tone={m.role === "owner" ? "green" : "default"}>{label(m.role)}</Badge>
+                    <Badge tone={m.role === "owner" ? "green" : "default"}>{e(m.role)}</Badge>
                   </Td>
                 </tr>
               ))}
             </Table>
           </Card>
 
-          <Card title="Plan">
-            <p className="text-sm text-stone-600">
-              You are on the <strong>{label(farm.plan)}</strong> plan.
-            </p>
+          <Card title={t("settings.planTitle")}>
+            <p className="text-sm text-stone-600">{t("settings.planText", { plan: e(farm.plan) })}</p>
           </Card>
 
-          <Card title="Account">
-            <p className="mb-3 text-sm text-stone-600">Signed in as {user.email}</p>
+          <Card title={t("settings.accountTitle")}>
+            <p className="mb-3 text-sm text-stone-600">{t("settings.signedInAs", { email: user.email ?? "" })}</p>
             <form action="/auth/signout" method="post">
-              <Button variant="secondary" type="submit">Sign out</Button>
+              <Button variant="secondary" type="submit">{t("menu.logout")}</Button>
             </form>
           </Card>
         </div>
