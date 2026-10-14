@@ -33,6 +33,8 @@ export async function addCattle(_: ActionState, formData: FormData): Promise<Act
   const { t } = await getI18n();
   const tag = str(formData, "tag_number");
   if (!tag) return { error: t("cattle.tagRequired") };
+  const category = str(formData, "category");
+  if (!category) return { error: t("cattle.typeUnknown") };
 
   const motherId = str(formData, "mother_id");
   const motherError = await validateMother(supabase, farm.id, motherId, null, t);
@@ -43,8 +45,8 @@ export async function addCattle(_: ActionState, formData: FormData): Promise<Act
     tag_number: tag,
     name: str(formData, "name"),
     breed: str(formData, "breed"),
-    sex: str(formData, "sex") ?? "female",
-    category: str(formData, "category") ?? "cow",
+    // sex is set by the database from the animal type
+    category,
     date_of_birth: str(formData, "date_of_birth"),
     purchase_date: str(formData, "purchase_date"),
     purchase_price: num(formData, "purchase_price"),
@@ -77,7 +79,7 @@ export async function updateCattle(_: ActionState, formData: FormData): Promise<
     .update({
       name: str(formData, "name"),
       breed: str(formData, "breed"),
-      category: str(formData, "category") ?? "cow",
+      ...(str(formData, "category") ? { category: str(formData, "category")! } : {}),
       status: str(formData, "status") ?? "active",
       date_of_birth: str(formData, "date_of_birth"),
       mother_id: motherId,

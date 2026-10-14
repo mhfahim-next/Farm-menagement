@@ -23,7 +23,8 @@ export type Cattle = {
   name: string | null;
   breed: string | null;
   sex: "female" | "male";
-  category: "cow" | "heifer" | "calf" | "bull" | "steer";
+  /** Value from the admin-managed cattle_category list. */
+  category: string;
   status: "active" | "sold" | "dead";
   date_of_birth: string | null;
   purchase_date: string | null;

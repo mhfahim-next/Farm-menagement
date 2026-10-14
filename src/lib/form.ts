@@ -21,8 +21,19 @@ export function int(fd: FormData, key: string) {
   return n === null ? null : Math.trunc(n);
 }
 
+// Messages raised by our own database rules, mapped to translated text.
+const RULE_MESSAGES: Record<string, Parameters<I18n["t"]>[0]> = {
+  "Unknown animal type.": "cattle.typeUnknown",
+  "This animal type is no longer available.": "cattle.typeHidden",
+  "This animal is recorded as a mother, so it must stay female.": "cattle.motherMustStayFemale",
+  "The mother must be a female animal on this farm.": "cattle.motherNotFemale",
+  "An animal cannot be its own mother.": "cattle.motherSelf",
+};
+
 /** Turns Postgres errors into messages a farmer can act on. */
 export function dbError(t: I18n["t"], error: { code?: string; message: string }) {
+  const rule = RULE_MESSAGES[error.message];
+  if (rule) return t(rule);
   if (error.code === "23505") return t("common.dbDuplicate");
   if (error.code === "23514") return t("common.dbRange");
   if (error.code === "42501") return t("common.dbForbidden");

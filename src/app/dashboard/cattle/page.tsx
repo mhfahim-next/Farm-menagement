@@ -5,12 +5,11 @@ import { ActionForm } from "@/components/action-form";
 import { ParentsFields } from "@/components/parents-fields";
 import { Badge, Card, EmptyState, Field, Input, PageHeader, Select, Table, Td, Textarea } from "@/components/ui";
 import { requireFarm } from "@/lib/auth";
-import type { MotherCandidate } from "@/lib/cattle";
+import { typeSexHint, type MotherCandidate } from "@/lib/cattle";
 import { ageInMonths } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import type { Cattle } from "@/lib/types";
 import { addCattle } from "./actions";
-import { categoryOptions, sexOptions } from "./options";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -22,7 +21,8 @@ const statusFilters = ["active", "sold", "dead", "all"] as const;
 export default async function CattlePage({ searchParams }: PageProps<"/dashboard/cattle">) {
   const { supabase, farm } = await requireFarm();
   if (!farm.has_dairy) notFound();
-  const { t, e } = await getI18n();
+  const i18n = await getI18n();
+  const { t, e, o, options } = i18n;
 
   const { status: rawStatus, q } = await searchParams;
   const status = statusFilters.find((s) => s === rawStatus) ?? "active";
@@ -74,7 +74,7 @@ export default async function CattlePage({ searchParams }: PageProps<"/dashboard
               name="status"
               defaultValue={status}
               className="w-auto"
-              options={statusFilters.map((s) => ({ value: s, label: e(s) }))}
+              options={statusFilters.map((s) => ({ value: s, label: s === "all" ? e("all") : o("cattle_status", s) }))}
             />
             <button className="rounded-lg border border-stone-300 px-3 text-sm hover:bg-stone-50">
               {t("common.filter")}
@@ -102,12 +102,12 @@ export default async function CattlePage({ searchParams }: PageProps<"/dashboard
                     </Link>
                   </Td>
                   <Td>{c.name ?? "—"}</Td>
-                  <Td>{e(c.category)}</Td>
+                  <Td>{o("cattle_category", c.category)}</Td>
                   <Td>{c.breed ?? "—"}</Td>
                   <Td>{age(c.date_of_birth)}</Td>
                   <Td>
                     <Badge tone={c.status === "active" ? "green" : c.status === "sold" ? "blue" : "red"}>
-                      {e(c.status)}
+                      {o("cattle_status", c.status)}
                     </Badge>
                   </Td>
                 </tr>
@@ -125,20 +125,17 @@ export default async function CattlePage({ searchParams }: PageProps<"/dashboard
               <Field label={t("common.name")}>
                 <Input name="name" />
               </Field>
-              <Field label={t("common.category")}>
-                <Select name="category" options={categoryOptions(e)} />
-              </Field>
-              <Field label={t("cattle.sex")}>
-                <Select name="sex" options={sexOptions(e)} />
-              </Field>
             </div>
+            <Field label={t("common.category")} hint={typeSexHint(i18n)}>
+              <Select name="category" required options={options("cattle_category")} />
+            </Field>
             <Field label={t("common.breed")}>
               <Input name="breed" placeholder={t("cattle.breedPlaceholder")} />
             </Field>
             <Field label={t("cattle.dob")}>
               <Input name="date_of_birth" type="date" />
             </Field>
-            <ParentsFields candidates={mothers} i18n={{ t, e }} />
+            <ParentsFields candidates={mothers} i18n={i18n} />
             <div className="grid grid-cols-2 gap-3">
               <Field label={t("cattle.purchaseDate")}>
                 <Input name="purchase_date" type="date" />

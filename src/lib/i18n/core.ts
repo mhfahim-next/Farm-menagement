@@ -1,4 +1,5 @@
 // Shared (server + client) i18n helpers. No server-only imports here.
+import type { ListKey, OptionRow } from "../options";
 import type { EnMessages } from "./messages/en";
 
 export const LOCALES = ["en", "bn"] as const;
@@ -33,8 +34,11 @@ function prettify(value: string) {
   return value.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
 }
 
-/** Builds the translate function, enum labeller and locale-aware formatters. */
-export function createI18n(locale: Locale, messages: Messages) {
+/**
+ * Builds the translate function, enum labeller, admin-managed dropdown
+ * options and locale-aware formatters.
+ */
+export function createI18n(locale: Locale, messages: Messages, optionRows: OptionRow[] = []) {
   const lookup = messages as Record<string, string>;
   const numberLocale = INTL_NUMBER_LOCALE[locale];
   const dateLocale = INTL_LOCALE[locale];
@@ -53,6 +57,39 @@ export function createI18n(locale: Locale, messages: Messages) {
   function e(value: string | null | undefined) {
     if (!value) return "—";
     return lookup[`enum.${value}`] ?? prettify(value);
+  }
+
+  const byList = new Map<ListKey, OptionRow[]>();
+  for (const row of [...optionRows].sort((a, b) => a.sort_order - b.sort_order)) {
+    byList.set(row.list_key, [...(byList.get(row.list_key) ?? []), row]);
+  }
+  const rowLabel = (row: OptionRow) =>
+    (locale === "bn" ? row.label_bn || row.label_en : row.label_en || row.label_bn) ?? row.value;
+
+  /** Label of a stored value from an admin-managed list (hidden options too). */
+  function o(list: ListKey, value: string | null | undefined) {
+    if (!value) return "—";
+    const row = byList.get(list)?.find((r) => r.value === value);
+    if (row) return rowLabel(row);
+    return lookup[`enum.${value}`] ?? lookup[`cat.${value}`] ?? prettify(value);
+  }
+
+  /** Every option of a list, hidden ones included (for logic and admin). */
+  function rows(list: ListKey) {
+    return byList.get(list) ?? [];
+  }
+
+  /**
+   * Visible options of a list for a <select>. Pass `keep` with the record's
+   * current value so a since-hidden option still shows when editing it.
+   */
+  function options(list: ListKey, keep?: string | null) {
+    const visible = rows(list).filter((r) => r.active || r.value === keep);
+    const result = visible.map((r) => ({ value: r.value, label: rowLabel(r), meta: r.meta }));
+    if (keep && !result.some((r) => r.value === keep)) {
+      result.unshift({ value: keep, label: o(list, keep), meta: {} });
+    }
+    return result;
   }
 
   /** Translation for a dynamic key (stored category, heat sign, audit action…), or undefined. */
@@ -103,7 +140,7 @@ export function createI18n(locale: Locale, messages: Messages) {
     },
   };
 
-  return { locale, t, e, f, maybe };
+  return { locale, t, e, f, maybe, o, rows, options };
 }
 
 export type I18n = ReturnType<typeof createI18n>;

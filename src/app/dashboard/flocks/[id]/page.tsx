@@ -19,7 +19,7 @@ export default async function FlockDetailPage({ params, searchParams }: PageProp
   const { id } = await params;
   const sp = await searchParams;
   const { supabase, farm } = await requireFarm();
-  const { t, e, f } = await getI18n();
+  const { t, f, o, options } = await getI18n();
 
   const [flockRes, logsRes] = await Promise.all([
     supabase.from("flocks").select("*").eq("id", id).eq("farm_id", farm.id).maybeSingle(),
@@ -48,7 +48,7 @@ export default async function FlockDetailPage({ params, searchParams }: PageProp
           flock.breed,
           flock.shed && t("flocks.shed", { s: flock.shed }),
           t("flocks.weeksOld", { n: flockAgeWeeks(flock) }),
-          e(flock.status),
+          o("flock_status", flock.status),
         ]
           .filter(Boolean)
           .join(" · ")}
@@ -161,11 +161,7 @@ export default async function FlockDetailPage({ params, searchParams }: PageProp
               <Select
                 name="status"
                 defaultValue={flock.status}
-                options={[
-                  { value: "active", label: e("active") },
-                  { value: "sold", label: e("sold") },
-                  { value: "culled", label: e("culled") },
-                ]}
+                options={options("flock_status", flock.status)}
               />
             </ActionForm>
           </Card>

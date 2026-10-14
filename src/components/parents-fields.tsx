@@ -14,7 +14,7 @@ export function ParentsFields({
   defaultFather,
 }: {
   candidates: MotherCandidate[];
-  i18n: Pick<I18n, "t" | "e">;
+  i18n: Pick<I18n, "t" | "o">;
   excludeId?: string;
   defaultMother?: string | null;
   defaultFather?: string | null;

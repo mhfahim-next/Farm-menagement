@@ -20,7 +20,7 @@ export function animalLabel(a: Pick<MotherCandidate, "tag_number" | "name">) {
  */
 export function motherOptions(
   candidates: MotherCandidate[],
-  { t, e }: Pick<I18n, "t" | "e">,
+  { t, o }: Pick<I18n, "t" | "o">,
   excludeId?: string,
 ) {
   return [
@@ -29,7 +29,22 @@ export function motherOptions(
       .filter((a) => a.id !== excludeId)
       .map((a) => ({
         value: a.id,
-        label: `${animalLabel(a)} — ${e(a.category)}${a.status === "active" ? "" : ` (${e(a.status)})`}`,
+        label: `${animalLabel(a)} — ${o("cattle_category", a.category)}${a.status === "active" ? "" : ` (${o("cattle_status", a.status)})`}`,
       })),
   ];
+}
+
+/** Animal types that count as milking (shown on the milking sheet). */
+export function milkingCategories(rows: I18n["rows"]) {
+  return rows("cattle_category")
+    .filter((r) => r.meta.milking)
+    .map((r) => r.value);
+}
+
+/** "Female: Cow, Heifer · Male: Bull" — explains that the type sets the sex. */
+export function typeSexHint({ t, options }: Pick<I18n, "t" | "options">) {
+  const types = options("cattle_category");
+  const names = (sex: string) =>
+    types.filter((x) => x.meta.sex === sex).map((x) => x.label).join(", ") || "—";
+  return t("cattle.typeHint", { female: names("female"), male: names("male") });
 }

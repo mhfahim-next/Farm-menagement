@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Badge, ButtonLink, Card, EmptyState, PageHeader, StatCard } from "@/components/ui";
 import { requireFarm } from "@/lib/auth";
 import { loadBreedingBoard } from "@/lib/breeding-data";
+import { milkingCategories } from "@/lib/cattle";
 import { monthStart, today } from "@/lib/format";
 import { dueItems, dueLabel } from "@/lib/health";
 import { getI18n } from "@/lib/i18n/server";
@@ -15,7 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function OverviewPage() {
   const { supabase, farm } = await requireFarm();
-  const { t, e, f } = await getI18n();
+  const { t, f, o, rows } = await getI18n();
   const day = today();
   const weekAgo = today(-6);
 
@@ -69,7 +70,8 @@ export default async function OverviewPage() {
   ]);
 
   const cattle = cattleRes?.data ?? [];
-  const milkingCows = cattle.filter((c) => c.category === "cow").length;
+  const milkingTypes = milkingCategories(rows);
+  const milkingCows = cattle.filter((c) => milkingTypes.includes(c.category)).length;
   const milk = milkRes?.data ?? [];
   const activeFlockIds = new Set((flocksRes?.data ?? []).map((fl) => fl.id));
   const birds = ((statsRes?.data ?? []) as FlockStats[])
@@ -99,7 +101,7 @@ export default async function OverviewPage() {
     ...healthDue.map((d) => ({
       key: `h-${d.record.id}`,
       cattleId: d.record.cattle_id,
-      title: `${d.record.product ?? d.record.description} (${e(d.record.record_type)})`,
+      title: `${d.record.product ?? d.record.description} (${o("health_type", d.record.record_type)})`,
       status: dueLabel(t, d.daysUntilDue),
       days: d.daysUntilDue,
       tone: d.overdue ? ("red" as const) : ("amber" as const),

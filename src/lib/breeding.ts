@@ -11,26 +11,17 @@ export const DRY_OFF_BEFORE_CALVING_DAYS = 60;
 /** Cow still not bred this long after calving → flag for service. */
 export const VOLUNTARY_WAIT_DAYS = 60;
 
-/** Heat signs the form offers. Stored as these slugs; shown via `sign.<slug>`. */
-export const HEAT_SIGNS = ["standing", "mounting", "mucus", "restless", "swollen", "milk_drop"] as const;
-
 /**
- * Turns the stored "standing, mucus" into translated text. Older free-text
- * values (saved before signs became a fixed list) are shown as they are.
+ * Turns the stored "standing, mucus" into labels from the admin-managed
+ * heat_sign list. Older free-text values are shown as they are.
  */
-export function heatSignsText(
-  t: (key: `sign.${(typeof HEAT_SIGNS)[number]}`) => string,
-  raw: string | null,
-) {
+export function heatSignsText(o: (list: "heat_sign", value: string) => string, raw: string | null) {
   if (!raw) return null;
   return raw
     .split(",")
     .map((part) => part.trim())
-    .map((part) =>
-      (HEAT_SIGNS as readonly string[]).includes(part)
-        ? t(`sign.${part as (typeof HEAT_SIGNS)[number]}`)
-        : part,
-    )
+    .filter(Boolean)
+    .map((part) => o("heat_sign", part))
     .join(", ");
 }
 

@@ -12,16 +12,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("finance.meta") };
 }
 
-// Categories are stored in English; `cat.<name>` translates them for display.
-const categories = [
-  "Milk sales", "Egg sales", "Animal sales", "Manure sales", "Other income",
-  "Feed", "Medicine & vet", "Labour", "Electricity & water", "Animal purchase",
-  "Chicks / pullets", "Equipment", "Transport", "Rent", "Other expense",
-];
-
 export default async function FinancePage({ searchParams }: PageProps<"/dashboard/finance">) {
   const { supabase, farm } = await requireFarm();
-  const { t, e, f, maybe } = await getI18n();
+  const { t, f, o, options } = await getI18n();
   const sp = await searchParams;
   const month = typeof sp.month === "string" && /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : today().slice(0, 7);
   const [y, m] = month.split("-").map(Number);
@@ -43,13 +36,12 @@ export default async function FinancePage({ searchParams }: PageProps<"/dashboar
     txns.filter(pred).reduce((s, x) => s + Number(x.amount), 0);
   const income = sum((x) => x.txn_type === "income");
   const expense = sum((x) => x.txn_type === "expense");
-  const categoryLabel = (c: string) => maybe(`cat.${c}`) ?? c;
 
-  const modules = [
-    ...(farm.has_dairy ? ["dairy"] : []),
-    ...(farm.has_layer ? ["layer"] : []),
-    "general",
-  ];
+  // Only the modules this farm uses; labels come from the admin-managed list.
+  const moduleOptions = options("txn_module").filter(
+    (m) => (m.value !== "dairy" || farm.has_dairy) && (m.value !== "layer" || farm.has_layer),
+  );
+  const modules = moduleOptions.map((m) => m.value);
 
   return (
     <>
@@ -77,7 +69,7 @@ export default async function FinancePage({ searchParams }: PageProps<"/dashboar
             return (
               <StatCard
                 key={mod}
-                label={t("finance.moduleProfit", { module: e(mod) })}
+                label={t("finance.moduleProfit", { module: o("txn_module", mod) })}
                 value={f.money(p, farm.currency)}
                 tone={p >= 0 ? "good" : "bad"}
               />
@@ -103,9 +95,9 @@ export default async function FinancePage({ searchParams }: PageProps<"/dashboar
               {txns.map((x) => (
                 <tr key={x.id}>
                   <Td>{f.date(x.txn_date)}</Td>
-                  <Td>{categoryLabel(x.category)}</Td>
+                  <Td>{o("finance_category", x.category)}</Td>
                   <Td>
-                    <Badge>{e(x.module)}</Badge>
+                    <Badge>{o("txn_module", x.module)}</Badge>
                   </Td>
                   <Td>{x.description ?? "—"}</Td>
                   <Td className={`text-right font-medium tabular-nums ${x.txn_type === "income" ? "text-emerald-700" : "text-red-600"}`}>
@@ -124,10 +116,7 @@ export default async function FinancePage({ searchParams }: PageProps<"/dashboar
               <Field label={t("finance.type")}>
                 <Select
                   name="txn_type"
-                  options={[
-                    { value: "expense", label: e("expense") },
-                    { value: "income", label: e("income") },
-                  ]}
+                  options={[...options("txn_type")].reverse()}
                 />
               </Field>
               <Field label={t("common.date")}>
@@ -135,11 +124,11 @@ export default async function FinancePage({ searchParams }: PageProps<"/dashboar
               </Field>
             </div>
             <Field label={t("common.category")}>
-              <Select name="category" options={categories.map((c) => ({ value: c, label: categoryLabel(c) }))} />
+              <Select name="category" options={options("finance_category")} />
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label={t("finance.module")}>
-                <Select name="module" options={modules.map((x) => ({ value: x, label: e(x) }))} />
+                <Select name="module" options={moduleOptions} />
               </Field>
               <Field label={t("finance.amountWith", { cur: farm.currency })}>
                 <Input name="amount" type="number" min="0.01" step="0.01" inputMode="decimal" required />

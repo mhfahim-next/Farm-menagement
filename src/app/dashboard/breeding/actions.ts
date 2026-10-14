@@ -56,7 +56,8 @@ export async function logBreedingEvent(_: ActionState, formData: FormData): Prom
     message = t("breeding.calvingSaved");
     const calfTag = str(formData, "calf_tag");
 
-    // A heifer becomes a cow once she has calved.
+    // A heifer becomes a cow once she has calved (skipped if "cow" was hidden
+    // by an admin; the database then refuses the change).
     await supabase
       .from("cattle")
       .update({ category: "cow" })
@@ -81,8 +82,8 @@ export async function logBreedingEvent(_: ActionState, formData: FormData): Prom
         farm_id: farm.id,
         tag_number: calfTag,
         name: str(formData, "calf_name"),
-        sex: str(formData, "calf_sex") === "male" ? "male" : "female",
-        category: "calf",
+        // Sex comes from the chosen type (database trigger).
+        category: str(formData, "calf_category") ?? "heifer",
         breed: dam?.breed ?? null,
         date_of_birth: eventDate,
         mother_id: cattleId,

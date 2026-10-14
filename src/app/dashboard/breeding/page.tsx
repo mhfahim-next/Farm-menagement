@@ -30,7 +30,7 @@ export default async function BreedingPage() {
   const { supabase, farm } = await requireFarm();
   if (!farm.has_dairy) notFound();
 
-  const { t, e, f } = await getI18n();
+  const { t, f, o } = await getI18n();
   const day = today();
   const when = (days: number) => {
     if (days === 0) return t("breeding.whenToday");
@@ -120,7 +120,7 @@ export default async function BreedingPage() {
                         <Link href={`/dashboard/cattle/${c.id}`} className="font-medium text-emerald-700 hover:underline">
                           {cowLabel(c)}
                         </Link>
-                        <span className="block text-xs text-stone-500">{e(c.category)}</span>
+                        <span className="block text-xs text-stone-500">{o("cattle_category", c.category)}</span>
                       </Td>
                       <Td>
                         <Badge tone={stateTone[s.state]}>{t(`breeding.state.${s.state}`)}</Badge>
@@ -158,15 +158,15 @@ export default async function BreedingPage() {
                   const details = [
                     ev.bull_or_semen,
                     ev.technician && t("breeding.by", { name: ev.technician }),
-                    ev.event_type === "pregnancy_check" && ev.result ? e(ev.result) : null,
-                    heatSignsText(t, ev.heat_signs),
+                    ev.event_type === "pregnancy_check" && ev.result ? o("pregnancy_result", ev.result) : null,
+                    heatSignsText(o, ev.heat_signs),
                     ev.expected_calving_date && t("breeding.calvingOn", { date: f.date(ev.expected_calving_date) }),
                   ].filter(Boolean);
                   return (
                     <tr key={ev.id}>
                       <Td>{f.date(ev.event_date)}</Td>
                       <Td>{cow ? cowLabel(cow) : "—"}</Td>
-                      <Td>{e(ev.event_type)}</Td>
+                      <Td>{o("breeding_event", ev.event_type)}</Td>
                       <Td className="text-xs">{details.join(" · ") || "—"}</Td>
                     </tr>
                   );

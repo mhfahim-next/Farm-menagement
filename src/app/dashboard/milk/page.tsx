@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ActionForm } from "@/components/action-form";
 import { Card, EmptyState, Field, Input, PageHeader, Select, StatCard, Table, Td } from "@/components/ui";
 import { requireFarm } from "@/lib/auth";
+import { milkingCategories } from "@/lib/cattle";
 import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import { saveMilkSession } from "./actions";
@@ -12,16 +13,15 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("milk.meta") };
 }
 
-const sessionValues = ["morning", "evening", "other"] as const;
-
 export default async function MilkPage({ searchParams }: PageProps<"/dashboard/milk">) {
   const { supabase, farm } = await requireFarm();
   if (!farm.has_dairy) notFound();
-  const { t, e, f } = await getI18n();
+  const { t, f, options, rows } = await getI18n();
+  const sessions = options("milk_session");
 
   const sp = await searchParams;
   const date = typeof sp.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(sp.date) ? sp.date : today();
-  const session = sessionValues.find((s) => s === sp.session) ?? "morning";
+  const session = sessions.find((s) => s.value === sp.session)?.value ?? sessions[0]?.value ?? "morning";
 
   const [cowsRes, existingRes, historyRes] = await Promise.all([
     supabase
@@ -29,7 +29,7 @@ export default async function MilkPage({ searchParams }: PageProps<"/dashboard/m
       .select("id, tag_number, name")
       .eq("farm_id", farm.id)
       .eq("status", "active")
-      .eq("category", "cow")
+      .in("category", milkingCategories(rows))
       .is("deleted_at", null)
       .order("tag_number"),
     supabase
@@ -83,7 +83,7 @@ export default async function MilkPage({ searchParams }: PageProps<"/dashboard/m
               <Select
                 name="session"
                 defaultValue={session}
-                options={sessionValues.map((s) => ({ value: s, label: e(s) }))}
+                options={sessions}
               />
             </Field>
             <button className="rounded-lg border border-stone-300 px-3 py-2 text-sm hover:bg-stone-50">{t("common.load")}</button>

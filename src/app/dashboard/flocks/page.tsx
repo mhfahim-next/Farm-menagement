@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function FlocksPage() {
   const { supabase, farm } = await requireFarm();
   if (!farm.has_layer) notFound();
-  const { t, e, f } = await getI18n();
+  const { t, f, o } = await getI18n();
 
   const [flocksRes, statsRes, todayRes] = await Promise.all([
     supabase
@@ -64,7 +64,7 @@ export default async function FlocksPage() {
                       {[fl.breed, fl.shed && t("flocks.shed", { s: fl.shed })].filter(Boolean).join(" · ") || "—"}
                     </p>
                   </div>
-                  <Badge tone={fl.status === "active" ? "green" : "default"}>{e(fl.status)}</Badge>
+                  <Badge tone={fl.status === "active" ? "green" : "default"}>{o("flock_status", fl.status)}</Badge>
                 </div>
                 <dl className="mt-4 grid grid-cols-3 gap-2 text-sm">
                   <div>

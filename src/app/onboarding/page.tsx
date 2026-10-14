@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function OnboardingPage() {
   const user = await requireUser();
-  const { t } = await getI18n();
+  const { t, options } = await getI18n();
   const supabase = await createClient();
   const { count } = await supabase
     .from("farm_members")
@@ -25,10 +25,8 @@ export default async function OnboardingPage() {
     .eq("user_id", user.id);
   if (count) redirect("/dashboard");
 
-  const currencies = (["BDT", "INR", "PKR", "USD", "EUR"] as const).map((c) => ({
-    value: c,
-    label: t(`currency.${c}`),
-  }));
+  const currencies = options("currency");
+  const defaultCurrency = currencies.find((c) => c.value === "BDT")?.value ?? currencies[0]?.value;
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center bg-gradient-to-b from-emerald-50 to-stone-50 px-4 py-12">
@@ -50,7 +48,7 @@ export default async function OnboardingPage() {
             <Input name="location" placeholder={t("onboarding.locationPlaceholder")} />
           </Field>
           <Field label={t("common.currency")}>
-            <Select name="currency" defaultValue="BDT" options={currencies} />
+            <Select name="currency" defaultValue={defaultCurrency} options={currencies} />
           </Field>
           <fieldset className="grid gap-2">
             <legend className="mb-1.5 text-sm font-medium text-stone-700">

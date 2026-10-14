@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function SettingsPage() {
   const { supabase, farm, role, user } = await requireFarm();
-  const { t, e } = await getI18n();
+  const { t, e, options } = await getI18n();
   const canEdit = role === "owner" || role === "manager";
 
   const { data: members } = await supabase
@@ -44,7 +44,7 @@ export default async function SettingsPage() {
                 <Select
                   name="currency"
                   defaultValue={farm.currency}
-                  options={(["BDT", "INR", "PKR", "USD", "EUR"] as const).map((c) => ({ value: c, label: c }))}
+                  options={options("currency", farm.currency)}
                 />
               </Field>
               <div className="flex flex-wrap gap-4 text-sm">
