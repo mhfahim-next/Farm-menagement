@@ -4,18 +4,23 @@ import { notFound } from "next/navigation";
 import { ActionForm } from "@/components/action-form";
 import { Badge, Card, EmptyState, Field, Input, PageHeader, Select, Table, Td, Textarea } from "@/components/ui";
 import { requireFarm } from "@/lib/auth";
-import { ageFrom, label } from "@/lib/format";
+import { ageInMonths } from "@/lib/format";
+import { getI18n } from "@/lib/i18n/server";
 import type { Cattle } from "@/lib/types";
 import { addCattle } from "./actions";
 import { categoryOptions, sexOptions } from "./options";
 
-export const metadata: Metadata = { title: "Cattle" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t("cattle.meta") };
+}
 
 const statusFilters = ["active", "sold", "dead", "all"] as const;
 
 export default async function CattlePage({ searchParams }: PageProps<"/dashboard/cattle">) {
   const { supabase, farm } = await requireFarm();
   if (!farm.has_dairy) notFound();
+  const { t, e } = await getI18n();
 
   const { status: rawStatus, q } = await searchParams;
   const status = statusFilters.find((s) => s === rawStatus) ?? "active";
@@ -36,29 +41,46 @@ export default async function CattlePage({ searchParams }: PageProps<"/dashboard
   if (error) throw new Error(error.message);
   const cattle = (data ?? []) as Cattle[];
 
+  const age = (dob: string | null) => {
+    const months = ageInMonths(dob);
+    if (months === null) return t("age.unknown");
+    if (months < 1) return t("age.lessThanMonth");
+    if (months < 24) return t("age.months", { n: months });
+    return t("age.yearsMonths", { y: Math.floor(months / 12), m: months % 12 });
+  };
+
   return (
     <>
-      <PageHeader title="Cattle" description="Your herd register." />
+      <PageHeader title={t("cattle.title")} description={t("cattle.desc")} />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
         <Card>
           <form className="mb-4 flex flex-wrap gap-2">
-            <Input name="q" defaultValue={search} placeholder="Search tag, name or breed" className="max-w-xs" />
+            <Input name="q" defaultValue={search} placeholder={t("cattle.searchPlaceholder")} className="max-w-xs" />
             <Select
               name="status"
               defaultValue={status}
               className="w-auto"
-              options={statusFilters.map((s) => ({ value: s, label: label(s) }))}
+              options={statusFilters.map((s) => ({ value: s, label: e(s) }))}
             />
             <button className="rounded-lg border border-stone-300 px-3 text-sm hover:bg-stone-50">
-              Filter
+              {t("common.filter")}
             </button>
           </form>
 
           {cattle.length === 0 ? (
-            <EmptyState title="No animals found">Add one with the form.</EmptyState>
+            <EmptyState title={t("cattle.emptyTitle")}>{t("cattle.emptyBody")}</EmptyState>
           ) : (
-            <Table head={["Tag", "Name", "Category", "Breed", "Age", "Status"]}>
+            <Table
+              head={[
+                t("cattle.colTag"),
+                t("cattle.colName"),
+                t("cattle.colCategory"),
+                t("cattle.colBreed"),
+                t("cattle.colAge"),
+                t("cattle.colStatus"),
+              ]}
+            >
               {cattle.map((c) => (
                 <tr key={c.id} className="hover:bg-stone-50">
                   <Td>
@@ -67,12 +89,12 @@ export default async function CattlePage({ searchParams }: PageProps<"/dashboard
                     </Link>
                   </Td>
                   <Td>{c.name ?? "—"}</Td>
-                  <Td>{label(c.category)}</Td>
+                  <Td>{e(c.category)}</Td>
                   <Td>{c.breed ?? "—"}</Td>
-                  <Td>{ageFrom(c.date_of_birth)}</Td>
+                  <Td>{age(c.date_of_birth)}</Td>
                   <Td>
                     <Badge tone={c.status === "active" ? "green" : c.status === "sold" ? "blue" : "red"}>
-                      {label(c.status)}
+                      {e(c.status)}
                     </Badge>
                   </Td>
                 </tr>
@@ -81,37 +103,37 @@ export default async function CattlePage({ searchParams }: PageProps<"/dashboard
           )}
         </Card>
 
-        <Card title="Add animal">
-          <ActionForm action={addCattle} submitLabel="Add animal">
+        <Card title={t("cattle.addTitle")}>
+          <ActionForm action={addCattle} submitLabel={t("cattle.addSubmit")}>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Tag number">
+              <Field label={t("cattle.tag")}>
                 <Input name="tag_number" required />
               </Field>
-              <Field label="Name">
+              <Field label={t("common.name")}>
                 <Input name="name" />
               </Field>
-              <Field label="Category">
-                <Select name="category" options={categoryOptions} />
+              <Field label={t("common.category")}>
+                <Select name="category" options={categoryOptions(e)} />
               </Field>
-              <Field label="Sex">
-                <Select name="sex" options={sexOptions} />
+              <Field label={t("cattle.sex")}>
+                <Select name="sex" options={sexOptions(e)} />
               </Field>
             </div>
-            <Field label="Breed">
-              <Input name="breed" placeholder="e.g. Holstein Friesian, Sahiwal" />
+            <Field label={t("common.breed")}>
+              <Input name="breed" placeholder={t("cattle.breedPlaceholder")} />
             </Field>
-            <Field label="Date of birth">
+            <Field label={t("cattle.dob")}>
               <Input name="date_of_birth" type="date" />
             </Field>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Purchase date">
+              <Field label={t("cattle.purchaseDate")}>
                 <Input name="purchase_date" type="date" />
               </Field>
-              <Field label={`Price (${farm.currency})`}>
+              <Field label={t("cattle.price", { cur: farm.currency })}>
                 <Input name="purchase_price" type="number" min="0" step="0.01" />
               </Field>
             </div>
-            <Field label="Notes">
+            <Field label={t("common.notes")}>
               <Textarea name="notes" rows={2} />
             </Field>
           </ActionForm>

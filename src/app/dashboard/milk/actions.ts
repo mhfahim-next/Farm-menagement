@@ -3,14 +3,16 @@
 import { revalidatePath } from "next/cache";
 import { requireFarm } from "@/lib/auth";
 import { dbError, str } from "@/lib/form";
+import { getI18n } from "@/lib/i18n/server";
 import type { ActionState } from "@/lib/types";
 
 /** Saves one milking session for many cows at once (re-saving overwrites). */
 export async function saveMilkSession(_: ActionState, formData: FormData): Promise<ActionState> {
   const { supabase, farm } = await requireFarm();
+  const { t, f } = await getI18n();
   const recordDate = str(formData, "record_date");
   const session = str(formData, "session");
-  if (!recordDate || !session) return { error: "Choose a date and session." };
+  if (!recordDate || !session) return { error: t("milk.chooseDateSession") };
 
   const rows: {
     farm_id: string;
@@ -25,7 +27,7 @@ export async function saveMilkSession(_: ActionState, formData: FormData): Promi
     if (!key.startsWith("qty_") || typeof value !== "string" || value.trim() === "") continue;
     const cattleId = key.slice(4);
     const qty = Number(value);
-    if (!Number.isFinite(qty) || qty < 0) return { error: "Litres must be a positive number." };
+    if (!Number.isFinite(qty) || qty < 0) return { error: t("milk.litresPositive") };
     const fatRaw = formData.get(`fat_${cattleId}`);
     const fat = typeof fatRaw === "string" && fatRaw.trim() !== "" ? Number(fatRaw) : null;
     rows.push({
@@ -38,14 +40,14 @@ export async function saveMilkSession(_: ActionState, formData: FormData): Promi
     });
   }
 
-  if (rows.length === 0) return { error: "Enter litres for at least one cow." };
+  if (rows.length === 0) return { error: t("milk.enterOne") };
 
   const { error } = await supabase
     .from("milk_records")
     .upsert(rows, { onConflict: "cattle_id,record_date,session" });
-  if (error) return { error: dbError(error) };
+  if (error) return { error: dbError(t, error) };
 
   revalidatePath("/dashboard", "layout");
   const total = rows.reduce((s, r) => s + r.quantity_liters, 0);
-  return { success: `Saved ${rows.length} cows · ${total.toFixed(1)} L.` };
+  return { success: t("milk.saved", { n: rows.length, l: f.number(total, 1) }) };
 }

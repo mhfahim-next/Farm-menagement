@@ -1,24 +1,23 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { ActionForm } from "@/components/action-form";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { Logo } from "@/components/logo";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Field, Input, Select } from "@/components/ui";
 import { requireUser } from "@/lib/auth";
+import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import { createFarm } from "./actions";
 
-export const metadata: Metadata = { title: "Set up your farm" };
-
-const currencies = [
-  { value: "BDT", label: "BDT — Bangladeshi Taka" },
-  { value: "INR", label: "INR — Indian Rupee" },
-  { value: "PKR", label: "PKR — Pakistani Rupee" },
-  { value: "USD", label: "USD — US Dollar" },
-  { value: "EUR", label: "EUR — Euro" },
-];
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t("onboarding.meta") };
+}
 
 export default async function OnboardingPage() {
   const user = await requireUser();
+  const { t } = await getI18n();
   const supabase = await createClient();
   const { count } = await supabase
     .from("farm_members")
@@ -26,32 +25,39 @@ export default async function OnboardingPage() {
     .eq("user_id", user.id);
   if (count) redirect("/dashboard");
 
+  const currencies = (["BDT", "INR", "PKR", "USD", "EUR"] as const).map((c) => ({
+    value: c,
+    label: t(`currency.${c}`),
+  }));
+
   return (
     <div className="flex flex-1 flex-col items-center justify-center bg-gradient-to-b from-emerald-50 to-stone-50 px-4 py-12">
+      <div className="absolute right-4 top-4 flex items-center gap-2">
+        <LanguageSwitcher />
+        <ThemeToggle />
+      </div>
       <div className="mb-8">
         <Logo />
       </div>
       <div className="w-full max-w-lg rounded-2xl border border-stone-200 bg-white p-7 shadow-sm">
-        <h1 className="text-xl font-bold">Set up your farm</h1>
-        <p className="mb-6 mt-1 text-sm text-stone-500">
-          You can change these later in Settings.
-        </p>
-        <ActionForm action={createFarm} submitLabel="Create farm" fullWidthSubmit>
-          <Field label="Farm name">
-            <Input name="name" placeholder="e.g. Green Valley Dairy" required minLength={2} />
+        <h1 className="text-xl font-bold">{t("onboarding.title")}</h1>
+        <p className="mb-6 mt-1 text-sm text-stone-500">{t("onboarding.subtitle")}</p>
+        <ActionForm action={createFarm} submitLabel={t("onboarding.submit")} fullWidthSubmit>
+          <Field label={t("onboarding.farmName")}>
+            <Input name="name" placeholder={t("onboarding.farmNamePlaceholder")} required minLength={2} />
           </Field>
-          <Field label="Location">
-            <Input name="location" placeholder="District / village" />
+          <Field label={t("common.location")}>
+            <Input name="location" placeholder={t("onboarding.locationPlaceholder")} />
           </Field>
-          <Field label="Currency">
+          <Field label={t("common.currency")}>
             <Select name="currency" defaultValue="BDT" options={currencies} />
           </Field>
           <fieldset className="grid gap-2">
             <legend className="mb-1.5 text-sm font-medium text-stone-700">
-              What do you farm?
+              {t("onboarding.farmTypeLegend")}
             </legend>
-            <ModuleOption name="has_dairy" title="Cattle & dairy" body="Cows, calves, milk, breeding, health" />
-            <ModuleOption name="has_layer" title="Layer chickens" body="Flocks, eggs, feed, mortality" />
+            <ModuleOption name="has_dairy" title={t("onboarding.dairyTitle")} body={t("onboarding.dairyBody")} />
+            <ModuleOption name="has_layer" title={t("onboarding.layerTitle")} body={t("onboarding.layerBody")} />
           </fieldset>
         </ActionForm>
       </div>

@@ -1,26 +1,9 @@
-export const categoryOptions = [
-  { value: "cow", label: "Cow (milking)" },
-  { value: "heifer", label: "Heifer" },
-  { value: "calf", label: "Calf" },
-  { value: "bull", label: "Bull" },
-  { value: "steer", label: "Steer" },
-];
+import type { I18n } from "@/lib/i18n/core";
 
-export const sexOptions = [
-  { value: "female", label: "Female" },
-  { value: "male", label: "Male" },
-];
+type E = I18n["e"];
 
-export const statusOptions = [
-  { value: "active", label: "Active" },
-  { value: "sold", label: "Sold" },
-  { value: "dead", label: "Dead" },
-];
+const opts = (e: E, values: string[]) => values.map((value) => ({ value, label: e(value) }));
 
-export const breedingTypeOptions = [
-  { value: "heat", label: "Heat observed" },
-  { value: "insemination", label: "Insemination (AI / natural)" },
-  { value: "pregnancy_check", label: "Pregnancy check" },
-  { value: "calving", label: "Calving" },
-  { value: "dry_off", label: "Dry off" },
-];
+export const categoryOptions = (e: E) => opts(e, ["cow", "heifer", "calf", "bull", "steer"]);
+export const sexOptions = (e: E) => opts(e, ["female", "male"]);
+export const statusOptions = (e: E) => opts(e, ["active", "sold", "dead"]);

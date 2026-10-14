@@ -1,26 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { HEAT_SIGNS } from "@/lib/breeding";
 import type { ActionState } from "@/lib/types";
 import { ActionForm } from "./action-form";
+import { useI18n } from "./i18n-provider";
 import { Field, Input, Select, Textarea } from "./ui";
 
-const eventOptions = [
-  { value: "heat", label: "Heat observed" },
-  { value: "insemination", label: "Artificial insemination / service" },
-  { value: "pregnancy_check", label: "Pregnancy check" },
-  { value: "calving", label: "Calving" },
-  { value: "dry_off", label: "Dry off" },
-];
-
-const heatSigns = [
-  "Standing to be mounted",
-  "Mounting others",
-  "Mucus discharge",
-  "Restless / bellowing",
-  "Swollen vulva",
-  "Drop in milk",
-];
+const eventTypes = ["heat", "insemination", "pregnancy_check", "calving", "dry_off"] as const;
 
 export function BreedingForm({
   action,
@@ -37,39 +24,48 @@ export function BreedingForm({
   cattleId?: string;
   defaultType?: string;
 }) {
+  const { t } = useI18n();
   const [type, setType] = useState(defaultType);
 
   return (
-    <ActionForm action={action} submitLabel="Save" className="grid gap-4">
+    <ActionForm action={action} submitLabel={t("breeding.submit")} className="grid gap-4">
       {cattleId ? (
         <input type="hidden" name="cattle_id" value={cattleId} />
       ) : (
-        <Field label="Cow">
+        <Field label={t("breeding.cow")}>
           <Select
             name="cattle_id"
             required
             defaultValue=""
-            options={[{ value: "", label: "Choose a cow…" }, ...(cows ?? []).map((c) => ({ value: c.id, label: c.label }))]}
+            options={[
+              { value: "", label: t("breeding.chooseCowPlaceholder") },
+              ...(cows ?? []).map((c) => ({ value: c.id, label: c.label })),
+            ]}
           />
         </Field>
       )}
 
       <div className="grid grid-cols-2 gap-3">
-        <Field label="What happened">
-          <Select name="event_type" value={type} onChange={(e) => setType(e.target.value)} options={eventOptions} />
+        <Field label={t("breeding.whatHappened")}>
+          <Select
+            name="event_type"
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+            options={eventTypes.map((v) => ({ value: v, label: t(`breeding.opt.${v}`) }))}
+          />
         </Field>
-        <Field label="Date">
+        <Field label={t("common.date")}>
           <Input name="event_date" type="date" defaultValue={today} max={today} required />
         </Field>
       </div>
 
       {type === "heat" && (
         <fieldset className="grid gap-1.5">
-          <legend className="mb-1 text-sm font-medium text-stone-700">Signs seen</legend>
-          {heatSigns.map((s) => (
+          <legend className="mb-1 text-sm font-medium text-stone-700">{t("breeding.signsSeen")}</legend>
+          {HEAT_SIGNS.map((s) => (
             <label key={s} className="flex items-center gap-2 text-sm">
               <input type="checkbox" name="heat_sign" value={s} className="accent-emerald-700" />
-              {s}
+              {t(`sign.${s}`)}
             </label>
           ))}
         </fieldset>
@@ -77,74 +73,70 @@ export function BreedingForm({
 
       {type === "insemination" && (
         <>
-          <Field label="Bull / semen">
-            <Input name="bull_or_semen" placeholder="Bull name or straw number" />
+          <Field label={t("breeding.bullSemen")}>
+            <Input name="bull_or_semen" placeholder={t("breeding.bullSemenPlaceholder")} />
           </Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="AI technician">
+            <Field label={t("breeding.technician")}>
               <Input name="technician" />
             </Field>
-            <Field label={`Cost (${currency})`}>
+            <Field label={t("breeding.cost", { cur: currency })}>
               <Input name="cost" type="number" min="0" step="0.01" inputMode="decimal" />
             </Field>
           </div>
-          <p className="rounded-lg bg-stone-50 px-3 py-2 text-xs text-stone-600">
-            Expected calving is set to 283 days after insemination. Check for pregnancy after about 45 days.
-          </p>
+          <p className="rounded-lg bg-stone-50 px-3 py-2 text-xs text-stone-600">{t("breeding.aiHint")}</p>
         </>
       )}
 
       {type === "pregnancy_check" && (
         <>
-          <Field label="Result">
+          <Field label={t("breeding.result")}>
             <Select
               name="result"
               required
               defaultValue=""
               options={[
-                { value: "", label: "Choose…" },
-                { value: "positive", label: "Pregnant" },
-                { value: "negative", label: "Not pregnant (open)" },
-                { value: "uncertain", label: "Uncertain — recheck" },
+                { value: "", label: t("breeding.chooseResult") },
+                { value: "positive", label: t("breeding.resultPositive") },
+                { value: "negative", label: t("breeding.resultNegative") },
+                { value: "uncertain", label: t("breeding.resultUncertain") },
               ]}
             />
           </Field>
-          <Field label="Checked by">
-            <Input name="technician" placeholder="Vet / technician" />
+          <Field label={t("breeding.checkedBy")}>
+            <Input name="technician" placeholder={t("breeding.checkedByPlaceholder")} />
           </Field>
         </>
       )}
 
       {type === "calving" && (
         <fieldset className="grid gap-3 rounded-lg border border-stone-200 p-3">
-          <legend className="px-1 text-sm font-medium text-stone-700">Calf (optional)</legend>
+          <legend className="px-1 text-sm font-medium text-stone-700">{t("breeding.calfLegend")}</legend>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Calf tag no." hint="Adds the calf to your herd.">
+            <Field label={t("breeding.calfTag")} hint={t("breeding.calfTagHint")}>
               <Input name="calf_tag" />
             </Field>
-            <Field label="Sex">
+            <Field label={t("breeding.calfSex")}>
               <Select
                 name="calf_sex"
                 options={[
-                  { value: "female", label: "Female" },
-                  { value: "male", label: "Male" },
+                  { value: "female", label: t("enum.female") },
+                  { value: "male", label: t("enum.male") },
                 ]}
               />
             </Field>
           </div>
-          <Field label="Calf name">
+          <Field label={t("breeding.calfName")}>
             <Input name="calf_name" />
           </Field>
         </fieldset>
       )}
 
       {type === "dry_off" && (
-        <p className="rounded-lg bg-stone-50 px-3 py-2 text-xs text-stone-600">
-          Stop milking this cow ahead of calving to let her udder rest.
-        </p>
+        <p className="rounded-lg bg-stone-50 px-3 py-2 text-xs text-stone-600">{t("breeding.dryOffHint")}</p>
       )}
 
-      <Field label="Notes">
+      <Field label={t("common.notes")}>
         <Textarea name="notes" rows={2} />
       </Field>
     </ActionForm>

@@ -4,16 +4,21 @@ import { notFound } from "next/navigation";
 import { ActionForm } from "@/components/action-form";
 import { Badge, Card, EmptyState, Field, Input, PageHeader, Textarea } from "@/components/ui";
 import { requireFarm } from "@/lib/auth";
-import { formatDate, formatNumber, label, today } from "@/lib/format";
+import { today } from "@/lib/format";
+import { getI18n } from "@/lib/i18n/server";
 import type { Flock, FlockStats } from "@/lib/types";
 import { addFlock } from "./actions";
 import { flockAgeWeeks } from "./utils";
 
-export const metadata: Metadata = { title: "Layer flocks" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t("flocks.meta") };
+}
 
 export default async function FlocksPage() {
   const { supabase, farm } = await requireFarm();
   if (!farm.has_layer) notFound();
+  const { t, e, f } = await getI18n();
 
   const [flocksRes, statsRes, todayRes] = await Promise.all([
     supabase
@@ -33,88 +38,88 @@ export default async function FlocksPage() {
 
   return (
     <>
-      <PageHeader title="Layer flocks" description="Each batch of hens is tracked as one flock." />
+      <PageHeader title={t("flocks.title")} description={t("flocks.desc")} />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
         <div className="grid content-start gap-4 sm:grid-cols-2">
           {flocks.length === 0 && (
             <div className="sm:col-span-2">
-              <EmptyState title="No flocks yet">Add your first batch with the form.</EmptyState>
+              <EmptyState title={t("flocks.emptyTitle")}>{t("flocks.emptyBody")}</EmptyState>
             </div>
           )}
-          {flocks.map((f) => {
-            const s = stats.get(f.id);
-            const live = s?.current_count ?? f.initial_count;
-            const eggs = eggsToday.get(f.id);
+          {flocks.map((fl) => {
+            const s = stats.get(fl.id);
+            const live = s?.current_count ?? fl.initial_count;
+            const eggs = eggsToday.get(fl.id);
             return (
               <Link
-                key={f.id}
-                href={`/dashboard/flocks/${f.id}`}
+                key={fl.id}
+                href={`/dashboard/flocks/${fl.id}`}
                 className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm transition-colors hover:border-emerald-600"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <h3 className="font-semibold">{f.name}</h3>
+                    <h3 className="font-semibold">{fl.name}</h3>
                     <p className="text-sm text-stone-500">
-                      {[f.breed, f.shed && `Shed ${f.shed}`].filter(Boolean).join(" · ") || "—"}
+                      {[fl.breed, fl.shed && t("flocks.shed", { s: fl.shed })].filter(Boolean).join(" · ") || "—"}
                     </p>
                   </div>
-                  <Badge tone={f.status === "active" ? "green" : "default"}>{label(f.status)}</Badge>
+                  <Badge tone={fl.status === "active" ? "green" : "default"}>{e(fl.status)}</Badge>
                 </div>
                 <dl className="mt-4 grid grid-cols-3 gap-2 text-sm">
                   <div>
-                    <dt className="text-stone-500">Birds</dt>
-                    <dd className="font-semibold tabular-nums">{formatNumber(live)}</dd>
+                    <dt className="text-stone-500">{t("flocks.birds")}</dt>
+                    <dd className="font-semibold tabular-nums">{f.number(live)}</dd>
                   </div>
                   <div>
-                    <dt className="text-stone-500">Age</dt>
-                    <dd className="font-semibold">{flockAgeWeeks(f)} wk</dd>
+                    <dt className="text-stone-500">{t("flocks.age")}</dt>
+                    <dd className="font-semibold">{t("flocks.weeksShort", { n: flockAgeWeeks(fl) })}</dd>
                   </div>
                   <div>
-                    <dt className="text-stone-500">Eggs today</dt>
+                    <dt className="text-stone-500">{t("flocks.eggsToday")}</dt>
                     <dd className="font-semibold tabular-nums">
                       {eggs != null ? (
                         <>
-                          {formatNumber(eggs)}{" "}
+                          {f.number(eggs)}{" "}
                           <span className="font-normal text-stone-500">
-                            ({live ? formatNumber((eggs / live) * 100, 0) : 0}%)
+                            ({live ? f.number((eggs / live) * 100, 0) : f.number(0)}%)
                           </span>
                         </>
                       ) : (
-                        <span className="font-normal text-amber-700">Not logged</span>
+                        <span className="font-normal text-amber-700">{t("flocks.notLogged")}</span>
                       )}
                     </dd>
                   </div>
                 </dl>
-                <p className="mt-3 text-xs text-stone-500">Placed {formatDate(f.placed_date)}</p>
+                <p className="mt-3 text-xs text-stone-500">{t("flocks.placed", { date: f.date(fl.placed_date) })}</p>
               </Link>
             );
           })}
         </div>
 
-        <Card title="Add flock">
-          <ActionForm action={addFlock} submitLabel="Add flock">
-            <Field label="Flock name">
-              <Input name="name" placeholder="e.g. Batch 2026-A" required />
+        <Card title={t("flocks.addTitle")}>
+          <ActionForm action={addFlock} submitLabel={t("flocks.addSubmit")}>
+            <Field label={t("flocks.flockName")}>
+              <Input name="name" placeholder={t("flocks.flockNamePlaceholder")} required />
             </Field>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Breed">
-                <Input name="breed" placeholder="e.g. ISA Brown" />
+              <Field label={t("common.breed")}>
+                <Input name="breed" placeholder={t("flocks.breedPlaceholder")} />
               </Field>
-              <Field label="Shed">
+              <Field label={t("flocks.shedLabel")}>
                 <Input name="shed" />
               </Field>
-              <Field label="Birds placed">
+              <Field label={t("flocks.birdsPlaced")}>
                 <Input name="initial_count" type="number" min="1" required />
               </Field>
-              <Field label="Age at placement (wk)">
+              <Field label={t("flocks.ageAtPlacement")}>
                 <Input name="age_at_placement_weeks" type="number" min="0" defaultValue="0" />
               </Field>
             </div>
-            <Field label="Placed on">
+            <Field label={t("flocks.placedOn")}>
               <Input name="placed_date" type="date" defaultValue={today()} required />
             </Field>
-            <Field label="Notes">
+            <Field label={t("common.notes")}>
               <Textarea name="notes" rows={2} />
             </Field>
           </ActionForm>

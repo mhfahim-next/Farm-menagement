@@ -1,6 +1,6 @@
 import "server-only";
 import { cache } from "react";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Farm, Role } from "@/lib/types";
 
@@ -16,6 +16,37 @@ export async function requireUser() {
   const user = await getUser();
   if (!user) redirect("/login");
   return user;
+}
+
+export type Profile = {
+  id: string;
+  full_name: string | null;
+  phone: string | null;
+  avatar_url: string | null;
+  is_super_admin: boolean;
+};
+
+export const getProfile = cache(async (): Promise<Profile | null> => {
+  const user = await getUser();
+  if (!user) return null;
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("profiles")
+    .select("id, full_name, phone, avatar_url, is_super_admin")
+    .eq("id", user.id)
+    .maybeSingle();
+  return data;
+});
+
+/**
+ * Guards the /admin area. Anyone who isn't a super admin gets a 404 so the
+ * area's existence isn't revealed. Every admin RPC re-checks this in Postgres.
+ */
+export async function requireSuperAdmin() {
+  const user = await requireUser();
+  const profile = await getProfile();
+  if (!profile?.is_super_admin) notFound();
+  return { user, profile, supabase: await createClient() };
 }
 
 export type FarmContext = {
@@ -43,12 +74,14 @@ export const requireFarm = cache(async (): Promise<FarmContext> => {
     .maybeSingle();
 
   if (error) throw new Error(error.message);
-  if (!data?.farms) redirect("/onboarding");
+  if (!data?.farms) {
+    // A super admin without a farm of their own goes straight to the admin panel.
+    const profile = await getProfile();
+    redirect(profile?.is_super_admin ? "/admin" : "/onboarding");
+  }
 
-  return {
-    supabase,
-    user,
-    farm: data.farms as unknown as Farm,
-    role: data.role as Role,
-  };
+  const farm = data.farms as unknown as Farm;
+  if (farm.suspended) redirect("/suspended");
+
+  return { supabase, user, farm, role: data.role as Role };
 });

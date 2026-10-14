@@ -4,21 +4,16 @@ import { notFound } from "next/navigation";
 import { BreedingForm } from "@/components/breeding-form";
 import { Badge, Card, EmptyState, PageHeader, StatCard, Table, Td } from "@/components/ui";
 import { requireFarm } from "@/lib/auth";
-import { daysBetween, type BreedingAlertKind } from "@/lib/breeding";
+import { daysBetween, heatSignsText, type BreedingAlertKind } from "@/lib/breeding";
 import { loadBreedingBoard, type CowRepro } from "@/lib/breeding-data";
-import { formatDate, label, today } from "@/lib/format";
+import { today } from "@/lib/format";
+import { getI18n } from "@/lib/i18n/server";
 import { logBreedingEvent } from "./actions";
 
-export const metadata: Metadata = { title: "Breeding" };
-
-const alertText: Record<BreedingAlertKind, string> = {
-  heat_expected: "Heat expected",
-  return_to_heat: "Watch for return to heat",
-  pregnancy_check: "Pregnancy check due",
-  dry_off: "Dry off",
-  calving_soon: "Calving soon",
-  service_overdue: "Not yet inseminated",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t("breeding.meta") };
+}
 
 const alertTone: Record<BreedingAlertKind, "amber" | "red" | "blue" | "green"> = {
   heat_expected: "amber",
@@ -29,24 +24,20 @@ const alertTone: Record<BreedingAlertKind, "amber" | "red" | "blue" | "green"> =
   service_overdue: "red",
 };
 
-function when(days: number) {
-  if (days === 0) return "today";
-  if (days === 1) return "tomorrow";
-  if (days === -1) return "yesterday";
-  return days > 0 ? `in ${days} days` : `${-days} days ago`;
-}
-
-const stateBadge = {
-  pregnant: { tone: "green", text: "Pregnant" },
-  inseminated: { tone: "blue", text: "Inseminated" },
-  open: { tone: "default", text: "Open" },
-} as const;
+const stateTone = { pregnant: "green", inseminated: "blue", open: "default" } as const;
 
 export default async function BreedingPage() {
   const { supabase, farm } = await requireFarm();
   if (!farm.has_dairy) notFound();
 
+  const { t, e, f } = await getI18n();
   const day = today();
+  const when = (days: number) => {
+    if (days === 0) return t("breeding.whenToday");
+    if (days === 1) return t("breeding.whenTomorrow");
+    if (days === -1) return t("breeding.whenYesterday");
+    return days > 0 ? t("breeding.whenIn", { n: days }) : t("breeding.whenAgo", { n: -days });
+  };
   const { cows, events } = await loadBreedingBoard({ supabase, farm });
   const byId = new Map(cows.map((c) => [c.id, c]));
   const cowLabel = (c: Pick<CowRepro, "tag_number" | "name">) => `${c.tag_number}${c.name ? ` · ${c.name}` : ""}`;
@@ -60,22 +51,22 @@ export default async function BreedingPage() {
 
   return (
     <>
-      <PageHeader title="Breeding" description="Heat, artificial insemination, pregnancy and calving." />
+      <PageHeader title={t("breeding.title")} description={t("breeding.desc")} />
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <StatCard label="Pregnant" value={count("pregnant")} tone="good" />
-        <StatCard label="Inseminated, waiting" value={count("inseminated")} />
-        <StatCard label="Open" value={count("open")} />
-        <StatCard label="Need attention" value={attention.length} tone={attention.length ? "bad" : "default"} />
+        <StatCard label={t("breeding.pregnant")} value={f.number(count("pregnant"))} tone="good" />
+        <StatCard label={t("breeding.inseminatedWaiting")} value={f.number(count("inseminated"))} />
+        <StatCard label={t("breeding.open")} value={f.number(count("open"))} />
+        <StatCard label={t("breeding.needAttention")} value={f.number(attention.length)} tone={attention.length ? "bad" : "default"} />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
         <div className="grid content-start gap-6">
-          <Card title="Needs attention" description="Based on heat cycles (21 days), a pregnancy check about 45 days after AI, and 283 days of gestation.">
+          <Card title={t("breeding.attentionTitle")} description={t("breeding.attentionDesc")}>
             {attention.length === 0 ? (
-              <EmptyState title="Nothing needs attention right now" />
+              <EmptyState title={t("breeding.attentionEmpty")} />
             ) : (
-              <Table head={["Cow", "What", "When"]}>
+              <Table head={[t("breeding.colCow"), t("breeding.colWhat"), t("breeding.colWhen")]}>
                 {attention.map(({ cow, alert }) => (
                   <tr key={`${cow.id}-${alert.kind}`}>
                     <Td>
@@ -84,16 +75,16 @@ export default async function BreedingPage() {
                       </Link>
                     </Td>
                     <Td>
-                      <Badge tone={alertTone[alert.kind]}>{alertText[alert.kind]}</Badge>
+                      <Badge tone={alertTone[alert.kind]}>{t(`breeding.alert.${alert.kind}`)}</Badge>
                     </Td>
                     <Td>
                       {alert.date ? (
                         <>
-                          {formatDate(alert.date)}
+                          {f.date(alert.date)}
                           <span className="block text-xs text-stone-500">{when(alert.daysUntil)}</span>
                         </>
                       ) : cow.status.daysOpen != null ? (
-                        <span className="text-xs text-stone-500">{cow.status.daysOpen} days since calving</span>
+                        <span className="text-xs text-stone-500">{t("breeding.sinceCalving", { n: cow.status.daysOpen })}</span>
                       ) : (
                         "—"
                       )}
@@ -104,25 +95,24 @@ export default async function BreedingPage() {
             )}
           </Card>
 
-          <Card title="Herd status">
+          <Card title={t("breeding.herdTitle")}>
             {cows.length === 0 ? (
-              <EmptyState title="No cows or heifers yet">Add females on the Cattle page.</EmptyState>
+              <EmptyState title={t("breeding.noCowsTitle")}>{t("breeding.noCowsBody")}</EmptyState>
             ) : (
-              <Table head={["Cow", "Status", "Last heat", "Last AI", "Next step", "Calving"]}>
+              <Table head={[t("breeding.colCow"), t("breeding.colStatus"), t("breeding.colLastHeat"), t("breeding.colLastAi"), t("breeding.colNext"), t("breeding.colCalving")]}>
                 {cows.map((c) => {
                   const s = c.status;
-                  const badge = stateBadge[s.state];
-                  const next =
+                                    const next =
                     s.state === "open"
                       ? s.nextHeatExpected
-                        ? `Heat ~${formatDate(s.nextHeatExpected)}`
+                        ? t("breeding.nextHeat", { date: f.date(s.nextHeatExpected) })
                         : s.lastCalving
-                          ? "Record heat"
+                          ? t("breeding.recordHeat")
                           : "—"
                       : s.state === "inseminated"
-                        ? `Check ${formatDate(s.pregnancyCheckDue)}`
+                        ? t("breeding.checkOn", { date: f.date(s.pregnancyCheckDue) })
                         : s.dryOffDue
-                          ? `Dry off ${formatDate(s.dryOffDue)}`
+                          ? t("breeding.dryOffOn", { date: f.date(s.dryOffDue) })
                           : "—";
                   return (
                     <tr key={c.id}>
@@ -130,21 +120,21 @@ export default async function BreedingPage() {
                         <Link href={`/dashboard/cattle/${c.id}`} className="font-medium text-emerald-700 hover:underline">
                           {cowLabel(c)}
                         </Link>
-                        <span className="block text-xs text-stone-500">{label(c.category)}</span>
+                        <span className="block text-xs text-stone-500">{e(c.category)}</span>
                       </Td>
                       <Td>
-                        <Badge tone={badge.tone}>{badge.text}</Badge>
+                        <Badge tone={stateTone[s.state]}>{t(`breeding.state.${s.state}`)}</Badge>
                         {s.inseminationCount > 1 && (
-                          <span className="block text-xs text-stone-500">{s.inseminationCount} services</span>
+                          <span className="block text-xs text-stone-500">{t("breeding.services", { n: s.inseminationCount })}</span>
                         )}
                       </Td>
-                      <Td>{formatDate(s.lastHeat)}</Td>
-                      <Td>{formatDate(s.lastInsemination)}</Td>
+                      <Td>{f.date(s.lastHeat)}</Td>
+                      <Td>{f.date(s.lastInsemination)}</Td>
                       <Td>{next}</Td>
                       <Td>
                         {s.expectedCalving ? (
                           <>
-                            {formatDate(s.expectedCalving)}
+                            {f.date(s.expectedCalving)}
                             <span className="block text-xs text-stone-500">{when(daysBetween(day, s.expectedCalving))}</span>
                           </>
                         ) : (
@@ -158,25 +148,25 @@ export default async function BreedingPage() {
             )}
           </Card>
 
-          <Card title="Recent events">
+          <Card title={t("breeding.recentTitle")}>
             {recent.length === 0 ? (
-              <EmptyState title="No breeding events yet" />
+              <EmptyState title={t("breeding.noEvents")} />
             ) : (
-              <Table head={["Date", "Cow", "Event", "Details"]}>
-                {recent.map((e) => {
-                  const cow = byId.get(e.cattle_id);
+              <Table head={[t("breeding.colDate"), t("breeding.colCow"), t("breeding.colEvent"), t("breeding.colDetails")]}>
+                {recent.map((ev) => {
+                  const cow = byId.get(ev.cattle_id);
                   const details = [
-                    e.bull_or_semen,
-                    e.technician && `by ${e.technician}`,
-                    e.event_type === "pregnancy_check" && e.result ? label(e.result) : null,
-                    e.heat_signs,
-                    e.expected_calving_date && `calving ${formatDate(e.expected_calving_date)}`,
+                    ev.bull_or_semen,
+                    ev.technician && t("breeding.by", { name: ev.technician }),
+                    ev.event_type === "pregnancy_check" && ev.result ? e(ev.result) : null,
+                    heatSignsText(t, ev.heat_signs),
+                    ev.expected_calving_date && t("breeding.calvingOn", { date: f.date(ev.expected_calving_date) }),
                   ].filter(Boolean);
                   return (
-                    <tr key={e.id}>
-                      <Td>{formatDate(e.event_date)}</Td>
+                    <tr key={ev.id}>
+                      <Td>{f.date(ev.event_date)}</Td>
                       <Td>{cow ? cowLabel(cow) : "—"}</Td>
-                      <Td>{label(e.event_type)}</Td>
+                      <Td>{e(ev.event_type)}</Td>
                       <Td className="text-xs">{details.join(" · ") || "—"}</Td>
                     </tr>
                   );
@@ -186,9 +176,9 @@ export default async function BreedingPage() {
           </Card>
         </div>
 
-        <Card title="Record event">
+        <Card title={t("breeding.recordTitle")}>
           {cows.length === 0 ? (
-            <EmptyState title="No cows or heifers yet" />
+            <EmptyState title={t("breeding.noCowsTitle")} />
           ) : (
             <BreedingForm
               action={logBreedingEvent}

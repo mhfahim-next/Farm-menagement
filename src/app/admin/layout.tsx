@@ -1,0 +1,36 @@
+import { AppShell } from "@/components/app-shell";
+import type { NavItem } from "@/components/dashboard-nav";
+import { requireSuperAdmin } from "@/lib/auth";
+import { getI18n } from "@/lib/i18n/server";
+
+export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
+  const { user, profile } = await requireSuperAdmin();
+  const { t } = await getI18n();
+
+  const nav: NavItem[] = [
+    { href: "/admin", label: t("nav.adminOverview") },
+    { href: "/admin/users", label: t("nav.adminUsers") },
+    { href: "/admin/farms", label: t("nav.adminFarms") },
+    { href: "/admin/audit", label: t("nav.adminAudit") },
+    { href: "/admin/settings", label: t("nav.adminSettings") },
+    { href: "/dashboard", label: `← ${t("menu.backToApp")}` },
+  ];
+
+  return (
+    <AppShell
+      logoHref="/admin"
+      title={t("admin.title")}
+      subtitle={t("admin.subtitle")}
+      nav={nav}
+      inAdmin
+      user={{
+        name: profile.full_name,
+        email: user.email ?? null,
+        avatarUrl: profile.avatar_url,
+        isSuperAdmin: true,
+      }}
+    >
+      {children}
+    </AppShell>
+  );
+}

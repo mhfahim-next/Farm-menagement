@@ -12,6 +12,7 @@ export type Farm = {
   has_dairy: boolean;
   has_layer: boolean;
   plan: "free" | "pro" | "business";
+  suspended: boolean;
   created_at: string;
 };
 
@@ -126,3 +127,60 @@ export type Transaction = {
 };
 
 export type ActionState = { error?: string; success?: string } | null;
+
+// Rows returned by the admin_* functions (see supabase/migrations).
+export type AdminUserRow = {
+  id: string;
+  email: string;
+  full_name: string | null;
+  phone: string | null;
+  avatar_url: string | null;
+  is_super_admin: boolean;
+  banned: boolean;
+  created_at: string;
+  last_sign_in_at: string | null;
+  farm_count: number;
+  total_count: number;
+};
+
+export type AdminFarmRow = {
+  id: string;
+  name: string;
+  owner_id: string;
+  owner_email: string | null;
+  owner_name: string | null;
+  plan: "free" | "pro" | "business";
+  suspended: boolean;
+  currency: string;
+  has_dairy: boolean;
+  has_layer: boolean;
+  created_at: string;
+  members: number;
+  cattle: number;
+  flocks: number;
+  total_count: number;
+};
+
+export type AdminStats = {
+  users: number;
+  users_7d: number;
+  users_30d: number;
+  banned_users: number;
+  farms: number;
+  suspended_farms: number;
+  cattle: number;
+  flocks: number;
+  milk_30d_liters: number;
+  eggs_30d: number;
+  plans: Record<string, number>;
+};
+
+export type AuditRow = {
+  id: number;
+  actor_email: string | null;
+  action: string;
+  target_type: string | null;
+  target_id: string | null;
+  details: Record<string, unknown>;
+  created_at: string;
+};

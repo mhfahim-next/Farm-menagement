@@ -2,6 +2,7 @@
 
 import { Fragment, startTransition, useActionState, type ReactNode } from "react";
 import type { ActionState } from "@/lib/types";
+import { useI18n } from "./i18n-provider";
 import { Button, type ButtonVariant } from "./ui";
 
 export function SubmitButton({
@@ -15,9 +16,10 @@ export function SubmitButton({
   className?: string;
   pending: boolean;
 }) {
+  const { t } = useI18n();
   return (
     <Button type="submit" disabled={pending} variant={variant} className={className}>
-      {pending ? "Saving…" : children}
+      {pending ? t("common.saving") : children}
     </Button>
   );
 }

@@ -4,17 +4,22 @@ import { notFound } from "next/navigation";
 import { ActionForm } from "@/components/action-form";
 import { Card, EmptyState, Field, Input, PageHeader, Select, StatCard, Table, Td } from "@/components/ui";
 import { requireFarm } from "@/lib/auth";
-import { formatDate, formatNumber, label, today } from "@/lib/format";
+import { today } from "@/lib/format";
+import { getI18n } from "@/lib/i18n/server";
 import type { Flock, FlockDailyLog } from "@/lib/types";
 import { saveDailyLog, updateFlockStatus } from "../actions";
 import { flockAgeWeeks, withDailyStats } from "../utils";
 
-export const metadata: Metadata = { title: "Flock" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t("flocks.detailMeta") };
+}
 
 export default async function FlockDetailPage({ params, searchParams }: PageProps<"/dashboard/flocks/[id]">) {
   const { id } = await params;
   const sp = await searchParams;
   const { supabase, farm } = await requireFarm();
+  const { t, e, f } = await getI18n();
 
   const [flockRes, logsRes] = await Promise.all([
     supabase.from("flocks").select("*").eq("id", id).eq("farm_id", farm.id).maybeSingle(),
@@ -39,56 +44,71 @@ export default async function FlockDetailPage({ params, searchParams }: PageProp
     <>
       <PageHeader
         title={flock.name}
-        description={[flock.breed, flock.shed && `Shed ${flock.shed}`, `${flockAgeWeeks(flock)} weeks old`, label(flock.status)]
+        description={[
+          flock.breed,
+          flock.shed && t("flocks.shed", { s: flock.shed }),
+          t("flocks.weeksOld", { n: flockAgeWeeks(flock) }),
+          e(flock.status),
+        ]
           .filter(Boolean)
           .join(" · ")}
         action={
           <Link href="/dashboard/flocks" className="text-sm text-stone-500 hover:text-stone-900">
-            ← All flocks
+            {t("flocks.allFlocks")}
           </Link>
         }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Live birds" value={formatNumber(alive)} hint={`of ${formatNumber(flock.initial_count)} placed`} />
+        <StatCard label={t("flocks.liveBirds")} value={f.number(alive)} hint={t("flocks.ofPlaced", { n: f.number(flock.initial_count) })} />
         <StatCard
-          label="Hen-day production (7 d)"
-          value={`${formatNumber(avgHenDay, 1)}%`}
+          label={t("flocks.henDay7")}
+          value={`${f.number(avgHenDay, 1)}%`}
           tone={avgHenDay >= 80 ? "good" : avgHenDay > 0 && avgHenDay < 60 ? "bad" : "default"}
         />
         <StatCard
-          label="Mortality"
-          value={`${formatNumber((totalMortality / flock.initial_count) * 100, 2)}%`}
-          hint={`${formatNumber(totalMortality)} birds`}
+          label={t("flocks.mortality")}
+          value={`${f.number((totalMortality / flock.initial_count) * 100, 2)}%`}
+          hint={t("flocks.birdsCount", { n: f.number(totalMortality) })}
         />
         <StatCard
-          label="Feed per dozen eggs"
-          value={totalEggs ? `${formatNumber(totalFeed / (totalEggs / 12), 2)} kg` : "—"}
-          hint={`${formatNumber(totalEggs)} eggs total`}
+          label={t("flocks.feedPerDozen")}
+          value={totalEggs ? t("flocks.kg", { n: f.number(totalFeed / (totalEggs / 12), 2) }) : "—"}
+          hint={t("flocks.eggsTotal", { n: f.number(totalEggs) })}
         />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_340px]">
-        <Card title="Daily logs" description="Last 30 entries">
+        <Card title={t("flocks.logsTitle")} description={t("flocks.logsDesc")}>
           {recent.length === 0 ? (
-            <EmptyState title="No logs yet">Use the form to record today.</EmptyState>
+            <EmptyState title={t("flocks.logsEmptyTitle")}>{t("flocks.logsEmptyBody")}</EmptyState>
           ) : (
-            <Table head={["Date", "Eggs", "Broken", "Hen-day", "Deaths", "Feed", "g/bird"]}>
+            <Table
+              head={[
+                t("flocks.colDate"),
+                t("flocks.colEggs"),
+                t("flocks.colBroken"),
+                t("flocks.colHenDay"),
+                t("flocks.colDeaths"),
+                t("flocks.colFeed"),
+                t("flocks.colGramsBird"),
+              ]}
+            >
               {recent.map((r) => (
                 <tr key={r.id}>
                   <Td>
                     <Link href={`?date=${r.log_date}`} className="text-emerald-700 hover:underline">
-                      {formatDate(r.log_date)}
+                      {f.date(r.log_date)}
                     </Link>
                   </Td>
-                  <Td className="tabular-nums">{formatNumber(r.eggs_collected)}</Td>
-                  <Td className="tabular-nums">{r.eggs_broken || "—"}</Td>
-                  <Td className="tabular-nums">{formatNumber(r.henDay, 1)}%</Td>
+                  <Td className="tabular-nums">{f.number(r.eggs_collected)}</Td>
+                  <Td className="tabular-nums">{r.eggs_broken ? f.number(r.eggs_broken) : "—"}</Td>
+                  <Td className="tabular-nums">{f.number(r.henDay, 1)}%</Td>
                   <Td className={r.mortality ? "tabular-nums text-red-600" : "tabular-nums"}>
-                    {r.mortality + r.culled || "—"}
+                    {r.mortality + r.culled ? f.number(r.mortality + r.culled) : "—"}
                   </Td>
-                  <Td className="tabular-nums">{r.feed_kg != null ? `${formatNumber(Number(r.feed_kg), 1)} kg` : "—"}</Td>
-                  <Td className="tabular-nums">{r.feedPerBird != null ? formatNumber(r.feedPerBird, 0) : "—"}</Td>
+                  <Td className="tabular-nums">{r.feed_kg != null ? t("flocks.kg", { n: f.number(Number(r.feed_kg), 1) }) : "—"}</Td>
+                  <Td className="tabular-nums">{r.feedPerBird != null ? f.number(r.feedPerBird, 0) : "—"}</Td>
                 </tr>
               ))}
             </Table>
@@ -97,54 +117,54 @@ export default async function FlockDetailPage({ params, searchParams }: PageProp
 
         <div className="grid content-start gap-6">
           <Card
-            title={existing ? `Edit log · ${formatDate(logDate)}` : "Daily log"}
-            description="Saving the same date again updates it."
+            title={existing ? t("flocks.logTitleEdit", { date: f.date(logDate) }) : t("flocks.logTitle")}
+            description={t("flocks.logDesc")}
           >
             <form className="mb-3 flex items-end gap-2">
-              <Field label="Date" className="flex-1">
+              <Field label={t("common.date")} className="flex-1">
                 <Input name="date" type="date" defaultValue={logDate} max={today()} />
               </Field>
-              <button className="rounded-lg border border-stone-300 px-3 py-2 text-sm hover:bg-stone-50">Load</button>
+              <button className="rounded-lg border border-stone-300 px-3 py-2 text-sm hover:bg-stone-50">{t("common.load")}</button>
             </form>
-            <ActionForm action={saveDailyLog} submitLabel="Save log" key={logDate}>
+            <ActionForm action={saveDailyLog} submitLabel={t("flocks.saveLog")} key={logDate}>
               <input type="hidden" name="flock_id" value={flock.id} />
               <input type="hidden" name="log_date" value={logDate} />
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Eggs collected">
+                <Field label={t("flocks.eggsCollected")}>
                   <Input name="eggs_collected" type="number" min="0" inputMode="numeric" defaultValue={existing?.eggs_collected ?? ""} required />
                 </Field>
-                <Field label="Broken / rejected">
+                <Field label={t("flocks.eggsBroken")}>
                   <Input name="eggs_broken" type="number" min="0" inputMode="numeric" defaultValue={existing?.eggs_broken ?? ""} />
                 </Field>
-                <Field label="Deaths">
+                <Field label={t("flocks.deaths")}>
                   <Input name="mortality" type="number" min="0" inputMode="numeric" defaultValue={existing?.mortality ?? ""} />
                 </Field>
-                <Field label="Culled">
+                <Field label={t("flocks.culled")}>
                   <Input name="culled" type="number" min="0" inputMode="numeric" defaultValue={existing?.culled ?? ""} />
                 </Field>
-                <Field label="Feed (kg)">
+                <Field label={t("flocks.feedKg")}>
                   <Input name="feed_kg" type="number" min="0" step="0.1" inputMode="decimal" defaultValue={existing?.feed_kg ?? ""} />
                 </Field>
-                <Field label="Water (L)">
+                <Field label={t("flocks.waterL")}>
                   <Input name="water_liters" type="number" min="0" step="0.1" inputMode="decimal" defaultValue={existing?.water_liters ?? ""} />
                 </Field>
               </div>
-              <Field label="Notes">
+              <Field label={t("common.notes")}>
                 <Input name="notes" defaultValue={existing?.notes ?? ""} />
               </Field>
             </ActionForm>
           </Card>
 
-          <Card title="Flock status">
-            <ActionForm action={updateFlockStatus} submitLabel="Update" submitVariant="secondary" className="flex items-end gap-2">
+          <Card title={t("flocks.statusTitle")}>
+            <ActionForm action={updateFlockStatus} submitLabel={t("flocks.update")} submitVariant="secondary" className="flex items-end gap-2">
               <input type="hidden" name="id" value={flock.id} />
               <Select
                 name="status"
                 defaultValue={flock.status}
                 options={[
-                  { value: "active", label: "Active" },
-                  { value: "sold", label: "Sold" },
-                  { value: "culled", label: "Culled (depleted)" },
+                  { value: "active", label: e("active") },
+                  { value: "sold", label: e("sold") },
+                  { value: "culled", label: e("culled") },
                 ]}
               />
             </ActionForm>

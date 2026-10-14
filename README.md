@@ -2,13 +2,13 @@
 
 A multi-tenant farm management web app built with **Next.js 16 (App Router)** and **Supabase**.
 
-| Overview | Health & reminders | Breeding & heat |
+| Overview (Bangla, dark) | Avatar menu, language & theme | Super admin: farms |
 | --- | --- | --- |
-| ![Overview](docs/screenshots/overview.png) | ![Health](docs/screenshots/health.png) | ![Breeding](docs/screenshots/breeding.png) |
+| ![Overview in Bangla, dark mode](docs/screenshots/overview-bn-dark.png) | ![Menu](docs/screenshots/menu.png) | ![Admin farms](docs/screenshots/admin-farms.png) |
 
-| Layer flock | Cow record |
+| Health & reminders | Breeding & heat |
 | --- | --- |
-| ![Flock](docs/screenshots/flock.png) | ![Cow](docs/screenshots/cow.png) |
+| ![Health](docs/screenshots/health.png) | ![Breeding](docs/screenshots/breeding.png) |
 
 ## Features
 
@@ -25,10 +25,39 @@ A multi-tenant farm management web app built with **Next.js 16 (App Router)** an
   - Each cow shows as **Open / Inseminated / Pregnant**, with dry-off date (60 days before calving) and cows **not yet served 60+ days after calving** flagged.
   - Recording a calving can **register the calf** in the herd (linked to its mother) and promotes a heifer to cow.
 - **Reminders**: the Overview page shows everything overdue or coming up in one *Needs attention* list.
+- **Bangla & English**: every page, form, message, date and number (Bangla digits and month names) is translated. Switch language from the top bar; the choice is remembered, and first-time visitors get Bangla if their browser prefers it.
+- **Dark & light mode**: toggle in the top bar, remembered per device, no flash on load.
+- **Top bar & avatar menu**: language and theme toggles beside the profile picture; the avatar opens *Dashboard / Profile / Admin panel (super admins) / Log out*.
+- **Profile** (`/dashboard/profile`): upload a profile photo (cropped to a square, stored in Supabase Storage), edit name and phone, change password.
+- **Super admin panel** (`/admin`, see below).
 - **Layer flocks**: batches with breed, shed and age. Daily logs cover eggs, broken eggs, deaths, culls, feed and water.
   KPIs: live birds, **hen-day production %**, mortality %, feed per dozen eggs, grams of feed per bird.
 - **Finance**: income and expenses by category and module (dairy / layer / general), with monthly profit.
 - **Overview dashboard**: today's milk and eggs, herd and flock size, this month's P&L, and 7-day charts.
+
+## Super admin
+
+A super admin controls the whole system from `/admin` (only they can open it; everyone else gets a 404):
+
+| Page | What you can do |
+| --- | --- |
+| Overview | Users, farms, active cattle/flocks, 30-day milk and eggs, farms per plan |
+| Users | Search; **suspend / restore** (signs them out immediately), **make / remove super admin**, delete |
+| Farms | Search; change **plan**, **suspend / restore** a farm (its members are locked out), delete a farm and all its data; open a farm's summary |
+| Audit log | Every admin action: who, what, when |
+| Announcement | A banner shown at the top of every user's dashboard, with separate English and Bangla text |
+
+**Create your first super admin** (a normal user must sign up first), in the Supabase SQL editor:
+
+```sql
+select public.grant_super_admin('you@example.com');
+```
+
+After that, make more admins from *Admin → Users*. Safety rules enforced in the database, not just the UI:
+
+- Users can never promote themselves or change their own plan / suspension — those columns are not writable by normal users.
+- Every `admin_*` function re-checks `is_super_admin()`; an admin cannot suspend, delete or demote their own account.
+- A user who owns farms can't be deleted until the farms are removed; every admin action is written to the audit log.
 
 ## Architecture
 
@@ -50,13 +79,15 @@ Mobile app     ─┘     (later: same database, same rules)
   ready for offline sync in the mobile app.
 
 ```
-supabase/migrations/   SQL schema, RLS policies, functions
+supabase/migrations/   SQL schema, RLS policies, functions, admin_* functions, storage bucket
 src/proxy.ts           refreshes the Supabase session, protects /dashboard
 src/lib/supabase/      browser / server / proxy clients
 src/lib/auth.ts        requireUser() / requireFarm() data access layer
 src/app/(auth)/        login & signup
 src/app/onboarding/    create the first farm
-src/app/dashboard/     overview, cattle, milk, flocks, finance, settings
+src/app/dashboard/     overview, cattle, milk, health, breeding, flocks, finance, settings, profile
+src/app/admin/         super admin panel
+src/lib/i18n/          English + Bangla dictionaries (typed: a missing Bangla key fails the build)
 ```
 
 ## Getting started
@@ -87,6 +118,9 @@ cp .env.example .env.local
 npm run db:start      # prints the API URL and publishable key for .env.local
 ```
 
+Profile photos use Supabase Storage, which `db:start` includes. If you start Supabase with
+services excluded (`-x`), keep `storage-api` running.
+
 ### 3. Run
 
 ```bash
@@ -112,9 +146,9 @@ Sign up, create your farm, then add cattle and flocks.
 
 ## Roadmap
 
+- More languages (the dictionaries make this a one-file addition)
 - Team invitations (email invite → `farm_members`)
 - Subscription billing (Stripe / SSLCommerz / bKash) and plan limits
 - Feed & medicine inventory, egg/milk sales to customers with invoices
 - Reports & CSV/PDF export; SMS / WhatsApp / push reminders for vaccines, heats and calvings
-- Bangla language (i18n)
 - Mobile app (Expo + Supabase, offline-first) in a monorepo

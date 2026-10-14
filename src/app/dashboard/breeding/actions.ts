@@ -5,6 +5,7 @@ import { requireFarm } from "@/lib/auth";
 import { dbError, num, str } from "@/lib/form";
 import { addDays, GESTATION_DAYS } from "@/lib/breeding";
 import { today } from "@/lib/format";
+import { getI18n } from "@/lib/i18n/server";
 import type { ActionState } from "@/lib/types";
 
 const EVENT_TYPES = ["heat", "insemination", "pregnancy_check", "calving", "dry_off"];
@@ -12,18 +13,19 @@ const PREGNANCY_RESULTS = ["positive", "negative", "uncertain"];
 
 export async function logBreedingEvent(_: ActionState, formData: FormData): Promise<ActionState> {
   const { supabase, farm } = await requireFarm();
+  const { t, f } = await getI18n();
 
   const cattleId = str(formData, "cattle_id");
   const eventType = str(formData, "event_type");
   const eventDate = str(formData, "event_date");
-  if (!cattleId) return { error: "Choose the cow." };
-  if (!eventType || !EVENT_TYPES.includes(eventType)) return { error: "Choose the event type." };
-  if (!eventDate) return { error: "Choose the date." };
-  if (eventDate > today()) return { error: "The date can't be in the future." };
+  if (!cattleId) return { error: t("breeding.chooseCow") };
+  if (!eventType || !EVENT_TYPES.includes(eventType)) return { error: t("breeding.chooseEventType") };
+  if (!eventDate) return { error: t("breeding.chooseDate") };
+  if (eventDate > today()) return { error: t("breeding.dateFuture") };
 
   const result = eventType === "pregnancy_check" ? (str(formData, "result")?.toLowerCase() ?? null) : null;
   if (eventType === "pregnancy_check" && (!result || !PREGNANCY_RESULTS.includes(result))) {
-    return { error: "Choose the pregnancy check result." };
+    return { error: t("breeding.chooseResultError") };
   }
 
   let expected = str(formData, "expected_calving_date");
@@ -47,11 +49,11 @@ export async function logBreedingEvent(_: ActionState, formData: FormData): Prom
     expected_calving_date: eventType === "insemination" ? expected : null,
     notes: str(formData, "notes"),
   });
-  if (error) return { error: dbError(error) };
+  if (error) return { error: dbError(t, error) };
 
-  let message = "Saved.";
+  let message = t("breeding.saved");
   if (eventType === "calving") {
-    message = "Calving recorded.";
+    message = t("breeding.calvingSaved");
     const calfTag = str(formData, "calf_tag");
 
     // A heifer becomes a cow once she has calved.
@@ -79,16 +81,16 @@ export async function logBreedingEvent(_: ActionState, formData: FormData): Prom
         return {
           error:
             calfError.code === "23505"
-              ? `Calving was saved, but tag ${calfTag} is already used — add the calf from the Cattle page.`
-              : `Calving was saved, but the calf could not be added: ${dbError(calfError)}`,
+              ? t("breeding.calfDup", { tag: calfTag })
+              : t("breeding.calfFailed", { error: dbError(t, calfError) }),
         };
       }
-      message = `Calving recorded and calf ${calfTag} added to the herd.`;
+      message = t("breeding.calfAdded", { tag: calfTag });
     }
   } else if (eventType === "insemination" && expected) {
-    message = `Insemination recorded. Expected calving ${expected}.`;
+    message = t("breeding.aiSaved", { date: f.date(expected) });
   } else if (eventType === "heat") {
-    message = `Heat recorded. Next heat expected around ${addDays(eventDate, 21)}.`;
+    message = t("breeding.heatSaved", { date: f.date(addDays(eventDate, 21)) });
   }
 
   revalidatePath("/dashboard", "layout");

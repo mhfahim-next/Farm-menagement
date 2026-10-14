@@ -2,30 +2,36 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ActionForm } from "@/components/action-form";
 import { Field, Input } from "@/components/ui";
+import { getI18n } from "@/lib/i18n/server";
 import { signup } from "../actions";
 
-export const metadata: Metadata = { title: "Create account" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t("auth.signupMeta") };
+}
 
-export default function SignupPage() {
+export default async function SignupPage() {
+  const { t } = await getI18n();
+
   return (
     <>
-      <h1 className="text-xl font-bold">Create your account</h1>
-      <p className="mb-6 mt-1 text-sm text-stone-500">Free to start. No card needed.</p>
-      <ActionForm action={signup} submitLabel="Create account" fullWidthSubmit>
-        <Field label="Full name">
+      <h1 className="text-xl font-bold">{t("auth.signupTitle")}</h1>
+      <p className="mb-6 mt-1 text-sm text-stone-500">{t("auth.signupSubtitle")}</p>
+      <ActionForm action={signup} submitLabel={t("auth.signupSubmit")} fullWidthSubmit>
+        <Field label={t("auth.fullName")}>
           <Input name="full_name" autoComplete="name" required />
         </Field>
-        <Field label="Email">
+        <Field label={t("common.email")}>
           <Input name="email" type="email" autoComplete="email" required />
         </Field>
-        <Field label="Password" hint="At least 8 characters.">
+        <Field label={t("common.password")} hint={t("auth.passwordHint")}>
           <Input name="password" type="password" autoComplete="new-password" minLength={8} required />
         </Field>
       </ActionForm>
       <p className="mt-6 text-center text-sm text-stone-500">
-        Already registered?{" "}
+        {t("auth.alreadyRegistered")}{" "}
         <Link href="/login" className="font-medium text-emerald-700 hover:underline">
-          Log in
+          {t("auth.loginLink")}
         </Link>
       </p>
     </>
