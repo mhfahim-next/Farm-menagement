@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ActionForm } from "@/components/action-form";
+import { ParentsFields } from "@/components/parents-fields";
 import { Badge, Card, EmptyState, Field, Input, PageHeader, Select, Table, Td, Textarea } from "@/components/ui";
 import { requireFarm } from "@/lib/auth";
+import type { MotherCandidate } from "@/lib/cattle";
 import { ageInMonths } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import type { Cattle } from "@/lib/types";
@@ -37,9 +39,20 @@ export default async function CattlePage({ searchParams }: PageProps<"/dashboard
     const term = search.replace(/[%,()"\\*]/g, "");
     query = query.or(`tag_number.ilike.%${term}%,name.ilike.%${term}%,breed.ilike.%${term}%`);
   }
-  const { data, error } = await query;
+  const [{ data, error }, mothersRes] = await Promise.all([
+    query,
+    // Every female on the farm can be picked as a mother (even if sold or dead).
+    supabase
+      .from("cattle")
+      .select("id, tag_number, name, category, status")
+      .eq("farm_id", farm.id)
+      .eq("sex", "female")
+      .is("deleted_at", null)
+      .order("tag_number"),
+  ]);
   if (error) throw new Error(error.message);
   const cattle = (data ?? []) as Cattle[];
+  const mothers = (mothersRes.data ?? []) as MotherCandidate[];
 
   const age = (dob: string | null) => {
     const months = ageInMonths(dob);
@@ -125,6 +138,7 @@ export default async function CattlePage({ searchParams }: PageProps<"/dashboard
             <Field label={t("cattle.dob")}>
               <Input name="date_of_birth" type="date" />
             </Field>
+            <ParentsFields candidates={mothers} i18n={{ t, e }} />
             <div className="grid grid-cols-2 gap-3">
               <Field label={t("cattle.purchaseDate")}>
                 <Input name="purchase_date" type="date" />

@@ -3,9 +3,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ActionForm } from "@/components/action-form";
 import { BreedingForm } from "@/components/breeding-form";
+import { ParentsFields } from "@/components/parents-fields";
 import { HealthForm } from "@/components/health-form";
 import { Badge, Card, EmptyState, Field, Input, PageHeader, Select, StatCard, Table, Td, Textarea } from "@/components/ui";
 import { requireFarm } from "@/lib/auth";
+import { animalLabel, type MotherCandidate } from "@/lib/cattle";
 import { heatSignsText, reproStatus } from "@/lib/breeding";
 import { ageInMonths, today } from "@/lib/format";
 import { dueItems, dueLabel } from "@/lib/health";
@@ -26,7 +28,7 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
   const { supabase, farm } = await requireFarm();
   const { t, e, f } = await getI18n();
 
-  const [cowRes, milkRes, healthRes, breedingRes] = await Promise.all([
+  const [cowRes, milkRes, healthRes, breedingRes, femalesRes, calvesRes] = await Promise.all([
     supabase.from("cattle").select("*").eq("id", id).eq("farm_id", farm.id).maybeSingle(),
     supabase
       .from("milk_records")
@@ -36,6 +38,20 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
       .order("record_date", { ascending: false }),
     supabase.from("health_records").select("*").eq("cattle_id", id).order("record_date", { ascending: false }),
     supabase.from("breeding_events").select("*").eq("cattle_id", id).order("event_date", { ascending: false }),
+    supabase
+      .from("cattle")
+      .select("id, tag_number, name, category, status")
+      .eq("farm_id", farm.id)
+      .eq("sex", "female")
+      .is("deleted_at", null)
+      .order("tag_number"),
+    supabase
+      .from("cattle")
+      .select("id, tag_number, name, category, date_of_birth")
+      .eq("farm_id", farm.id)
+      .eq("mother_id", id)
+      .is("deleted_at", null)
+      .order("date_of_birth", { ascending: false }),
   ]);
 
   const cow = cowRes.data as Cattle | null;
@@ -43,6 +59,9 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
   const milk = (milkRes.data ?? []) as MilkRecord[];
   const health = (healthRes.data ?? []) as HealthRecord[];
   const breeding = (breedingRes.data ?? []) as BreedingEvent[];
+  const females = (femalesRes.data ?? []) as MotherCandidate[];
+  const mother = females.find((a) => a.id === cow.mother_id) ?? null;
+  const calves = calvesRes.data ?? [];
 
   const milkTotal = milk.reduce((s, m) => s + Number(m.quantity_liters), 0);
   const milkDays = new Set(milk.map((m) => m.record_date)).size;
@@ -199,6 +218,49 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
           )}
         </Card>
 
+        <Card title={t("cattle.familyTitle")}>
+          <dl className="grid gap-3 text-sm">
+            <div className="flex justify-between gap-4">
+              <dt className="text-stone-500">{t("cattle.mother")}</dt>
+              <dd className="text-right font-medium">
+                {mother ? (
+                  <Link href={`/dashboard/cattle/${mother.id}`} className="text-emerald-700 hover:underline">
+                    {animalLabel(mother)} — {e(mother.category)}
+                  </Link>
+                ) : (
+                  "—"
+                )}
+              </dd>
+            </div>
+            <div className="flex justify-between gap-4">
+              <dt className="text-stone-500">{t("cattle.father")}</dt>
+              <dd className="text-right font-medium">{cow.father ?? "—"}</dd>
+            </div>
+            <div>
+              <dt className="mb-1 text-stone-500">{t("cattle.calves")}</dt>
+              <dd>
+                {calves.length === 0 ? (
+                  <span className="text-stone-500">{t("cattle.noCalves")}</span>
+                ) : (
+                  <ul className="grid gap-1">
+                    {calves.map((c) => (
+                      <li key={c.id}>
+                        <Link href={`/dashboard/cattle/${c.id}`} className="text-emerald-700 hover:underline">
+                          {animalLabel(c)}
+                        </Link>{" "}
+                        <span className="text-stone-500">
+                          — {e(c.category)}
+                          {c.date_of_birth ? ` · ${f.date(c.date_of_birth)}` : ""}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </dd>
+            </div>
+          </dl>
+        </Card>
+
         <Card title={t("cattle.detailsTitle")}>
           <ActionForm action={updateCattle} submitLabel={t("cattle.saveChanges")} submitVariant="secondary">
             <input type="hidden" name="id" value={cow.id} />
@@ -219,6 +281,13 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
             <Field label={t("cattle.dob")}>
               <Input name="date_of_birth" type="date" defaultValue={cow.date_of_birth ?? ""} />
             </Field>
+            <ParentsFields
+              candidates={females}
+              i18n={{ t, e }}
+              excludeId={cow.id}
+              defaultMother={cow.mother_id}
+              defaultFather={cow.father}
+            />
             <Field label={t("common.notes")}>
               <Textarea name="notes" defaultValue={cow.notes ?? ""} />
             </Field>
