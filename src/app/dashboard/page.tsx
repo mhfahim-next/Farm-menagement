@@ -1,22 +1,33 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ButtonLink, Card, EmptyState, PageHeader, StatCard } from "@/components/ui";
+import { Badge, ButtonLink, Card, EmptyState, PageHeader, StatCard } from "@/components/ui";
 import { requireFarm } from "@/lib/auth";
 import { formatMoney, formatNumber, monthStart, today } from "@/lib/format";
-import type { FlockStats } from "@/lib/types";
+import { loadBreedingBoard } from "@/lib/breeding-data";
+import { dueItems, dueLabel } from "@/lib/health";
+import type { FlockStats, HealthRecord } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Overview" };
+
+const breedingAlertText = {
+  heat_expected: "Heat expected",
+  return_to_heat: "Watch for return to heat",
+  pregnancy_check: "Pregnancy check due",
+  dry_off: "Dry off",
+  calving_soon: "Calving soon",
+  service_overdue: "Not yet inseminated after calving",
+} as const;
 
 export default async function OverviewPage() {
   const { supabase, farm } = await requireFarm();
   const day = today();
   const weekAgo = today(-6);
 
-  const [cattleRes, milkRes, flocksRes, statsRes, eggsRes, txnRes] = await Promise.all([
+  const [cattleRes, milkRes, flocksRes, statsRes, eggsRes, txnRes, scheduleRes, board] = await Promise.all([
     farm.has_dairy
       ? supabase
           .from("cattle")
-          .select("category", { count: "exact" })
+          .select("id, tag_number, name, category", { count: "exact" })
           .eq("farm_id", farm.id)
           .eq("status", "active")
           .is("deleted_at", null)
@@ -51,6 +62,14 @@ export default async function OverviewPage() {
       .select("txn_type, amount")
       .eq("farm_id", farm.id)
       .gte("txn_date", monthStart()),
+    farm.has_dairy
+      ? supabase
+          .from("health_records")
+          .select("*")
+          .eq("farm_id", farm.id)
+          .not("next_due_date", "is", null)
+      : null,
+    farm.has_dairy ? loadBreedingBoard({ supabase, farm }) : null,
   ]);
 
   const cattle = cattleRes?.data ?? [];
@@ -71,6 +90,37 @@ export default async function OverviewPage() {
     .reduce((s, e) => s + e.eggs_collected, 0);
   const income = txns.filter((t) => t.txn_type === "income").reduce((s, t) => s + Number(t.amount), 0);
   const expense = txns.filter((t) => t.txn_type === "expense").reduce((s, t) => s + Number(t.amount), 0);
+
+  // Reminders: health schedules + breeding alerts, most urgent first.
+  const cowName = new Map(
+    cattle.map((c) => [c.id, `${c.tag_number}${c.name ? ` · ${c.name}` : ""}`]),
+  );
+  // Only active animals — sold or dead ones shouldn't raise reminders.
+  const healthDue = dueItems((scheduleRes?.data ?? []) as HealthRecord[], day, 14).filter((d) =>
+    cowName.has(d.record.cattle_id),
+  );
+  const reminders = [
+    ...healthDue.map((d) => ({
+      key: `h-${d.record.id}`,
+      cattleId: d.record.cattle_id,
+      title: `${d.record.product ?? d.record.description} (${d.record.record_type.replace(/_/g, " ")})`,
+      status: dueLabel(d.daysUntilDue),
+      days: d.daysUntilDue,
+      tone: d.overdue ? ("red" as const) : ("amber" as const),
+      href: "/dashboard/health",
+    })),
+    ...(board?.cows ?? []).flatMap((c) =>
+      c.alerts.map((a) => ({
+        key: `b-${c.id}-${a.kind}`,
+        cattleId: c.id,
+        title: breedingAlertText[a.kind],
+        status: a.date ? dueLabel(a.daysUntil) : "Review",
+        days: a.date ? a.daysUntil : 0,
+        tone: a.kind === "service_overdue" || a.daysUntil < 0 ? ("red" as const) : ("blue" as const),
+        href: "/dashboard/breeding",
+      })),
+    ),
+  ].sort((a, b) => a.days - b.days);
 
   const days = Array.from({ length: 7 }, (_, i) => today(i - 6));
   const milkByDay = days.map((d) => ({
@@ -119,6 +169,41 @@ export default async function OverviewPage() {
           tone={income - expense >= 0 ? "good" : "bad"}
         />
       </div>
+
+      {farm.has_dairy && (
+        <Card
+          className="mt-6"
+          title="Needs attention"
+          description="Vaccines, pest control, heats, pregnancy checks and calvings coming up."
+          action={
+            <div className="flex gap-2">
+              <ButtonLink href="/dashboard/health" variant="secondary">Health</ButtonLink>
+              <ButtonLink href="/dashboard/breeding" variant="secondary">Breeding</ButtonLink>
+            </div>
+          }
+        >
+          {reminders.length === 0 ? (
+            <p className="text-sm text-stone-500">All caught up — nothing is due in the next two weeks.</p>
+          ) : (
+            <ul className="divide-y divide-stone-100">
+              {reminders.slice(0, 8).map((r) => (
+                <li key={r.key} className="flex items-center justify-between gap-3 py-2 text-sm">
+                  <span>
+                    <Link href={`/dashboard/cattle/${r.cattleId}`} className="font-medium text-emerald-700 hover:underline">
+                      {cowName.get(r.cattleId) ?? "Animal"}
+                    </Link>{" "}
+                    <span className="text-stone-600">— {r.title}</span>
+                  </span>
+                  <Badge tone={r.tone}>{r.status}</Badge>
+                </li>
+              ))}
+            </ul>
+          )}
+          {reminders.length > 8 && (
+            <p className="mt-2 text-xs text-stone-500">+ {reminders.length - 8} more on the Health and Breeding pages.</p>
+          )}
+        </Card>
+      )}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         {farm.has_dairy && (

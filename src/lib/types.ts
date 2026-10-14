@@ -45,13 +45,25 @@ export type HealthRecord = {
   id: string;
   cattle_id: string;
   record_date: string;
-  record_type: "vaccination" | "treatment" | "checkup" | "deworming";
+  record_type: HealthRecordType;
   description: string;
+  product: string | null;
+  dose: string | null;
+  batch_number: string | null;
+  interval_days: number | null;
+  next_due_date: string | null;
   medicine: string | null;
   vet_name: string | null;
   cost: number | null;
   withdrawal_until: string | null;
 };
+
+export type HealthRecordType =
+  | "vaccination"
+  | "deworming"
+  | "parasite_control"
+  | "treatment"
+  | "checkup";
 
 export type BreedingEvent = {
   id: string;
@@ -61,6 +73,9 @@ export type BreedingEvent = {
   bull_or_semen: string | null;
   result: string | null;
   expected_calving_date: string | null;
+  heat_signs: string | null;
+  technician: string | null;
+  cost: number | null;
   notes: string | null;
 };
 

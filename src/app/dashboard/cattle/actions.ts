@@ -5,8 +5,6 @@ import { requireFarm } from "@/lib/auth";
 import { dbError, num, str } from "@/lib/form";
 import type { ActionState } from "@/lib/types";
 
-const GESTATION_DAYS = 283;
-
 export async function addCattle(_: ActionState, formData: FormData): Promise<ActionState> {
   const { supabase, farm } = await requireFarm();
   const tag = str(formData, "tag_number");
@@ -56,57 +54,4 @@ export async function updateCattle(_: ActionState, formData: FormData): Promise<
   revalidatePath(`/dashboard/cattle/${id}`);
   revalidatePath("/dashboard/cattle");
   return { success: "Saved." };
-}
-
-export async function addHealthRecord(_: ActionState, formData: FormData): Promise<ActionState> {
-  const { supabase, farm } = await requireFarm();
-  const cattleId = str(formData, "cattle_id");
-  const description = str(formData, "description");
-  if (!cattleId || !description) return { error: "Describe what was done." };
-
-  const { error } = await supabase.from("health_records").insert({
-    farm_id: farm.id,
-    cattle_id: cattleId,
-    record_date: str(formData, "record_date"),
-    record_type: str(formData, "record_type") ?? "treatment",
-    description,
-    medicine: str(formData, "medicine"),
-    vet_name: str(formData, "vet_name"),
-    cost: num(formData, "cost"),
-    withdrawal_until: str(formData, "withdrawal_until"),
-  });
-  if (error) return { error: dbError(error) };
-
-  revalidatePath(`/dashboard/cattle/${cattleId}`);
-  return { success: "Health record added." };
-}
-
-export async function addBreedingEvent(_: ActionState, formData: FormData): Promise<ActionState> {
-  const { supabase, farm } = await requireFarm();
-  const cattleId = str(formData, "cattle_id");
-  const eventType = str(formData, "event_type");
-  const eventDate = str(formData, "event_date");
-  if (!cattleId || !eventType || !eventDate) return { error: "Event type and date are required." };
-
-  let expected = str(formData, "expected_calving_date");
-  if (!expected && eventType === "insemination") {
-    const d = new Date(eventDate + "T00:00:00Z");
-    d.setUTCDate(d.getUTCDate() + GESTATION_DAYS);
-    expected = d.toISOString().slice(0, 10);
-  }
-
-  const { error } = await supabase.from("breeding_events").insert({
-    farm_id: farm.id,
-    cattle_id: cattleId,
-    event_type: eventType,
-    event_date: eventDate,
-    bull_or_semen: str(formData, "bull_or_semen"),
-    result: str(formData, "result"),
-    expected_calving_date: expected,
-    notes: str(formData, "notes"),
-  });
-  if (error) return { error: dbError(error) };
-
-  revalidatePath(`/dashboard/cattle/${cattleId}`);
-  return { success: "Breeding event added." };
 }

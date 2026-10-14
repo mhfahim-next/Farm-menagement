@@ -3,11 +3,17 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ActionForm } from "@/components/action-form";
 import { Badge, Card, EmptyState, Field, Input, PageHeader, Select, StatCard, Table, Td, Textarea } from "@/components/ui";
+import { dueItems, dueLabel } from "@/lib/health";
 import { requireFarm } from "@/lib/auth";
 import { ageFrom, formatDate, formatMoney, formatNumber, label, today } from "@/lib/format";
 import type { BreedingEvent, Cattle, HealthRecord, MilkRecord } from "@/lib/types";
-import { addBreedingEvent, addHealthRecord, updateCattle } from "../actions";
-import { breedingTypeOptions, categoryOptions, healthTypeOptions, statusOptions } from "../options";
+import { BreedingForm } from "@/components/breeding-form";
+import { HealthForm } from "@/components/health-form";
+import { reproStatus } from "@/lib/breeding";
+import { logBreedingEvent } from "../../breeding/actions";
+import { recordHealth } from "../../health/actions";
+import { updateCattle } from "../actions";
+import { categoryOptions, statusOptions } from "../options";
 
 export const metadata: Metadata = { title: "Animal" };
 
@@ -36,7 +42,8 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
   const milkTotal = milk.reduce((s, m) => s + Number(m.quantity_liters), 0);
   const milkDays = new Set(milk.map((m) => m.record_date)).size;
   const withdrawal = health.find((h) => h.withdrawal_until && h.withdrawal_until >= today());
-  const nextCalving = breeding.find((b) => b.expected_calving_date && b.expected_calving_date >= today());
+  const repro = reproStatus(breeding, today());
+  const dues = dueItems(health, today(), 60);
 
   return (
     <>
@@ -66,102 +73,95 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
         />
         <StatCard
           label="Expected calving"
-          value={nextCalving ? formatDate(nextCalving.expected_calving_date) : "—"}
+          value={formatDate(repro.expectedCalving)}
         />
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <Card title="Health records">
+          {dues.length > 0 && (
+            <ul className="mb-4 grid gap-1.5">
+              {dues.map((d) => (
+                <li key={d.record.id} className="flex items-center justify-between gap-2 rounded-lg bg-stone-50 px-3 py-2 text-sm">
+                  <span>{d.record.product ?? d.record.description}</span>
+                  <Badge tone={d.overdue ? "red" : d.daysUntilDue <= 7 ? "amber" : "default"}>{dueLabel(d.daysUntilDue)}</Badge>
+                </li>
+              ))}
+            </ul>
+          )}
           {health.length === 0 ? (
             <EmptyState title="No health records yet" />
           ) : (
-            <Table head={["Date", "Type", "Details", "Cost"]}>
+            <Table head={["Date", "What", "Next due", "Cost"]}>
               {health.map((h) => (
                 <tr key={h.id}>
                   <Td>{formatDate(h.record_date)}</Td>
                   <Td>
-                    <Badge tone={h.record_type === "vaccination" ? "blue" : "default"}>{label(h.record_type)}</Badge>
+                    <Badge tone={h.record_type === "vaccination" ? "blue" : h.record_type === "treatment" || h.record_type === "checkup" ? "default" : "amber"}>
+                      {label(h.record_type)}
+                    </Badge>
+                    <span className="mt-0.5 block">{h.product ?? h.description}</span>
                   </Td>
-                  <Td>
-                    {h.description}
-                    {h.medicine && <span className="block text-xs text-stone-500">{h.medicine}</span>}
-                  </Td>
+                  <Td>{formatDate(h.next_due_date)}</Td>
                   <Td>{h.cost != null ? formatMoney(h.cost, farm.currency) : "—"}</Td>
                 </tr>
               ))}
             </Table>
           )}
           <details className="mt-4 border-t border-stone-100 pt-4">
-            <summary className="cursor-pointer text-sm font-medium text-emerald-700">Add health record</summary>
-            <ActionForm action={addHealthRecord} className="mt-4 grid gap-3">
-              <input type="hidden" name="cattle_id" value={cow.id} />
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Date">
-                  <Input name="record_date" type="date" defaultValue={today()} required />
-                </Field>
-                <Field label="Type">
-                  <Select name="record_type" options={healthTypeOptions} />
-                </Field>
-              </div>
-              <Field label="What was done">
-                <Input name="description" placeholder="e.g. FMD vaccine, mastitis treatment" required />
-              </Field>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Medicine">
-                  <Input name="medicine" />
-                </Field>
-                <Field label="Vet">
-                  <Input name="vet_name" />
-                </Field>
-                <Field label={`Cost (${farm.currency})`}>
-                  <Input name="cost" type="number" min="0" step="0.01" />
-                </Field>
-                <Field label="Milk withdrawal until">
-                  <Input name="withdrawal_until" type="date" />
-                </Field>
-              </div>
-            </ActionForm>
+            <summary className="cursor-pointer text-sm font-medium text-emerald-700">Record vaccine / treatment</summary>
+            <div className="mt-4">
+              <HealthForm action={recordHealth} today={today()} currency={farm.currency} cattleId={cow.id} />
+            </div>
           </details>
         </Card>
 
         <Card title="Breeding">
+          {cow.sex === "female" && (
+            <p className="mb-4 text-sm text-stone-600">
+              <Badge tone={repro.state === "pregnant" ? "green" : repro.state === "inseminated" ? "blue" : "default"}>
+                {repro.state === "pregnant" ? "Pregnant" : repro.state === "inseminated" ? "Inseminated" : "Open"}
+              </Badge>{" "}
+              {repro.state === "open" && repro.nextHeatExpected && <>Next heat expected around {formatDate(repro.nextHeatExpected)}.</>}
+              {repro.state === "inseminated" && <>Pregnancy check due {formatDate(repro.pregnancyCheckDue)}.</>}
+              {repro.state === "pregnant" && (
+                <>
+                  Calving {formatDate(repro.expectedCalving)} · dry off {formatDate(repro.dryOffDue)}.
+                </>
+              )}
+            </p>
+          )}
           {breeding.length === 0 ? (
             <EmptyState title="No breeding events yet" />
           ) : (
-            <Table head={["Date", "Event", "Details", "Expected calving"]}>
+            <Table head={["Date", "Event", "Details"]}>
               {breeding.map((b) => (
                 <tr key={b.id}>
                   <Td>{formatDate(b.event_date)}</Td>
                   <Td>{label(b.event_type)}</Td>
-                  <Td>{[b.bull_or_semen, b.result].filter(Boolean).join(" · ") || "—"}</Td>
-                  <Td>{formatDate(b.expected_calving_date)}</Td>
+                  <Td className="text-xs">
+                    {[
+                      b.bull_or_semen,
+                      b.technician && `by ${b.technician}`,
+                      b.event_type === "pregnancy_check" && b.result ? label(b.result) : null,
+                      b.heat_signs,
+                      b.expected_calving_date && `calving ${formatDate(b.expected_calving_date)}`,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ") || "—"}
+                  </Td>
                 </tr>
               ))}
             </Table>
           )}
-          <details className="mt-4 border-t border-stone-100 pt-4">
-            <summary className="cursor-pointer text-sm font-medium text-emerald-700">Add breeding event</summary>
-            <ActionForm action={addBreedingEvent} className="mt-4 grid gap-3">
-              <input type="hidden" name="cattle_id" value={cow.id} />
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Date">
-                  <Input name="event_date" type="date" defaultValue={today()} required />
-                </Field>
-                <Field label="Event">
-                  <Select name="event_type" options={breedingTypeOptions} />
-                </Field>
-                <Field label="Bull / semen">
-                  <Input name="bull_or_semen" />
-                </Field>
-                <Field label="Result">
-                  <Input name="result" placeholder="e.g. Positive" />
-                </Field>
+          {cow.sex === "female" && (
+            <details className="mt-4 border-t border-stone-100 pt-4">
+              <summary className="cursor-pointer text-sm font-medium text-emerald-700">Record heat / AI / pregnancy / calving</summary>
+              <div className="mt-4">
+                <BreedingForm action={logBreedingEvent} today={today()} currency={farm.currency} cattleId={cow.id} />
               </div>
-              <Field label="Expected calving" hint="Filled automatically (283 days) for inseminations if left empty.">
-                <Input name="expected_calving_date" type="date" />
-              </Field>
-            </ActionForm>
-          </details>
+            </details>
+          )}
         </Card>
 
         <Card title="Milk, last 30 days">
