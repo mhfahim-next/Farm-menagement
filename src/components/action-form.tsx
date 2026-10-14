@@ -1,7 +1,6 @@
 "use client";
 
-import { useActionState, type ReactNode } from "react";
-import { useFormStatus } from "react-dom";
+import { Fragment, startTransition, useActionState, type ReactNode } from "react";
 import type { ActionState } from "@/lib/types";
 import { Button, type ButtonVariant } from "./ui";
 
@@ -9,12 +8,13 @@ export function SubmitButton({
   children,
   variant,
   className,
+  pending,
 }: {
   children: ReactNode;
   variant?: ButtonVariant;
   className?: string;
+  pending: boolean;
 }) {
-  const { pending } = useFormStatus();
   return (
     <Button type="submit" disabled={pending} variant={variant} className={className}>
       {pending ? "Saving…" : children}
@@ -22,9 +22,16 @@ export function SubmitButton({
   );
 }
 
+type State = (NonNullable<ActionState> & { saves: number }) | null;
+
 /**
  * A form bound to a server action that returns { error } or { success }.
- * The action's message is shown under the fields.
+ *
+ * It submits through onSubmit rather than the `action` prop on purpose:
+ * React 19 resets every field after an action finishes, which would wipe what
+ * the user typed when a save is rejected, and leaves controlled fields out of
+ * sync. Here the fields are kept on errors and the whole field set is
+ * remounted (fresh defaults) only after a successful save.
  */
 export function ActionForm({
   action,
@@ -41,17 +48,28 @@ export function ActionForm({
   fullWidthSubmit?: boolean;
   children: ReactNode;
 }) {
-  const [state, formAction] = useActionState(action, null);
+  const [state, dispatch, pending] = useActionState<State, FormData>(async (prev, formData) => {
+    const result = await action(prev, formData);
+    const saves = prev?.saves ?? 0;
+    return result ? { ...result, saves: result.success ? saves + 1 : saves } : null;
+  }, null);
 
   return (
-    <form action={formAction} className={className}>
-      {children}
-      {state?.error && (
+    <form
+      className={className}
+      onSubmit={(e) => {
+        e.preventDefault();
+        const formData = new FormData(e.currentTarget);
+        startTransition(() => dispatch(formData));
+      }}
+    >
+      <Fragment key={state?.saves ?? 0}>{children}</Fragment>
+      {!pending && state?.error && (
         <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
           {state.error}
         </p>
       )}
-      {state?.success && (
+      {!pending && state?.success && (
         <p role="status" className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
           {state.success}
         </p>
@@ -59,8 +77,11 @@ export function ActionForm({
       <div>
         <SubmitButton
           variant={submitVariant}
+          pending={pending}
           className={fullWidthSubmit ? "w-full" : undefined}
-        >{submitLabel}</SubmitButton>
+        >
+          {submitLabel}
+        </SubmitButton>
       </div>
     </form>
   );

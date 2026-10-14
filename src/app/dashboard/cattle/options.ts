@@ -17,13 +17,6 @@ export const statusOptions = [
   { value: "dead", label: "Dead" },
 ];
 
-export const healthTypeOptions = [
-  { value: "vaccination", label: "Vaccination" },
-  { value: "treatment", label: "Treatment" },
-  { value: "deworming", label: "Deworming" },
-  { value: "checkup", label: "Check-up" },
-];
-
 export const breedingTypeOptions = [
   { value: "heat", label: "Heat observed" },
   { value: "insemination", label: "Insemination (AI / natural)" },

@@ -12,6 +12,8 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
       ? [
           { href: "/dashboard/cattle", label: "Cattle" },
           { href: "/dashboard/milk", label: "Milk" },
+          { href: "/dashboard/health", label: "Health" },
+          { href: "/dashboard/breeding", label: "Breeding" },
         ]
       : []),
     ...(farm.has_layer ? [{ href: "/dashboard/flocks", label: "Layer flocks" }] : []),
