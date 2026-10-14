@@ -28,6 +28,8 @@ export type Cattle = {
   date_of_birth: string | null;
   purchase_date: string | null;
   purchase_price: number | null;
+  mother_id: string | null;
+  father: string | null;
   notes: string | null;
   created_at: string;
 };

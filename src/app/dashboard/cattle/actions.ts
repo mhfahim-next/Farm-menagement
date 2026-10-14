@@ -6,11 +6,37 @@ import { dbError, num, str } from "@/lib/form";
 import { getI18n } from "@/lib/i18n/server";
 import type { ActionState } from "@/lib/types";
 
+/**
+ * Checks the chosen mother (empty = unknown). The database enforces the same
+ * rules; checking here gives a clear message.
+ */
+async function validateMother(
+  supabase: Awaited<ReturnType<typeof requireFarm>>["supabase"],
+  farmId: string,
+  motherId: string | null,
+  selfId: string | null,
+  t: Awaited<ReturnType<typeof getI18n>>["t"],
+) {
+  if (!motherId) return null;
+  if (motherId === selfId) return t("cattle.motherSelf");
+  const { data } = await supabase
+    .from("cattle")
+    .select("sex")
+    .eq("id", motherId)
+    .eq("farm_id", farmId)
+    .maybeSingle();
+  return data?.sex === "female" ? null : t("cattle.motherNotFemale");
+}
+
 export async function addCattle(_: ActionState, formData: FormData): Promise<ActionState> {
   const { supabase, farm } = await requireFarm();
   const { t } = await getI18n();
   const tag = str(formData, "tag_number");
   if (!tag) return { error: t("cattle.tagRequired") };
+
+  const motherId = str(formData, "mother_id");
+  const motherError = await validateMother(supabase, farm.id, motherId, null, t);
+  if (motherError) return { error: motherError };
 
   const { error } = await supabase.from("cattle").insert({
     farm_id: farm.id,
@@ -22,6 +48,8 @@ export async function addCattle(_: ActionState, formData: FormData): Promise<Act
     date_of_birth: str(formData, "date_of_birth"),
     purchase_date: str(formData, "purchase_date"),
     purchase_price: num(formData, "purchase_price"),
+    mother_id: motherId,
+    father: str(formData, "father"),
     notes: str(formData, "notes"),
   });
   if (error) {
@@ -40,6 +68,10 @@ export async function updateCattle(_: ActionState, formData: FormData): Promise<
   const id = str(formData, "id");
   if (!id) return { error: t("cattle.missing") };
 
+  const motherId = str(formData, "mother_id");
+  const motherError = await validateMother(supabase, farm.id, motherId, id, t);
+  if (motherError) return { error: motherError };
+
   const { error } = await supabase
     .from("cattle")
     .update({
@@ -48,6 +80,8 @@ export async function updateCattle(_: ActionState, formData: FormData): Promise<
       category: str(formData, "category") ?? "cow",
       status: str(formData, "status") ?? "active",
       date_of_birth: str(formData, "date_of_birth"),
+      mother_id: motherId,
+      father: str(formData, "father"),
       notes: str(formData, "notes"),
     })
     .eq("id", id)

@@ -65,7 +65,18 @@ export async function logBreedingEvent(_: ActionState, formData: FormData): Prom
       .eq("category", "heifer");
 
     if (calfTag) {
-      const { data: dam } = await supabase.from("cattle").select("breed").eq("id", cattleId).eq("farm_id", farm.id).maybeSingle();
+      const [{ data: dam }, { data: lastAi }] = await Promise.all([
+        supabase.from("cattle").select("breed").eq("id", cattleId).eq("farm_id", farm.id).maybeSingle(),
+        supabase
+          .from("breeding_events")
+          .select("bull_or_semen")
+          .eq("cattle_id", cattleId)
+          .eq("event_type", "insemination")
+          .lte("event_date", eventDate)
+          .order("event_date", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ]);
       const { error: calfError } = await supabase.from("cattle").insert({
         farm_id: farm.id,
         tag_number: calfTag,
@@ -75,6 +86,7 @@ export async function logBreedingEvent(_: ActionState, formData: FormData): Prom
         breed: dam?.breed ?? null,
         date_of_birth: eventDate,
         mother_id: cattleId,
+        father: lastAi?.bull_or_semen ?? null,
       });
       if (calfError) {
         revalidatePath("/dashboard", "layout");

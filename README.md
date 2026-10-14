@@ -13,7 +13,7 @@ A multi-tenant farm management web app built with **Next.js 16 (App Router)** an
 ## Features
 
 - **Accounts & farms**: email sign-up/login, farm onboarding, one owner per farm, and a team roles model (owner / manager / worker / vet).
-- **Cattle register**: tag, name, breed, category, age, status, purchase info, search and filter.
+- **Cattle register**: tag, name, breed, category, age, status, purchase info, search and filter. Record each animal's **mother** (dropdown of the farm's females, shown with their type, or "Unknown") and **father** (free text); the animal page shows a *Family* card with parents and calves.
 - **Milk**: a milking sheet that records every cow for one session at once (morning/evening), with fat %, daily totals, and per-cow history.
 - **Health** (`/dashboard/health`): vaccines, pest/parasite control (tick & fly spray, pour-on), deworming and treatments.
   - Record for **one animal or the whole herd at once**, with quick-pick presets (FMD, HS, BQ, Anthrax, LSD, Rabies, Brucellosis, deworming, tick spray) that fill in the usual repeat interval.
