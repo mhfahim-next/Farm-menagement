@@ -48,6 +48,13 @@ export const adminplans = {
   "admin.unverifiedDoctors": "Doctors to verify",
   "admin.doctors": "Doctors",
 
+  "admin.breedingRules.title": "Breeding rules",
+  "admin.breedingRules.desc": "Applies to every farm. Changing it updates the due dates of all cows right away.",
+  "admin.breedingRules.checkDays": "Pregnancy check due (days after AI)",
+  "admin.breedingRules.checkDaysHint": "Between 20 and 120 days. Default 45.",
+  "admin.breedingRules.save": "Save breeding rules",
+  "admin.breedingRules.saved": "Breeding rules saved.",
+  "admin.breedingRules.invalid": "Enter a whole number between 20 and 120.",
   "admin.payment.title": "Payment instructions",
   "admin.payment.desc": "Shown on every farm's plan page: how to pay (bKash / Nagad / bank number) and what to send with the request.",
   "admin.payment.en": "Instructions (English)",

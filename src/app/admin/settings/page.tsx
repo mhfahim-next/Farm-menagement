@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { ActionForm } from "@/components/action-form";
-import { Card, Field, PageHeader, Textarea } from "@/components/ui";
+import { Card, Field, Input, PageHeader, Textarea } from "@/components/ui";
 import { requireSuperAdmin } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
-import { saveAnnouncement, savePaymentInstructions } from "../actions";
+import { saveAnnouncement, savePaymentInstructions, savePregnancyCheckDays } from "../actions";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -16,7 +16,7 @@ export default async function AdminSettingsPage() {
 
   const { data } = await supabase
     .from("system_settings")
-    .select("announcement_en, announcement_bn, announcement_active, payment_instructions_en, payment_instructions_bn")
+    .select("announcement_en, announcement_bn, announcement_active, payment_instructions_en, payment_instructions_bn, pregnancy_check_days")
     .eq("id", 1)
     .maybeSingle();
 
@@ -35,6 +35,22 @@ export default async function AdminSettingsPage() {
             <input type="checkbox" name="active" defaultChecked={data?.announcement_active ?? false} className="accent-emerald-700" />
             {t("admin.announceActive")}
           </label>
+        </ActionForm>
+      </Card>
+
+      <Card title={t("admin.breedingRules.title")} description={t("admin.breedingRules.desc")} className="mt-6 max-w-2xl">
+        <ActionForm action={savePregnancyCheckDays} submitLabel={t("admin.breedingRules.save")}>
+          <Field label={t("admin.breedingRules.checkDays")} hint={t("admin.breedingRules.checkDaysHint")}>
+            <Input
+              name="pregnancy_check_days"
+              type="number"
+              min={20}
+              max={120}
+              step={1}
+              required
+              defaultValue={data?.pregnancy_check_days ?? 45}
+            />
+          </Field>
         </ActionForm>
       </Card>
 

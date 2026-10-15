@@ -53,7 +53,7 @@ A super admin controls the whole system from `/admin` (only they can open it; ev
 | Requests | Approve / reject upgrade and support requests |
 | Dropdowns | Every dropdown in the app (see below) |
 | Audit log | Every admin action: who, what, when |
-| Announcement | A banner shown at the top of every user's dashboard, with separate English and Bangla text |
+| Announcement | A banner shown at the top of every user's dashboard (English + Bangla), the payment instructions, and the **breeding rules** (pregnancy check due N days after AI, default 45) |
 
 ### Dropdowns
 

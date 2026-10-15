@@ -108,3 +108,10 @@ export async function resolveRequest(id: string, approve: boolean, reply: string
   revalidatePath("/admin", "layout");
   return { success: t("admin.requests.done") };
 }
+
+export async function savePregnancyCheckDays(_: ActionState, formData: FormData): Promise<ActionState> {
+  const { t } = await getI18n();
+  const days = Number(str(formData, "pregnancy_check_days"));
+  if (!Number.isInteger(days) || days < 20 || days > 120) return { error: t("admin.breedingRules.invalid") };
+  return run((s) => s.rpc("admin_set_pregnancy_check_days", { p_days: days }), t("admin.breedingRules.saved"));
+}

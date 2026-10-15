@@ -50,6 +50,13 @@ export const adminplans: Record<keyof typeof en, string> = {
   "admin.unverifiedDoctors": "যাচাই বাকি ডাক্তার",
   "admin.doctors": "ডাক্তার",
 
+  "admin.breedingRules.title": "প্রজননের নিয়ম",
+  "admin.breedingRules.desc": "সব খামারের জন্য প্রযোজ্য। বদলালে সব গাভীর তারিখ সঙ্গে সঙ্গে বদলে যাবে।",
+  "admin.breedingRules.checkDays": "গর্ভ পরীক্ষার সময় (এআই-এর কত দিন পর)",
+  "admin.breedingRules.checkDaysHint": "২০ থেকে ১২০ দিনের মধ্যে। ডিফল্ট ৪৫।",
+  "admin.breedingRules.save": "নিয়ম সংরক্ষণ করুন",
+  "admin.breedingRules.saved": "প্রজননের নিয়ম সংরক্ষিত হয়েছে।",
+  "admin.breedingRules.invalid": "২০ থেকে ১২০ এর মধ্যে একটি পূর্ণসংখ্যা দিন।",
   "admin.payment.title": "পেমেন্টের নির্দেশনা",
   "admin.payment.desc": "প্রতিটি খামারের প্ল্যান পাতায় দেখানো হয়: কীভাবে পেমেন্ট করবেন (বিকাশ / নগদ / ব্যাংক নম্বর) এবং অনুরোধের সঙ্গে কী পাঠাবেন।",
   "admin.payment.en": "নির্দেশনা (ইংরেজি)",
