@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireFarm } from "@/lib/auth";
+import { requireRole, STAFF } from "@/lib/auth";
 import { dbError, num, str } from "@/lib/form";
 import { getI18n } from "@/lib/i18n/server";
 import type { ActionState } from "@/lib/types";
@@ -11,7 +11,7 @@ import type { ActionState } from "@/lib/types";
  * rules; checking here gives a clear message.
  */
 async function validateMother(
-  supabase: Awaited<ReturnType<typeof requireFarm>>["supabase"],
+  supabase: Awaited<ReturnType<typeof requireRole>>["supabase"],
   farmId: string,
   motherId: string | null,
   selfId: string | null,
@@ -29,7 +29,7 @@ async function validateMother(
 }
 
 export async function addCattle(_: ActionState, formData: FormData): Promise<ActionState> {
-  const { supabase, farm } = await requireFarm();
+  const { supabase, farm } = await requireRole(STAFF);
   const { t } = await getI18n();
   const tag = str(formData, "tag_number");
   if (!tag) return { error: t("cattle.tagRequired") };
@@ -65,7 +65,7 @@ export async function addCattle(_: ActionState, formData: FormData): Promise<Act
 }
 
 export async function updateCattle(_: ActionState, formData: FormData): Promise<ActionState> {
-  const { supabase, farm } = await requireFarm();
+  const { supabase, farm } = await requireRole(STAFF);
   const { t } = await getI18n();
   const id = str(formData, "id");
   if (!id) return { error: t("cattle.missing") };

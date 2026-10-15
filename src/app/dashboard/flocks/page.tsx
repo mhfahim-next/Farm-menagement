@@ -2,8 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ActionForm } from "@/components/action-form";
-import { Badge, Card, EmptyState, Field, Input, PageHeader, Textarea } from "@/components/ui";
-import { requireFarm } from "@/lib/auth";
+import { Badge, Card, EmptyState, Field, Input, PageHeader, Select, Textarea } from "@/components/ui";
+import { LimitNotice } from "@/components/limit-notice";
+import { MANAGERS, requireRole, STAFF } from "@/lib/auth";
+import { getPlanContext } from "@/lib/plans";
+import { planName } from "@/lib/plan-utils";
+import { breedOptions } from "@/lib/cattle";
 import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import type { Flock, FlockStats } from "@/lib/types";
@@ -16,9 +20,12 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function FlocksPage() {
-  const { supabase, farm } = await requireFarm();
+  const { supabase, farm, role } = await requireRole(STAFF);
   if (!farm.has_layer) notFound();
-  const { t, f, o } = await getI18n();
+  const i18n = await getI18n();
+  const { t, f, o, locale } = i18n;
+  const { plan, usage, limits, states } = await getPlanContext();
+  const atLimit = states.flocks === "full" || states.flocks === "over";
 
   const [flocksRes, statsRes, todayRes] = await Promise.all([
     supabase
@@ -61,7 +68,7 @@ export default async function FlocksPage() {
                   <div>
                     <h3 className="font-semibold">{fl.name}</h3>
                     <p className="text-sm text-stone-500">
-                      {[fl.breed, fl.shed && t("flocks.shed", { s: fl.shed })].filter(Boolean).join(" · ") || "—"}
+                      {[fl.breed ? o("flock_breed", fl.breed) : null, fl.shed && t("flocks.shed", { s: fl.shed })].filter(Boolean).join(" · ") || "—"}
                     </p>
                   </div>
                   <Badge tone={fl.status === "active" ? "green" : "default"}>{o("flock_status", fl.status)}</Badge>
@@ -98,13 +105,23 @@ export default async function FlocksPage() {
         </div>
 
         <Card title={t("flocks.addTitle")}>
+          <LimitNotice
+            t={t}
+            kind="flocks"
+            state={states.flocks}
+            used={usage.flocks}
+            max={limits.flocks}
+            plan={planName(plan, locale)}
+            canUpgrade={MANAGERS.includes(role)}
+          />
+          {!atLimit && (
           <ActionForm action={addFlock} submitLabel={t("flocks.addSubmit")}>
             <Field label={t("flocks.flockName")}>
               <Input name="name" placeholder={t("flocks.flockNamePlaceholder")} required />
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label={t("common.breed")}>
-                <Input name="breed" placeholder={t("flocks.breedPlaceholder")} />
+                <Select name="breed" options={breedOptions(i18n, "flock_breed")} />
               </Field>
               <Field label={t("flocks.shedLabel")}>
                 <Input name="shed" />
@@ -123,6 +140,7 @@ export default async function FlocksPage() {
               <Textarea name="notes" rows={2} />
             </Field>
           </ActionForm>
+          )}
         </Card>
       </div>
     </>

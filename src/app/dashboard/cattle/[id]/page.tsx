@@ -7,7 +7,7 @@ import { ParentsFields } from "@/components/parents-fields";
 import { HealthForm } from "@/components/health-form";
 import { Badge, Card, EmptyState, Field, Input, PageHeader, Select, StatCard, Table, Td, Textarea } from "@/components/ui";
 import { requireFarm } from "@/lib/auth";
-import { animalLabel, typeSexHint, type MotherCandidate } from "@/lib/cattle";
+import { animalLabel, breedOptions, typeSexHint, type MotherCandidate } from "@/lib/cattle";
 import { heatSignsText, reproStatus } from "@/lib/breeding";
 import { ageInMonths, today } from "@/lib/format";
 import { dueItems, dueLabel } from "@/lib/health";
@@ -24,7 +24,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function CattleDetailPage({ params }: PageProps<"/dashboard/cattle/[id]">) {
   const { id } = await params;
-  const { supabase, farm } = await requireFarm();
+  const { supabase, farm, role } = await requireFarm();
+  const canWrite = role !== "vet";
   const i18n = await getI18n();
   const { t, f, o, options } = i18n;
 
@@ -85,7 +86,7 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
     <>
       <PageHeader
         title={`${cow.tag_number}${cow.name ? ` · ${cow.name}` : ""}`}
-        description={[o("cattle_category", cow.category), cow.breed, ageText].filter(Boolean).join(" · ")}
+        description={[o("cattle_category", cow.category), cow.breed ? o("cattle_breed", cow.breed) : null, ageText].filter(Boolean).join(" · ")}
         action={
           <Link href="/dashboard/cattle" className="text-sm text-stone-500 hover:text-stone-900">
             {t("cattle.allCattle")}
@@ -261,6 +262,7 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
           </dl>
         </Card>
 
+        {canWrite && (
         <Card title={t("cattle.detailsTitle")}>
           <ActionForm action={updateCattle} submitLabel={t("cattle.saveChanges")} submitVariant="secondary">
             <input type="hidden" name="id" value={cow.id} />
@@ -269,7 +271,7 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
                 <Input name="name" defaultValue={cow.name ?? ""} />
               </Field>
               <Field label={t("common.breed")}>
-                <Input name="breed" defaultValue={cow.breed ?? ""} />
+                <Select name="breed" defaultValue={cow.breed ?? ""} options={breedOptions(i18n, "cattle_breed", cow.breed)} />
               </Field>
               <Field label={t("common.category")} hint={typeSexHint(i18n)}>
                 <Select name="category" defaultValue={cow.category} options={options("cattle_category", cow.category)} />
@@ -293,6 +295,7 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
             </Field>
           </ActionForm>
         </Card>
+        )}
       </div>
     </>
   );

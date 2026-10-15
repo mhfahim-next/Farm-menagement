@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { ActionForm } from "@/components/action-form";
+import { FarmForm } from "@/components/farm-form";
+import { InviteList, type PendingInvite } from "@/components/invite-list";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Field, Input, Select } from "@/components/ui";
-import { requireUser } from "@/lib/auth";
+import { getProfile, requireUser } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
+import { getPlans } from "@/lib/plans";
 import { createClient } from "@/lib/supabase/server";
 import { createFarm } from "./actions";
 
@@ -15,9 +16,12 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("onboarding.meta") };
 }
 
-export default async function OnboardingPage() {
+export default async function OnboardingPage({ searchParams }: PageProps<"/onboarding">) {
   const user = await requireUser();
-  const { t, options } = await getI18n();
+  const profile = await getProfile();
+  if (profile?.account_type === "doctor") redirect("/doctor");
+  const i18n = await getI18n();
+  const { t } = i18n;
   const supabase = await createClient();
   const { count } = await supabase
     .from("farm_members")
@@ -25,8 +29,11 @@ export default async function OnboardingPage() {
     .eq("user_id", user.id);
   if (count) redirect("/dashboard");
 
-  const currencies = options("currency");
-  const defaultCurrency = currencies.find((c) => c.value === "BDT")?.value ?? currencies[0]?.value;
+  const { data: inviteRows } = await supabase.rpc("my_pending_invites");
+  const invites = (inviteRows ?? []) as PendingInvite[];
+  const sp = await searchParams;
+  const wanted = typeof sp.plan === "string" ? sp.plan : null;
+  const plan = wanted && (await getPlans()).some((p) => p.key === wanted && p.active) ? wanted : null;
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center bg-gradient-to-b from-emerald-50 to-stone-50 px-4 py-12">
@@ -37,40 +44,17 @@ export default async function OnboardingPage() {
       <div className="mb-8">
         <Logo />
       </div>
+      {invites.length > 0 && (
+        <div className="mb-6 w-full max-w-lg">
+          <h2 className="mb-2 text-sm font-semibold text-stone-700">{t("invites.title")}</h2>
+          <InviteList invites={invites} i18n={i18n} />
+        </div>
+      )}
       <div className="w-full max-w-lg rounded-2xl border border-stone-200 bg-white p-7 shadow-sm">
         <h1 className="text-xl font-bold">{t("onboarding.title")}</h1>
         <p className="mb-6 mt-1 text-sm text-stone-500">{t("onboarding.subtitle")}</p>
-        <ActionForm action={createFarm} submitLabel={t("onboarding.submit")} fullWidthSubmit>
-          <Field label={t("onboarding.farmName")}>
-            <Input name="name" placeholder={t("onboarding.farmNamePlaceholder")} required minLength={2} />
-          </Field>
-          <Field label={t("common.location")}>
-            <Input name="location" placeholder={t("onboarding.locationPlaceholder")} />
-          </Field>
-          <Field label={t("common.currency")}>
-            <Select name="currency" defaultValue={defaultCurrency} options={currencies} />
-          </Field>
-          <fieldset className="grid gap-2">
-            <legend className="mb-1.5 text-sm font-medium text-stone-700">
-              {t("onboarding.farmTypeLegend")}
-            </legend>
-            <ModuleOption name="has_dairy" title={t("onboarding.dairyTitle")} body={t("onboarding.dairyBody")} />
-            <ModuleOption name="has_layer" title={t("onboarding.layerTitle")} body={t("onboarding.layerBody")} />
-          </fieldset>
-        </ActionForm>
+        <FarmForm action={createFarm} i18n={i18n} plan={plan} />
       </div>
     </div>
-  );
-}
-
-function ModuleOption({ name, title, body }: { name: string; title: string; body: string }) {
-  return (
-    <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-stone-200 p-3 has-[:checked]:border-emerald-600 has-[:checked]:bg-emerald-50">
-      <input type="checkbox" name={name} defaultChecked className="mt-1 accent-emerald-700" />
-      <span>
-        <span className="block text-sm font-medium">{title}</span>
-        <span className="block text-xs text-stone-500">{body}</span>
-      </span>
-    </label>
   );
 }

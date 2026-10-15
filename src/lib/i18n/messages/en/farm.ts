@@ -82,6 +82,7 @@ export const farm = {
   "cattle.colFat": "Fat %",
   "cattle.detailsTitle": "Details",
   "cattle.saveChanges": "Save changes",
+  "cattle.breedChoose": "Choose breed…",
   "cattle.typeUnknown": "Unknown animal type.",
   "cattle.typeHidden": "This animal type is no longer available. Choose another.",
   "cattle.motherMustStayFemale": "This animal is recorded as a mother, so it must stay a female type.",

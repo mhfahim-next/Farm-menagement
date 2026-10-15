@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ActionForm } from "@/components/action-form";
 import { Badge, Card, EmptyState, Field, Input, PageHeader, Select, StatCard, Table, Td } from "@/components/ui";
-import { requireFarm } from "@/lib/auth";
+import { requireRole, STAFF } from "@/lib/auth";
 import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import type { Transaction } from "@/lib/types";
@@ -13,7 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function FinancePage({ searchParams }: PageProps<"/dashboard/finance">) {
-  const { supabase, farm } = await requireFarm();
+  const { supabase, farm } = await requireRole(STAFF);
   const { t, f, o, options } = await getI18n();
   const sp = await searchParams;
   const month = typeof sp.month === "string" && /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : today().slice(0, 7);

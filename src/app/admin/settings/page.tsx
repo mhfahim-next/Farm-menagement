@@ -3,7 +3,7 @@ import { ActionForm } from "@/components/action-form";
 import { Card, Field, PageHeader, Textarea } from "@/components/ui";
 import { requireSuperAdmin } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
-import { saveAnnouncement } from "../actions";
+import { saveAnnouncement, savePaymentInstructions } from "../actions";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -16,7 +16,7 @@ export default async function AdminSettingsPage() {
 
   const { data } = await supabase
     .from("system_settings")
-    .select("announcement_en, announcement_bn, announcement_active")
+    .select("announcement_en, announcement_bn, announcement_active, payment_instructions_en, payment_instructions_bn")
     .eq("id", 1)
     .maybeSingle();
 
@@ -35,6 +35,17 @@ export default async function AdminSettingsPage() {
             <input type="checkbox" name="active" defaultChecked={data?.announcement_active ?? false} className="accent-emerald-700" />
             {t("admin.announceActive")}
           </label>
+        </ActionForm>
+      </Card>
+
+      <Card title={t("admin.payment.title")} description={t("admin.payment.desc")} className="mt-6 max-w-2xl">
+        <ActionForm action={savePaymentInstructions} submitLabel={t("admin.payment.save")}>
+          <Field label={t("admin.payment.en")}>
+            <Textarea name="payment_en" rows={4} defaultValue={data?.payment_instructions_en ?? ""} />
+          </Field>
+          <Field label={t("admin.payment.bn")}>
+            <Textarea name="payment_bn" rows={4} defaultValue={data?.payment_instructions_bn ?? ""} />
+          </Field>
         </ActionForm>
       </Card>
     </>

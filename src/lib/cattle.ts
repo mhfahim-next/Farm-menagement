@@ -48,3 +48,12 @@ export function typeSexHint({ t, options }: Pick<I18n, "t" | "options">) {
     types.filter((x) => x.meta.sex === sex).map((x) => x.label).join(", ") || "—";
   return t("cattle.typeHint", { female: names("female"), male: names("male") });
 }
+
+/** "Breed" dropdown options: an empty first choice, then the managed list. */
+export function breedOptions(
+  { t, options }: Pick<I18n, "t" | "options">,
+  list: "cattle_breed" | "flock_breed",
+  current?: string | null,
+) {
+  return [{ value: "", label: t("cattle.breedChoose") }, ...options(list, current)];
+}

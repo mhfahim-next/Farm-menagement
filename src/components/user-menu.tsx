@@ -10,6 +10,7 @@ export type MenuUser = {
   email: string | null;
   avatarUrl: string | null;
   isSuperAdmin: boolean;
+  isDoctor?: boolean;
 };
 
 /** Avatar button with a dropdown: Dashboard, Profile, Admin panel, Log out. */
@@ -74,10 +75,16 @@ export function UserMenu({ user, inAdmin = false }: { user: MenuUser; inAdmin?: 
           </div>
 
           <div className="py-1">
-            <Link role="menuitem" href="/dashboard" className={item} onClick={() => setOpen(false)}>
-              {t("menu.dashboard")}
-            </Link>
-            <Link role="menuitem" href="/dashboard/profile" className={item} onClick={() => setOpen(false)}>
+            {user.isDoctor ? (
+              <Link role="menuitem" href="/doctor" className={item} onClick={() => setOpen(false)}>
+                {t("doctor.consoleNav")}
+              </Link>
+            ) : (
+              <Link role="menuitem" href="/dashboard" className={item} onClick={() => setOpen(false)}>
+                {t("menu.dashboard")}
+              </Link>
+            )}
+            <Link role="menuitem" href={user.isDoctor ? "/doctor/profile" : "/dashboard/profile"} className={item} onClick={() => setOpen(false)}>
               {t("menu.profile")}
             </Link>
             {user.isSuperAdmin && !inAdmin && (

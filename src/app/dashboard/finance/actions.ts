@@ -1,13 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireFarm } from "@/lib/auth";
+import { requireRole, STAFF } from "@/lib/auth";
 import { dbError, num, str } from "@/lib/form";
 import { getI18n } from "@/lib/i18n/server";
 import type { ActionState } from "@/lib/types";
 
 export async function addTransaction(_: ActionState, formData: FormData): Promise<ActionState> {
-  const { supabase, farm } = await requireFarm();
+  const { supabase, farm } = await requireRole(STAFF);
   const { t } = await getI18n();
   const amount = num(formData, "amount");
   const category = str(formData, "category");

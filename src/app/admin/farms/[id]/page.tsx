@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { Badge, Card, PageHeader, StatCard, Table, Td } from "@/components/ui";
 import { requireSuperAdmin } from "@/lib/auth";
 import { today } from "@/lib/format";
+import { planName } from "@/lib/plan-utils";
+import { getPlans } from "@/lib/plans";
 import { getI18n } from "@/lib/i18n/server";
 import type { Farm } from "@/lib/types";
 
@@ -16,7 +18,8 @@ export default async function AdminFarmDetailPage({ params }: PageProps<"/admin/
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const { supabase } = await requireSuperAdmin();
-  const { t, e, f, o } = await getI18n();
+  const { t, f, o, locale } = await getI18n();
+  const plans = await getPlans();
 
   const since = today(-29);
   const [farmRes, membersRes, cattleRes, flocksRes, milkRes, eggsRes] = await Promise.all([
@@ -54,7 +57,7 @@ export default async function AdminFarmDetailPage({ params }: PageProps<"/admin/
 
       <div className="mb-4 flex flex-wrap gap-2">
         <Badge tone={farm.suspended ? "red" : "green"}>{farm.suspended ? t("admin.statusSuspended") : t("admin.statusActive")}</Badge>
-        <Badge tone="blue">{e(farm.plan)}</Badge>
+        <Badge tone="blue">{planName(plans.find((p) => p.key === farm.plan), locale, farm.plan)}</Badge>
         {farm.has_dairy && <Badge>{o("txn_module", "dairy")}</Badge>}
         {farm.has_layer && <Badge>{o("txn_module", "layer")}</Badge>}
       </div>
@@ -72,7 +75,7 @@ export default async function AdminFarmDetailPage({ params }: PageProps<"/admin/
             <tr key={m.user_id}>
               <Td>{names.get(m.user_id) ?? "—"}</Td>
               <Td>
-                <Badge tone={m.role === "owner" ? "green" : "default"}>{e(m.role)}</Badge>
+                <Badge tone={m.role === "owner" ? "green" : "default"}>{o("member_role", m.role)}</Badge>
               </Td>
               <Td>{f.date(m.created_at)}</Td>
             </tr>

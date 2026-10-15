@@ -1,14 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireFarm } from "@/lib/auth";
+import { requireRole, STAFF } from "@/lib/auth";
 import { dbError, str } from "@/lib/form";
 import { getI18n } from "@/lib/i18n/server";
 import type { ActionState } from "@/lib/types";
 
 /** Saves one milking session for many cows at once (re-saving overwrites). */
 export async function saveMilkSession(_: ActionState, formData: FormData): Promise<ActionState> {
-  const { supabase, farm } = await requireFarm();
+  const { supabase, farm } = await requireRole(STAFF);
   const { t, f } = await getI18n();
   const recordDate = str(formData, "record_date");
   const session = str(formData, "session");

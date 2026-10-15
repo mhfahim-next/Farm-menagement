@@ -2,8 +2,9 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { SUPABASE_KEY, SUPABASE_URL } from "./env";
 
-const PROTECTED_PREFIXES = ["/dashboard", "/onboarding", "/admin", "/suspended"];
-const AUTH_PAGES = ["/login", "/signup"];
+const PROTECTED_PREFIXES = ["/dashboard", "/onboarding", "/admin", "/suspended", "/doctor", "/invites"];
+const PUBLIC_PAGES = ["/doctor/signup"];
+const AUTH_PAGES = ["/login", "/signup", "/doctor/signup"];
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -31,7 +32,7 @@ export async function updateSession(request: NextRequest) {
   const isSignedIn = Boolean(data?.claims);
   const { pathname } = request.nextUrl;
 
-  if (!isSignedIn && PROTECTED_PREFIXES.some((p) => pathname.startsWith(p))) {
+  if (!isSignedIn && !PUBLIC_PAGES.includes(pathname) && PROTECTED_PREFIXES.some((p) => pathname.startsWith(p))) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.search = `?next=${encodeURIComponent(pathname)}`;
