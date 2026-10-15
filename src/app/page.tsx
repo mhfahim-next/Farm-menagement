@@ -1,18 +1,20 @@
+import Link from "next/link";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ButtonLink } from "@/components/ui";
 import { getI18n } from "@/lib/i18n/server";
+import { planFeatures, planName, priceText } from "@/lib/plan-utils";
+import { getPlans } from "@/lib/plans";
 
 export default async function Home() {
-  const { t } = await getI18n();
+  const i18n = await getI18n();
+  const { t, locale } = i18n;
+  const plans = (await getPlans()).filter((p) => p.active);
+  // The middle paid plan is highlighted as the recommended one.
+  const highlightKey = plans.length >= 3 ? plans[1].key : null;
 
   const features = [1, 2, 3, 4, 5, 6] as const;
-  const plans = [
-    { id: "free", items: [1, 2, 3] },
-    { id: "pro", items: [1, 2, 3, 4], highlight: true },
-    { id: "business", items: [1, 2, 3] },
-  ] as const;
 
   return (
     <div className="flex flex-1 flex-col">
@@ -22,6 +24,9 @@ export default async function Home() {
           <nav className="flex items-center gap-1.5 sm:gap-2">
             <LanguageSwitcher />
             <ThemeToggle />
+            <ButtonLink href="/doctor/signup" variant="ghost" className="hidden md:inline-flex">
+              {t("doctor.landingLink")}
+            </ButtonLink>
             <ButtonLink href="/login" variant="ghost" className="hidden sm:inline-flex">
               {t("landing.login")}
             </ButtonLink>
@@ -48,6 +53,12 @@ export default async function Home() {
                 {t("landing.ctaSecondary")}
               </ButtonLink>
             </div>
+            <p className="mt-5 text-sm text-stone-500">
+              {t("doctor.areDoctor")}{" "}
+              <Link href="/doctor/signup" className="font-medium text-emerald-700 hover:underline">
+                {t("doctor.landingCta")}
+              </Link>
+            </p>
           </div>
         </section>
 
@@ -68,30 +79,35 @@ export default async function Home() {
             <h2 className="text-center text-3xl font-bold tracking-tight">{t("landing.pricingTitle")}</h2>
             <p className="mt-2 text-center text-stone-500">{t("landing.pricingSub")}</p>
             <div className="mt-10 grid gap-5 md:grid-cols-3">
-              {plans.map((p) => (
-                <div
-                  key={p.id}
-                  className={`rounded-xl border p-6 ${
-                    "highlight" in p ? "border-emerald-600 ring-2 ring-emerald-600/20" : "border-stone-200"
-                  }`}
-                >
-                  <h3 className="font-semibold">{t(`enum.${p.id}`)}</h3>
-                  <p className="mt-2 text-3xl font-bold">{t(`landing.plan.${p.id}.price`)}</p>
-                  <p className="mt-2 text-sm text-stone-500">{t(`landing.plan.${p.id}.body`)}</p>
-                  <ul className="mt-5 space-y-2 text-sm text-stone-700">
-                    {p.items.map((i) => (
-                      <li key={i}>✓ {t(`landing.plan.${p.id}.i${i}` as "landing.plan.free.i1")}</li>
-                    ))}
-                  </ul>
-                  <ButtonLink
-                    href="/signup"
-                    variant={"highlight" in p ? "primary" : "secondary"}
-                    className="mt-6 w-full"
+              {plans.map((p) => {
+                const highlight = p.key === highlightKey;
+                return (
+                  <div
+                    key={p.key}
+                    data-testid={`home-plan-${p.key}`}
+                    className={`rounded-xl border p-6 ${highlight ? "border-emerald-600 ring-2 ring-emerald-600/20" : "border-stone-200"}`}
                   >
-                    {t("landing.getStarted")}
-                  </ButtonLink>
-                </div>
-              ))}
+                    <h3 className="font-semibold">{planName(p, locale, p.key)}</h3>
+                    <p className="mt-2 text-3xl font-bold">{priceText(i18n, p)}</p>
+                    <p className="mt-1 text-sm text-stone-500">
+                      {p.price_monthly === null ? t("plans.perMonthCustom") : t("plans.perMonth")}
+                    </p>
+                    <ul className="mt-5 space-y-2 text-sm text-stone-700">
+                      {planFeatures(t, p).map((x) => (
+                        <li key={x}>✓ {x}</li>
+                      ))}
+                      <li className="text-stone-500">✓ {t("plans.feat.vets")}</li>
+                    </ul>
+                    <ButtonLink
+                      href={p.price_monthly === 0 ? "/signup" : `/signup?plan=${p.key}`}
+                      variant={highlight ? "primary" : "secondary"}
+                      className="mt-6 w-full"
+                    >
+                      {p.price_monthly === 0 ? t("plans.getStarted") : t("plans.choose", { plan: planName(p, locale, p.key) })}
+                    </ButtonLink>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </section>

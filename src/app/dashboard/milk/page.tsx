@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ActionForm } from "@/components/action-form";
 import { Card, EmptyState, Field, Input, PageHeader, Select, StatCard, Table, Td } from "@/components/ui";
-import { requireFarm } from "@/lib/auth";
+import { requireRole, STAFF } from "@/lib/auth";
 import { milkingCategories } from "@/lib/cattle";
 import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function MilkPage({ searchParams }: PageProps<"/dashboard/milk">) {
-  const { supabase, farm } = await requireFarm();
+  const { supabase, farm } = await requireRole(STAFF);
   if (!farm.has_dairy) notFound();
   const { t, f, options, rows } = await getI18n();
   const sessions = options("milk_session");

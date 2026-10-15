@@ -10,14 +10,16 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("auth.signupMeta") };
 }
 
-export default async function SignupPage() {
+export default async function SignupPage({ searchParams }: PageProps<"/signup">) {
   const { t } = await getI18n();
+  const { plan } = await searchParams;
 
   return (
     <>
       <h1 className="text-xl font-bold">{t("auth.signupTitle")}</h1>
       <p className="mb-6 mt-1 text-sm text-stone-500">{t("auth.signupSubtitle")}</p>
       <ActionForm action={signup} submitLabel={t("auth.signupSubmit")} fullWidthSubmit>
+        <input type="hidden" name="plan" value={typeof plan === "string" ? plan : ""} />
         <Field label={t("auth.fullName")}>
           <Input name="full_name" autoComplete="name" required />
         </Field>
@@ -28,7 +30,13 @@ export default async function SignupPage() {
           <Input name="password" type="password" autoComplete="new-password" minLength={8} required />
         </Field>
       </ActionForm>
-      <p className="mt-6 text-center text-sm text-stone-500">
+      <p className="mt-4 text-center text-xs text-stone-500">
+        {t("doctor.areDoctor")}{" "}
+        <Link href="/doctor/signup" className="font-medium text-emerald-700 hover:underline">
+          {t("doctor.doctorSignup")}
+        </Link>
+      </p>
+      <p className="mt-3 text-center text-sm text-stone-500">
         {t("auth.alreadyRegistered")}{" "}
         <Link href="/login" className="font-medium text-emerald-700 hover:underline">
           {t("auth.loginLink")}

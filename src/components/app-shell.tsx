@@ -13,6 +13,7 @@ export function AppShell({
   logoHref,
   title,
   subtitle,
+  titleSlot,
   nav,
   user,
   inAdmin = false,
@@ -22,6 +23,8 @@ export function AppShell({
   logoHref: string;
   title: string;
   subtitle?: string;
+  /** Replaces the plain title (e.g. the farm switcher). */
+  titleSlot?: ReactNode;
   nav: NavItem[];
   user: MenuUser;
   inAdmin?: boolean;
@@ -34,10 +37,14 @@ export function AppShell({
         <div className="flex h-14 items-center justify-between gap-3 px-4">
           <div className="flex min-w-0 items-center gap-3">
             <Logo href={logoHref} />
-            <div className="hidden min-w-0 border-l border-stone-200 pl-3 sm:block">
-              <p className="truncate text-sm font-semibold text-stone-900">{title}</p>
-              {subtitle && <p className="truncate text-xs text-stone-500">{subtitle}</p>}
-            </div>
+            {titleSlot ? (
+              <div className="min-w-0 border-l border-stone-200 pl-3">{titleSlot}</div>
+            ) : (
+              <div className="hidden min-w-0 border-l border-stone-200 pl-3 sm:block">
+                <p className="truncate text-sm font-semibold text-stone-900">{title}</p>
+                {subtitle && <p className="truncate text-xs text-stone-500">{subtitle}</p>}
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2">
             <LanguageSwitcher />

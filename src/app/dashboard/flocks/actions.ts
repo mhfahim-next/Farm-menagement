@@ -1,13 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireFarm } from "@/lib/auth";
+import { requireRole, STAFF } from "@/lib/auth";
 import { dbError, int, num, str } from "@/lib/form";
 import { getI18n } from "@/lib/i18n/server";
 import type { ActionState } from "@/lib/types";
 
 export async function addFlock(_: ActionState, formData: FormData): Promise<ActionState> {
-  const { supabase, farm } = await requireFarm();
+  const { supabase, farm } = await requireRole(STAFF);
   const { t } = await getI18n();
   const name = str(formData, "name");
   const initialCount = int(formData, "initial_count");
@@ -31,7 +31,7 @@ export async function addFlock(_: ActionState, formData: FormData): Promise<Acti
 }
 
 export async function updateFlockStatus(_: ActionState, formData: FormData): Promise<ActionState> {
-  const { supabase, farm } = await requireFarm();
+  const { supabase, farm } = await requireRole(STAFF);
   const { t } = await getI18n();
   const id = str(formData, "id");
   const status = str(formData, "status");
@@ -46,7 +46,7 @@ export async function updateFlockStatus(_: ActionState, formData: FormData): Pro
 
 /** One log per flock per day; saving the same day again overwrites it. */
 export async function saveDailyLog(_: ActionState, formData: FormData): Promise<ActionState> {
-  const { supabase, farm } = await requireFarm();
+  const { supabase, farm } = await requireRole(STAFF);
   const { t } = await getI18n();
   const flockId = str(formData, "flock_id");
   const logDate = str(formData, "log_date");

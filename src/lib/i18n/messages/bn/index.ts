@@ -1,10 +1,13 @@
 import type { EnMessages } from "../en";
 import { account } from "./account";
+import { adminplans } from "./adminplans";
 import { auth } from "./auth";
 import { common } from "./common";
 import { dairy } from "./dairy";
 import { farm } from "./farm";
 import { landing } from "./landing";
+import { plans } from "./plans";
+import { team } from "./team";
 
 // Typed against the English keys: a missing Bangla string is a compile error.
 export const bn: Record<keyof EnMessages, string> = {
@@ -14,4 +17,7 @@ export const bn: Record<keyof EnMessages, string> = {
   ...farm,
   ...dairy,
   ...account,
+  ...plans,
+  ...team,
+  ...adminplans,
 };

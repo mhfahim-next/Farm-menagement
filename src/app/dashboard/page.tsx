@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Badge, ButtonLink, Card, EmptyState, PageHeader, StatCard } from "@/components/ui";
+import { redirect } from "next/navigation";
 import { requireFarm } from "@/lib/auth";
 import { loadBreedingBoard } from "@/lib/breeding-data";
 import { milkingCategories } from "@/lib/cattle";
@@ -15,7 +16,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function OverviewPage() {
-  const { supabase, farm } = await requireFarm();
+  const { supabase, farm, role } = await requireFarm();
+  if (role === "vet") redirect("/dashboard/health");
   const { t, f, o, rows } = await getI18n();
   const day = today();
   const weekAgo = today(-6);

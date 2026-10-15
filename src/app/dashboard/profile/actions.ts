@@ -21,7 +21,7 @@ export async function updateProfile(_: ActionState, formData: FormData): Promise
     .eq("id", user.id);
   if (error) return { error: dbError(t, error) };
 
-  revalidatePath("/dashboard", "layout");
+  revalidatePath("/", "layout");
   return { success: t("profile.detailsSaved") };
 }
 
@@ -66,7 +66,7 @@ export async function saveAvatar(path: string): Promise<ActionState> {
     await supabase.storage.from("avatars").remove([old]);
   }
 
-  revalidatePath("/dashboard", "layout");
+  revalidatePath("/", "layout");
   return { success: t("profile.photoSaved") };
 }
 
@@ -82,6 +82,6 @@ export async function removeAvatar(): Promise<ActionState> {
   const old = before?.avatar_url?.startsWith(AVATAR_PREFIX) ? before.avatar_url.slice(AVATAR_PREFIX.length) : null;
   if (old && old.startsWith(`${user.id}/`)) await supabase.storage.from("avatars").remove([old]);
 
-  revalidatePath("/dashboard", "layout");
+  revalidatePath("/", "layout");
   return { success: t("profile.photoRemoved") };
 }

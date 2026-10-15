@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ActionForm } from "@/components/action-form";
 import { Card, EmptyState, Field, Input, PageHeader, Select, StatCard, Table, Td } from "@/components/ui";
-import { requireFarm } from "@/lib/auth";
+import { requireRole, STAFF } from "@/lib/auth";
 import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import type { Flock, FlockDailyLog } from "@/lib/types";
@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function FlockDetailPage({ params, searchParams }: PageProps<"/dashboard/flocks/[id]">) {
   const { id } = await params;
   const sp = await searchParams;
-  const { supabase, farm } = await requireFarm();
+  const { supabase, farm } = await requireRole(STAFF);
   const { t, f, o, options } = await getI18n();
 
   const [flockRes, logsRes] = await Promise.all([
@@ -45,7 +45,7 @@ export default async function FlockDetailPage({ params, searchParams }: PageProp
       <PageHeader
         title={flock.name}
         description={[
-          flock.breed,
+          flock.breed ? o("flock_breed", flock.breed) : null,
           flock.shed && t("flocks.shed", { s: flock.shed }),
           t("flocks.weeksOld", { n: flockAgeWeeks(flock) }),
           o("flock_status", flock.status),

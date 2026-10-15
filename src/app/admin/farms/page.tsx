@@ -3,6 +3,8 @@ import Link from "next/link";
 import { ConfirmForm } from "@/components/confirm-form";
 import { Badge, Card, EmptyState, Input, PageHeader, Select, Table, Td } from "@/components/ui";
 import { requireSuperAdmin } from "@/lib/auth";
+import { planName } from "@/lib/plan-utils";
+import { getPlans } from "@/lib/plans";
 import { getI18n } from "@/lib/i18n/server";
 import type { AdminFarmRow } from "@/lib/types";
 import { deleteFarm, setFarmPlan, setFarmSuspended } from "../actions";
@@ -13,11 +15,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 const PAGE_SIZE = 25;
-const plans = ["free", "pro", "business"] as const;
 
 export default async function AdminFarmsPage({ searchParams }: PageProps<"/admin/farms">) {
   const { supabase } = await requireSuperAdmin();
-  const { t, e, f } = await getI18n();
+  const { t, f, locale } = await getI18n();
+  const plans = await getPlans();
 
   const sp = await searchParams;
   const search = typeof sp.q === "string" ? sp.q.trim() : "";
@@ -75,7 +77,7 @@ export default async function AdminFarmsPage({ searchParams }: PageProps<"/admin
                       name="plan"
                       defaultValue={fm.plan}
                       className="w-auto py-1 text-xs"
-                      options={plans.map((p) => ({ value: p, label: e(p) }))}
+                      options={plans.filter((p) => p.active || p.key === fm.plan).map((p) => ({ value: p.key, label: planName(p, locale, p.key) }))}
                     />
                   </ConfirmForm>
                 </Td>

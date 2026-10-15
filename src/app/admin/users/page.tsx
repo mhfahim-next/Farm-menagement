@@ -6,7 +6,7 @@ import { Badge, Card, EmptyState, Input, PageHeader, Table, Td } from "@/compone
 import { requireSuperAdmin } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
 import type { AdminUserRow } from "@/lib/types";
-import { deleteUser, setSuperAdmin, setUserBanned } from "../actions";
+import { deleteUser, setDoctorVerified, setSuperAdmin, setUserBanned } from "../actions";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -70,6 +70,14 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
                           {u.full_name ?? "—"} {isMe && <span className="font-normal text-stone-500">{t("common.you")}</span>}
                         </span>
                         <span className="block truncate text-xs text-stone-500">{u.email}</span>
+                        {u.account_type === "doctor" && (
+                          <span className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                            <Badge tone={u.doctor_verified ? "green" : "amber"}>
+                              {u.doctor_verified ? `✓ ${t("doctor.badgeVerified")}` : t("admin.doctorBadge")}
+                            </Badge>
+                            {u.doctor_reg_no && <span className="text-xs text-stone-500">{t("admin.doctor.regNo", { no: u.doctor_reg_no })}</span>}
+                          </span>
+                        )}
                       </span>
                     </span>
                   </Td>
@@ -87,6 +95,14 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
                   <Td>
                     {!isMe && (
                       <span className="flex flex-wrap items-start gap-2">
+                        {u.account_type === "doctor" && (
+                          <ConfirmForm
+                            action={setDoctorVerified}
+                            fields={{ id: u.id, value: String(!u.doctor_verified) }}
+                            confirm={t(u.doctor_verified ? "admin.doctor.confirmUnverify" : "admin.doctor.confirmVerify", { who })}
+                            label={u.doctor_verified ? t("admin.doctor.unverify") : t("admin.doctor.verify")}
+                          />
+                        )}
                         <ConfirmForm
                           action={setUserBanned}
                           fields={{ id: u.id, banned: String(!u.banned) }}

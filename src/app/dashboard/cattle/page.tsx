@@ -4,8 +4,11 @@ import { notFound } from "next/navigation";
 import { ActionForm } from "@/components/action-form";
 import { ParentsFields } from "@/components/parents-fields";
 import { Badge, Card, EmptyState, Field, Input, PageHeader, Select, Table, Td, Textarea } from "@/components/ui";
-import { requireFarm } from "@/lib/auth";
-import { typeSexHint, type MotherCandidate } from "@/lib/cattle";
+import { LimitNotice } from "@/components/limit-notice";
+import { MANAGERS, requireFarm } from "@/lib/auth";
+import { getPlanContext } from "@/lib/plans";
+import { planName } from "@/lib/plan-utils";
+import { breedOptions, typeSexHint, type MotherCandidate } from "@/lib/cattle";
 import { ageInMonths } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import type { Cattle } from "@/lib/types";
@@ -19,10 +22,13 @@ export async function generateMetadata(): Promise<Metadata> {
 const statusFilters = ["active", "sold", "dead", "all"] as const;
 
 export default async function CattlePage({ searchParams }: PageProps<"/dashboard/cattle">) {
-  const { supabase, farm } = await requireFarm();
+  const { supabase, farm, role } = await requireFarm();
   if (!farm.has_dairy) notFound();
   const i18n = await getI18n();
-  const { t, e, o, options } = i18n;
+  const { t, e, o, options, locale } = i18n;
+  const canWrite = role !== "vet";
+  const { plan, usage, limits, states } = await getPlanContext();
+  const atLimit = states.cattle === "full" || states.cattle === "over";
 
   const { status: rawStatus, q } = await searchParams;
   const status = statusFilters.find((s) => s === rawStatus) ?? "active";
@@ -66,7 +72,7 @@ export default async function CattlePage({ searchParams }: PageProps<"/dashboard
     <>
       <PageHeader title={t("cattle.title")} description={t("cattle.desc")} />
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+      <div className={`grid gap-6 ${canWrite ? "lg:grid-cols-[1fr_340px]" : ""}`}>
         <Card>
           <form className="mb-4 flex flex-wrap gap-2">
             <Input name="q" defaultValue={search} placeholder={t("cattle.searchPlaceholder")} className="max-w-xs" />
@@ -103,7 +109,7 @@ export default async function CattlePage({ searchParams }: PageProps<"/dashboard
                   </Td>
                   <Td>{c.name ?? "—"}</Td>
                   <Td>{o("cattle_category", c.category)}</Td>
-                  <Td>{c.breed ?? "—"}</Td>
+                  <Td>{c.breed ? o("cattle_breed", c.breed) : "—"}</Td>
                   <Td>{age(c.date_of_birth)}</Td>
                   <Td>
                     <Badge tone={c.status === "active" ? "green" : c.status === "sold" ? "blue" : "red"}>
@@ -116,7 +122,18 @@ export default async function CattlePage({ searchParams }: PageProps<"/dashboard
           )}
         </Card>
 
+        {canWrite && (
         <Card title={t("cattle.addTitle")}>
+          <LimitNotice
+            t={t}
+            kind="cattle"
+            state={states.cattle}
+            used={usage.cattle}
+            max={limits.cattle}
+            plan={planName(plan, locale)}
+            canUpgrade={MANAGERS.includes(role)}
+          />
+          {!atLimit && (
           <ActionForm action={addCattle} submitLabel={t("cattle.addSubmit")}>
             <div className="grid grid-cols-2 gap-3">
               <Field label={t("cattle.tag")}>
@@ -130,7 +147,7 @@ export default async function CattlePage({ searchParams }: PageProps<"/dashboard
               <Select name="category" required options={options("cattle_category")} />
             </Field>
             <Field label={t("common.breed")}>
-              <Input name="breed" placeholder={t("cattle.breedPlaceholder")} />
+              <Select name="breed" options={breedOptions(i18n, "cattle_breed")} />
             </Field>
             <Field label={t("cattle.dob")}>
               <Input name="date_of_birth" type="date" />
@@ -148,7 +165,9 @@ export default async function CattlePage({ searchParams }: PageProps<"/dashboard
               <Textarea name="notes" rows={2} />
             </Field>
           </ActionForm>
+          )}
         </Card>
+        )}
       </div>
     </>
   );

@@ -47,6 +47,7 @@ export type MilkRecord = {
 
 export type HealthRecord = {
   id: string;
+  farm_id?: string;
   cattle_id: string;
   record_date: string;
   record_type: HealthRecordType;
@@ -143,6 +144,10 @@ export type AdminUserRow = {
   created_at: string;
   last_sign_in_at: string | null;
   farm_count: number;
+  account_type: "farmer" | "doctor";
+  doctor_reg_no: string | null;
+  doctor_specialty: string | null;
+  doctor_verified: boolean;
   total_count: number;
 };
 
@@ -185,5 +190,19 @@ export type AuditRow = {
   target_type: string | null;
   target_id: string | null;
   details: Record<string, unknown>;
+  created_at: string;
+};
+
+export type AdminRequestRow = {
+  id: string;
+  farm_id: string;
+  requested_by: string | null;
+  kind: "upgrade" | "support";
+  plan_requested: string | null;
+  subject: string | null;
+  message: string | null;
+  priority: boolean;
+  status: "open" | "approved" | "rejected" | "resolved";
+  admin_reply: string | null;
   created_at: string;
 };

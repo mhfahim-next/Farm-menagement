@@ -82,6 +82,7 @@ export const farm: Record<keyof typeof en, string> = {
   "cattle.colFat": "ফ্যাট %",
   "cattle.detailsTitle": "বিবরণ",
   "cattle.saveChanges": "পরিবর্তন সংরক্ষণ করুন",
+  "cattle.breedChoose": "জাত বেছে নিন…",
   "cattle.typeUnknown": "অজানা পশুর ধরন।",
   "cattle.typeHidden": "এই ধরনটি আর ব্যবহার করা যায় না। অন্য ধরন বেছে নিন।",
   "cattle.motherMustStayFemale": "এই পশুটি একজন মা হিসেবে লেখা আছে, তাই এর ধরন স্ত্রী পশুরই থাকতে হবে।",

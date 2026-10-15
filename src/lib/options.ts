@@ -2,6 +2,8 @@
 
 export const LIST_KEYS = [
   "cattle_category",
+  "cattle_breed",
+  "flock_breed",
   "cattle_status",
   "milk_session",
   "health_type",
@@ -14,6 +16,8 @@ export const LIST_KEYS = [
   "txn_module",
   "finance_category",
   "currency",
+  "member_role",
+  "doctor_specialty",
 ] as const;
 
 export type ListKey = (typeof LIST_KEYS)[number];

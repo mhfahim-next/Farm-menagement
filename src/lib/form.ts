@@ -30,10 +30,20 @@ const RULE_MESSAGES: Record<string, Parameters<I18n["t"]>[0]> = {
   "An animal cannot be its own mother.": "cattle.motherSelf",
 };
 
+const PLAN_LIMIT_KEYS = {
+  cattle: "plan.limit.cattle",
+  flocks: "plan.limit.flocks",
+  members: "plan.limit.members",
+  farms: "plan.limit.farms",
+} as const;
+
 /** Turns Postgres errors into messages a farmer can act on. */
 export function dbError(t: I18n["t"], error: { code?: string; message: string }) {
   const rule = RULE_MESSAGES[error.message];
   if (rule) return t(rule);
+  // Raised by the plan-limit triggers: "PLAN_LIMIT:cattle:25"
+  const limit = /^PLAN_LIMIT:(cattle|flocks|members|farms):(\d+)/.exec(error.message);
+  if (limit) return t(PLAN_LIMIT_KEYS[limit[1] as keyof typeof PLAN_LIMIT_KEYS], { n: Number(limit[2]) });
   if (error.code === "23505") return t("common.dbDuplicate");
   if (error.code === "23514") return t("common.dbRange");
   if (error.code === "42501") return t("common.dbForbidden");

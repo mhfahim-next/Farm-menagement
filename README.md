@@ -14,6 +14,11 @@ A multi-tenant farm management web app built with **Next.js 16 (App Router)** an
 
 - **Accounts & farms**: email sign-up/login, farm onboarding, one owner per farm, and a team roles model (owner / manager / worker / vet).
 - **Cattle register**: tag, name, breed, category, age, status, purchase info, search and filter. Record each animal's **mother** (dropdown of the farm's females, shown with their type, or "Unknown") and **father** (free text); the animal page shows a *Family* card with parents and calves.
+- **Breed dropdowns**: cattle and flock breed are admin-managed dropdowns (Local, Holstein Friesian, Jersey, Sahiwal, … / ISA Brown, Lohmann, Hy-Line, …). Older free-text breeds keep showing.
+- **Plans & limits** (Free / Pro / Business, shown live on the home page from the `plans` table). Limits are enforced by database triggers, so stale pages and the future mobile app cannot bypass them: Free allows 25 cattle. Users get a warning at 80 %, and at the limit the add form is replaced with an upgrade prompt.
+  - *Upgrade requests*: `/dashboard/plan` creates a request; a super admin approves it in *Admin → Requests* after the manual bKash/Nagad payment (instructions text is editable in *Admin → Plans*). No payment gateway is integrated yet.
+  - *Pro / Business*: more cattle, flocks and team seats, **CSV reports** (`/dashboard/reports`, blocked with 403 on Free). *Business*: **multiple farms** with a farm switcher, and a priority support inbox.
+- **Doctors (veterinarians)**: sign up at `/doctor/signup`, fill in a profile (specialty, licence, area), and a super admin verifies them. Farm owners invite doctors by email; a doctor accepts at `/invites` and sees all their farms in `/doctor`. Vets can read everything except finances and write only health and breeding records. Vets do not use team seats.
 - **Milk**: a milking sheet that records every cow for one session at once (morning/evening), with fat %, daily totals, and per-cow history.
 - **Health** (`/dashboard/health`): vaccines, pest/parasite control (tick & fly spray, pour-on), deworming and treatments.
   - Record for **one animal or the whole herd at once**, with quick-pick presets (FMD, HS, BQ, Anthrax, LSD, Rabies, Brucellosis, deworming, tick spray) that fill in the usual repeat interval.
@@ -44,13 +49,15 @@ A super admin controls the whole system from `/admin` (only they can open it; ev
 | Overview | Users, farms, active cattle/flocks, 30-day milk and eggs, farms per plan |
 | Users | Search; **suspend / restore** (signs them out immediately), **make / remove super admin**, delete |
 | Farms | Search; change **plan**, **suspend / restore** a farm (its members are locked out), delete a farm and all its data; open a farm's summary |
+| Plans | Edit plan prices, limits and payment instructions |
+| Requests | Approve / reject upgrade and support requests |
 | Dropdowns | Every dropdown in the app (see below) |
 | Audit log | Every admin action: who, what, when |
 | Announcement | A banner shown at the top of every user's dashboard, with separate English and Bangla text |
 
 ### Dropdowns
 
-All 13 dropdowns are stored in the database (`dropdown_options`), so web and mobile share them. In *Admin → Dropdowns* a super admin can rename options in English and Bangla, reorder them and hide them:
+All 17 dropdowns are stored in the database (`dropdown_options`), so web and mobile share them. In *Admin → Dropdowns* a super admin can rename options in English and Bangla, reorder them and hide them:
 
 - **Fully editable** (add new options too): animal type, income & expense categories, vaccine/treatment quick picks, heat signs, currencies.
 - **Fixed** (rename and reorder only, because the app's logic relies on the values): animal/flock status, milking session, health record type, breeding event, pregnancy result, transaction type and module.
