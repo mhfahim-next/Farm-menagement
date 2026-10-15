@@ -14,6 +14,7 @@ export function BreedingForm({
   cows,
   cattleId,
   defaultType = "heat",
+  checkDays,
 }: {
   action: (state: ActionState, formData: FormData) => Promise<ActionState>;
   today: string;
@@ -21,6 +22,7 @@ export function BreedingForm({
   cows?: { id: string; label: string }[];
   cattleId?: string;
   defaultType?: string;
+  checkDays: number;
 }) {
   const { t, options } = useI18n();
   const [type, setType] = useState(defaultType);
@@ -86,7 +88,7 @@ export function BreedingForm({
               <Input name="cost" type="number" min="0" step="0.01" inputMode="decimal" />
             </Field>
           </div>
-          <p className="rounded-lg bg-stone-50 px-3 py-2 text-xs text-stone-600">{t("breeding.aiHint")}</p>
+          <p className="rounded-lg bg-stone-50 px-3 py-2 text-xs text-stone-600">{t("breeding.aiHint", { days: checkDays })}</p>
         </>
       )}
 

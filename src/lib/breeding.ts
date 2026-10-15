@@ -4,7 +4,7 @@
 
 export const HEAT_CYCLE_DAYS = 21;
 export const GESTATION_DAYS = 283;
-/** When to check an inseminated cow for pregnancy. */
+/** Default for when to check an inseminated cow; a super admin can change it (system_settings). */
 export const PREGNANCY_CHECK_AFTER_DAYS = 45;
 /** Dry cows off this many days before calving. */
 export const DRY_OFF_BEFORE_CALVING_DAYS = 60;
@@ -68,7 +68,11 @@ export function daysBetween(from: string, to: string) {
 
 const isPositive = (r: string | null) => r?.trim().toLowerCase() === "positive";
 
-export function reproStatus(events: BreedingEventLite[], today: string): ReproStatus {
+export function reproStatus(
+  events: BreedingEventLite[],
+  today: string,
+  pregnancyCheckDays: number = PREGNANCY_CHECK_AFTER_DAYS,
+): ReproStatus {
   // Oldest → newest; ties broken by insertion time so same-day events keep order.
   const sorted = [...events].sort(
     (a, b) =>
@@ -107,7 +111,7 @@ export function reproStatus(events: BreedingEventLite[], today: string): ReproSt
       expectedCalving = lastInsem.expected_calving_date ?? addDays(lastInsem.event_date, GESTATION_DAYS);
     } else if (!lastCheck && !heatAfter) {
       state = "inseminated";
-      pregnancyCheckDue = addDays(lastInsem.event_date, PREGNANCY_CHECK_AFTER_DAYS);
+      pregnancyCheckDue = addDays(lastInsem.event_date, pregnancyCheckDays);
       returnToHeatBy = addDays(lastInsem.event_date, HEAT_CYCLE_DAYS);
     }
   }
