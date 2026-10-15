@@ -32,7 +32,7 @@ A multi-tenant farm management web app built with **Next.js 16 (App Router)** an
 - **Reminders**: the Overview page shows everything overdue or coming up in one *Needs attention* list.
 - **Bangla & English**: every page, form, message, date and number (Bangla digits and month names) is translated. Switch language from the top bar; the choice is remembered, and first-time visitors get Bangla if their browser prefers it.
 - **Dark & light mode**: toggle in the top bar, remembered per device, no flash on load.
-- **Top bar & avatar menu**: language and theme toggles beside the profile picture; the avatar opens *Dashboard / Profile / Admin panel (super admins) / Log out*.
+- **Left sidebar** (a slide-in menu on phones) holds the navigation; the **top bar** has language and theme toggles beside the profile picture; the avatar opens *Dashboard / Profile / Admin panel (super admins) / Log out*.
 - **Profile** (`/dashboard/profile`): upload a profile photo (cropped to a square, stored in Supabase Storage), edit name and phone, change password.
 - **Super admin panel** (`/admin`, see below).
 - **Layer flocks**: batches with breed, shed and age. Daily logs cover eggs, broken eggs, deaths, culls, feed and water.
