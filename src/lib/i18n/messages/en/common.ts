@@ -25,6 +25,7 @@ export const common = {
   "common.you": "(you)",
   "common.cow": "Cow",
   "common.litersShort": "{n} L",
+  "common.loading": "Loading…",
   "common.errorGeneric": "Something went wrong. Please try again.",
   "common.dbDuplicate": "A record with these details already exists.",
   "common.dbRange": "Some values are out of the allowed range.",

@@ -232,3 +232,24 @@ export function Table({
 export function Td({ children, className }: { children: ReactNode; className?: string }) {
   return <td className={cx("px-5 py-2.5 text-stone-700", className)}>{children}</td>;
 }
+
+export function Spinner({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={cx("h-4 w-4 animate-spin", className)} fill="none" aria-hidden>
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="3" className="opacity-25" />
+      <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** Full-area loader shown by loading.tsx while a page's data is fetched. */
+export function PageLoader({ label }: { label: string }) {
+  return (
+    <div role="status" data-testid="page-loader" className="grid min-h-[50vh] place-items-center">
+      <div className="flex flex-col items-center gap-3 text-stone-500">
+        <Spinner className="h-8 w-8 text-emerald-700" />
+        <span className="text-sm">{label}</span>
+      </div>
+    </div>
+  );
+}

@@ -31,6 +31,7 @@ A multi-tenant farm management web app built with **Next.js 16 (App Router)** an
   - Recording a calving can **register the calf** in the herd (linked to its mother) and promotes a heifer to cow.
 - **Reminders**: the Overview page shows everything overdue or coming up in one *Needs attention* list.
 - **Bangla & English**: every page, form, message, date and number (Bangla digits and month names) is translated. Switch language from the top bar; the choice is remembered, and first-time visitors get Bangla if their browser prefers it.
+- **Feedback**: toast pop-ups confirm every add / update / delete (and show errors on row actions), buttons show a spinner while saving, and the sidebar links and pages show a loader while data loads.
 - **Dark & light mode**: toggle in the top bar, remembered per device, no flash on load.
 - **Left sidebar** (a slide-in menu on phones) holds the navigation; the **top bar** has language and theme toggles beside the profile picture; the avatar opens *Dashboard / Profile / Admin panel (super admins) / Log out*.
 - **Profile** (`/dashboard/profile`): upload a profile photo (cropped to a square, stored in Supabase Storage), edit name and phone, change password.

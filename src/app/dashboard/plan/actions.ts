@@ -29,13 +29,16 @@ export async function requestUpgrade(_: ActionState, formData: FormData): Promis
   return { success: t("plan.requestSent") };
 }
 
-export async function cancelRequest(formData: FormData) {
+export async function cancelRequest(_: ActionState, formData: FormData): Promise<ActionState> {
   const { supabase } = await requireRole(MANAGERS);
+  const { t } = await getI18n();
   const id = str(formData, "id");
-  if (!id) return;
+  if (!id) return { error: t("common.errorGeneric") };
   // RLS only lets a farm manager delete a request that is still open.
-  await supabase.from("requests").delete().eq("id", id).eq("status", "open");
+  const { data, error } = await supabase.from("requests").delete().eq("id", id).eq("status", "open").select("id");
+  if (error || !data?.length) return { error: t("common.errorGeneric") };
   revalidatePath("/dashboard/plan");
+  return { success: t("plan.requestCancelled") };
 }
 
 export async function sendSupport(_: ActionState, formData: FormData): Promise<ActionState> {

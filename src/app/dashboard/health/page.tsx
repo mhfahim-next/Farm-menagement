@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { HealthForm } from "@/components/health-form";
-import { Badge, Button, Card, EmptyState, PageHeader, Select, StatCard, Table, Td } from "@/components/ui";
+import { ConfirmForm } from "@/components/confirm-form";
+import { Badge, Card, EmptyState, PageHeader, Select, StatCard, Table, Td } from "@/components/ui";
 import { requireFarm } from "@/lib/auth";
 import { today } from "@/lib/format";
 import { milkingCategories } from "@/lib/cattle";
@@ -98,12 +99,7 @@ export default async function HealthPage({ searchParams }: PageProps<"/dashboard
                       <span className="block text-xs text-stone-500">{f.date(d.record.next_due_date)}</span>
                     </Td>
                     <Td className="text-right">
-                      <form action={renewHealth}>
-                        <input type="hidden" name="id" value={d.record.id} />
-                        <Button type="submit" variant="secondary" className="px-3 py-1.5">
-                          {t("health.doneToday")}
-                        </Button>
-                      </form>
+                      <ConfirmForm action={renewHealth} fields={{ id: d.record.id }} label={t("health.doneToday")} />
                     </Td>
                   </tr>
                 ))}

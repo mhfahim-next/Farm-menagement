@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { ActionForm } from "@/components/action-form";
+import { ConfirmForm } from "@/components/confirm-form";
 import { UsageMeter } from "@/components/usage-meter";
-import { Badge, Button, Card, EmptyState, Field, Input, PageHeader, Textarea } from "@/components/ui";
+import { Badge, Card, EmptyState, Field, Input, PageHeader, Textarea } from "@/components/ui";
 import { MANAGERS, requireRole } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
 import { farmQuota, planFeatures, planName, priceText, USAGE_KEYS, type Plan } from "@/lib/plan-utils";
@@ -115,12 +116,7 @@ export default async function PlanPage({ searchParams }: PageProps<"/dashboard/p
       {pending && (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           <span>{t("plan.requestPending", { plan: nameOf(pending.plan_requested), date: f.date(pending.created_at) })}</span>
-          <form action={cancelRequest}>
-            <input type="hidden" name="id" value={pending.id} />
-            <Button type="submit" variant="secondary" className="px-3 py-1.5">
-              {t("plan.requestCancel")}
-            </Button>
-          </form>
+          <ConfirmForm action={cancelRequest} fields={{ id: pending.id }} label={t("plan.requestCancel")} />
         </div>
       )}
       <div className="grid gap-5 md:grid-cols-3">
