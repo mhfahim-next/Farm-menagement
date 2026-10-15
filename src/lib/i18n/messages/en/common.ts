@@ -115,4 +115,5 @@ export const common = {
   "age.lessThanMonth": "< 1 mo",
   "age.months": "{n} mo",
   "age.yearsMonths": "{y} yr {m} mo",
+  "common.edit": "Edit",
 } as const;

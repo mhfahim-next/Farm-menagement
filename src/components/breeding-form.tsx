@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { ActionState } from "@/lib/types";
+import type { ActionState, BreedingEvent } from "@/lib/types";
 import { ActionForm } from "./action-form";
 import { useI18n } from "./i18n-provider";
 import { Field, Input, Select, Textarea } from "./ui";
@@ -15,6 +15,7 @@ export function BreedingForm({
   cattleId,
   defaultType = "heat",
   checkDays,
+  record,
 }: {
   action: (state: ActionState, formData: FormData) => Promise<ActionState>;
   today: string;
@@ -23,16 +24,19 @@ export function BreedingForm({
   cattleId?: string;
   defaultType?: string;
   checkDays: number;
+  /** Edit mode: an existing event to change (its type cannot be changed). */
+  record?: BreedingEvent;
 }) {
   const { t, options } = useI18n();
-  const [type, setType] = useState(defaultType);
+  const [type, setType] = useState(record?.event_type ?? defaultType);
   // A newborn is usually a female non-milking type (heifer) by default.
   const calfTypes = options("cattle_category");
   const defaultCalfType =
     calfTypes.find((c) => c.meta.sex === "female" && !c.meta.milking)?.value ?? calfTypes[0]?.value ?? "";
 
   return (
-    <ActionForm action={action} submitLabel={t("breeding.submit")} className="grid gap-4">
+    <ActionForm action={action} submitLabel={record ? t("cattle.saveChanges") : t("breeding.submit")} className="grid gap-4">
+      {record && <input type="hidden" name="id" value={record.id} />}
       {cattleId ? (
         <input type="hidden" name="cattle_id" value={cattleId} />
       ) : (
@@ -55,11 +59,13 @@ export function BreedingForm({
             name="event_type"
             value={type}
             onChange={(e) => setType(e.target.value)}
+            disabled={!!record}
             options={options("breeding_event")}
           />
+          {record && <input type="hidden" name="event_type" value={record.event_type} />}
         </Field>
         <Field label={t("common.date")}>
-          <Input name="event_date" type="date" defaultValue={today} max={today} required />
+          <Input name="event_date" type="date" defaultValue={record?.event_date ?? today} max={today} required />
         </Field>
       </div>
 
@@ -68,7 +74,13 @@ export function BreedingForm({
           <legend className="mb-1 text-sm font-medium text-stone-700">{t("breeding.signsSeen")}</legend>
           {options("heat_sign").map((s) => (
             <label key={s.value} className="flex items-center gap-2 text-sm">
-              <input type="checkbox" name="heat_sign" value={s.value} className="accent-emerald-700" />
+              <input
+                type="checkbox"
+                name="heat_sign"
+                value={s.value}
+                defaultChecked={!!record?.heat_signs?.split(",").map((x) => x.trim()).includes(s.value)}
+                className="accent-emerald-700"
+              />
               {s.label}
             </label>
           ))}
@@ -78,17 +90,23 @@ export function BreedingForm({
       {type === "insemination" && (
         <>
           <Field label={t("breeding.bullSemen")}>
-            <Input name="bull_or_semen" placeholder={t("breeding.bullSemenPlaceholder")} />
+            <Input name="bull_or_semen" defaultValue={record?.bull_or_semen ?? ""} placeholder={t("breeding.bullSemenPlaceholder")} />
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label={t("breeding.technician")}>
-              <Input name="technician" />
+              <Input name="technician" defaultValue={record?.technician ?? ""} />
             </Field>
             <Field label={t("breeding.cost", { cur: currency })}>
-              <Input name="cost" type="number" min="0" step="0.01" inputMode="decimal" />
+              <Input name="cost" type="number" min="0" step="0.01" inputMode="decimal" defaultValue={record?.cost ?? ""} />
             </Field>
           </div>
-          <p className="rounded-lg bg-stone-50 px-3 py-2 text-xs text-stone-600">{t("breeding.aiHint", { days: checkDays })}</p>
+          {record ? (
+            <Field label={t("breeding.expectedCalving")} hint={t("breeding.expectedCalvingHint")}>
+              <Input name="expected_calving_date" type="date" defaultValue={record.expected_calving_date ?? ""} />
+            </Field>
+          ) : (
+            <p className="rounded-lg bg-stone-50 px-3 py-2 text-xs text-stone-600">{t("breeding.aiHint", { days: checkDays })}</p>
+          )}
         </>
       )}
 
@@ -98,17 +116,17 @@ export function BreedingForm({
             <Select
               name="result"
               required
-              defaultValue=""
+              defaultValue={record?.result ?? ""}
               options={[{ value: "", label: t("breeding.chooseResult") }, ...options("pregnancy_result")]}
             />
           </Field>
           <Field label={t("breeding.checkedBy")}>
-            <Input name="technician" placeholder={t("breeding.checkedByPlaceholder")} />
+            <Input name="technician" defaultValue={record?.technician ?? ""} placeholder={t("breeding.checkedByPlaceholder")} />
           </Field>
         </>
       )}
 
-      {type === "calving" && (
+      {type === "calving" && !record && (
         <fieldset className="grid gap-3 rounded-lg border border-stone-200 p-3">
           <legend className="px-1 text-sm font-medium text-stone-700">{t("breeding.calfLegend")}</legend>
           <div className="grid grid-cols-2 gap-3">
@@ -130,7 +148,7 @@ export function BreedingForm({
       )}
 
       <Field label={t("common.notes")}>
-        <Textarea name="notes" rows={2} />
+        <Textarea name="notes" rows={2} defaultValue={record?.notes ?? ""} />
       </Field>
     </ActionForm>
   );

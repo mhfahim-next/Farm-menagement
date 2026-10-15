@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ActionForm } from "@/components/action-form";
+import { ConfirmForm } from "@/components/confirm-form";
+import { DeleteButton } from "@/components/delete-animal";
 import { BreedingForm } from "@/components/breeding-form";
 import { ParentsFields } from "@/components/parents-fields";
 import { HealthForm } from "@/components/health-form";
 import { Badge, Card, EmptyState, Field, Input, PageHeader, Select, StatCard, Table, Td, Textarea } from "@/components/ui";
-import { requireFarm } from "@/lib/auth";
+import { MANAGERS, requireFarm } from "@/lib/auth";
 import { animalLabel, breedOptions, typeSexHint, type MotherCandidate } from "@/lib/cattle";
 import { heatSignsText, reproStatus } from "@/lib/breeding";
 import { getPregnancyCheckDays } from "@/lib/breeding-data";
@@ -16,7 +18,7 @@ import { getI18n } from "@/lib/i18n/server";
 import type { BreedingEvent, Cattle, HealthRecord, MilkRecord } from "@/lib/types";
 import { logBreedingEvent } from "../../breeding/actions";
 import { recordHealth } from "../../health/actions";
-import { updateCattle } from "../actions";
+import { archiveCattle, deleteCattle, restoreCattle, updateCattle } from "../actions";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -27,6 +29,7 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
   const { id } = await params;
   const { supabase, farm, role } = await requireFarm();
   const canWrite = role !== "vet";
+  const canDelete = MANAGERS.includes(role);
   const i18n = await getI18n();
   const { t, f, o, options } = i18n;
 
@@ -90,11 +93,45 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
         title={`${cow.tag_number}${cow.name ? ` · ${cow.name}` : ""}`}
         description={[o("cattle_category", cow.category), cow.breed ? o("cattle_breed", cow.breed) : null, ageText].filter(Boolean).join(" · ")}
         action={
-          <Link href="/dashboard/cattle" className="text-sm text-stone-500 hover:text-stone-900">
-            {t("cattle.allCattle")}
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            {canWrite &&
+              (cow.status === "archived" ? (
+                <ConfirmForm
+                  action={restoreCattle}
+                  fields={{ id: cow.id }}
+                  label={t("cattle.restore")}
+                  variant="secondary"
+                />
+              ) : (
+                <ConfirmForm
+                  action={archiveCattle}
+                  fields={{ id: cow.id }}
+                  label={t("cattle.archive")}
+                  confirm={t("cattle.archiveConfirm", { tag: cow.tag_number })}
+                  variant="secondary"
+                />
+              ))}
+            {canDelete && (
+              <DeleteButton
+                action={deleteCattle}
+                id={cow.id}
+                label={t("cattle.delete")}
+                confirm={t("cattle.deleteConfirm", { tag: cow.tag_number })}
+                redirectTo="/dashboard/cattle"
+              />
+            )}
+            <Link href="/dashboard/cattle" className="text-sm text-stone-500 hover:text-stone-900">
+              {t("cattle.allCattle")}
+            </Link>
+          </div>
         }
       />
+
+      {cow.status === "archived" && (
+        <p role="status" className="mb-4 rounded-lg bg-stone-100 px-4 py-3 text-sm text-stone-700">
+          {t("cattle.archivedNotice")}
+        </p>
+      )}
 
       {withdrawal && (
         <p className="mb-4 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-900">
@@ -130,7 +167,7 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
           {health.length === 0 ? (
             <EmptyState title={t("cattle.noHealth")} />
           ) : (
-            <Table head={[t("cattle.colDate"), t("cattle.colWhat"), t("cattle.colNextDue"), t("cattle.colCost")]}>
+            <Table head={[t("cattle.colDate"), t("cattle.colWhat"), t("cattle.colNextDue"), t("cattle.colCost"), ""]}>
               {health.map((h) => (
                 <tr key={h.id}>
                   <Td>{f.date(h.record_date)}</Td>
@@ -142,6 +179,11 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
                   </Td>
                   <Td>{f.date(h.next_due_date)}</Td>
                   <Td>{h.cost != null ? f.money(h.cost, farm.currency) : "—"}</Td>
+                  <Td className="text-right">
+                    <Link href={`/dashboard/health/${h.id}/edit`} className="text-sm text-emerald-700 hover:underline" data-testid="edit-health">
+                      {t("common.edit")}
+                    </Link>
+                  </Td>
                 </tr>
               ))}
             </Table>
@@ -172,7 +214,7 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
           {breeding.length === 0 ? (
             <EmptyState title={t("cattle.noBreeding")} />
           ) : (
-            <Table head={[t("cattle.colDate"), t("cattle.colEvent"), t("cattle.colDetails")]}>
+            <Table head={[t("cattle.colDate"), t("cattle.colEvent"), t("cattle.colDetails"), ""]}>
               {breeding.map((b) => (
                 <tr key={b.id}>
                   <Td>{f.date(b.event_date)}</Td>
@@ -187,6 +229,11 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
                     ]
                       .filter(Boolean)
                       .join(" · ") || "—"}
+                  </Td>
+                  <Td className="text-right">
+                    <Link href={`/dashboard/breeding/${b.id}/edit`} className="text-sm text-emerald-700 hover:underline" data-testid="edit-breeding">
+                      {t("common.edit")}
+                    </Link>
                   </Td>
                 </tr>
               ))}
