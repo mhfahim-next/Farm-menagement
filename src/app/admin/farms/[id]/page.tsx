@@ -16,7 +16,7 @@ export default async function AdminFarmDetailPage({ params }: PageProps<"/admin/
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const { supabase } = await requireSuperAdmin();
-  const { t, e, f } = await getI18n();
+  const { t, e, f, o } = await getI18n();
 
   const since = today(-29);
   const [farmRes, membersRes, cattleRes, flocksRes, milkRes, eggsRes] = await Promise.all([
@@ -55,8 +55,8 @@ export default async function AdminFarmDetailPage({ params }: PageProps<"/admin/
       <div className="mb-4 flex flex-wrap gap-2">
         <Badge tone={farm.suspended ? "red" : "green"}>{farm.suspended ? t("admin.statusSuspended") : t("admin.statusActive")}</Badge>
         <Badge tone="blue">{e(farm.plan)}</Badge>
-        {farm.has_dairy && <Badge>{e("dairy")}</Badge>}
-        {farm.has_layer && <Badge>{e("layer")}</Badge>}
+        {farm.has_dairy && <Badge>{o("txn_module", "dairy")}</Badge>}
+        {farm.has_layer && <Badge>{o("txn_module", "layer")}</Badge>}
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">

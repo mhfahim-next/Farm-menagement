@@ -153,6 +153,7 @@ export const dairy: Record<keyof typeof en, string> = {
   "breeding.calfTag": "বাছুরের ট্যাগ নং",
   "breeding.calfTagHint": "বাছুরটি আপনার পালে যোগ হবে।",
   "breeding.calfSex": "লিঙ্গ",
+  "breeding.calfType": "বাছুরের ধরন",
   "breeding.calfName": "বাছুরের নাম",
   "breeding.dryOffHint": "বাছুর হওয়ার আগে এই গাভীর দুধ দোহানো বন্ধ করুন, যাতে ওলান বিশ্রাম পায়।",
   "breeding.submit": "সংরক্ষণ করুন",

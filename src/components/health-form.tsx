@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { healthPresets, healthTypeOptions, nextDue } from "@/lib/health";
+import { nextDue } from "@/lib/health";
 import type { ActionState, HealthRecordType } from "@/lib/types";
 import { ActionForm } from "./action-form";
 import { useI18n } from "./i18n-provider";
 import { Field, Input, Select } from "./ui";
 
-export type PickerAnimal = { id: string; label: string; category: string };
+export type PickerAnimal = { id: string; label: string; milking: boolean };
 
 function AnimalPicker({ animals }: { animals: PickerAnimal[] }) {
   const { t } = useI18n();
@@ -25,7 +25,7 @@ function AnimalPicker({ animals }: { animals: PickerAnimal[] }) {
         <button type="button" className={chip} onClick={() => set(animals.map((a) => a.id))}>
           {t("health.selectAll")}
         </button>
-        <button type="button" className={chip} onClick={() => set(animals.filter((a) => a.category === "cow").map((a) => a.id))}>
+        <button type="button" className={chip} onClick={() => set(animals.filter((a) => a.milking).map((a) => a.id))}>
           {t("health.cowsOnly")}
         </button>
         <button type="button" className={chip} onClick={() => set([])}>
@@ -73,7 +73,8 @@ export function HealthForm({
   animals?: PickerAnimal[];
   cattleId?: string;
 }) {
-  const { t, e, f } = useI18n();
+  const { t, f, options } = useI18n();
+  const presets = options("health_preset");
   const [type, setType] = useState<HealthRecordType>("vaccination");
   const [product, setProduct] = useState("");
   const [interval, setInterval] = useState("");
@@ -82,11 +83,11 @@ export function HealthForm({
   const due = nextDue(date, Number(interval) || null);
 
   function applyPreset(id: string) {
-    const p = healthPresets.find((x) => x.id === id);
+    const p = presets.find((x) => x.value === id);
     if (!p) return;
-    setType(p.type);
-    setProduct(p.product);
-    setInterval(p.intervalDays > 0 ? String(p.intervalDays) : "");
+    if (p.meta.record_type) setType(p.meta.record_type as HealthRecordType);
+    setProduct(p.meta.product ?? p.label);
+    setInterval(p.meta.interval_days && p.meta.interval_days > 0 ? String(p.meta.interval_days) : "");
   }
 
   return (
@@ -101,9 +102,9 @@ export function HealthForm({
           className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm"
         >
           <option value="">{t("health.quickPickPlaceholder")}</option>
-          {healthPresets.map((p) => (
-            <option key={p.id} value={p.id}>
-              {t(`preset.${p.id}` as "preset.fmd")}
+          {presets.map((p) => (
+            <option key={p.value} value={p.value}>
+              {p.label}
             </option>
           ))}
         </select>
@@ -115,7 +116,7 @@ export function HealthForm({
             name="record_type"
             value={type}
             onChange={(ev) => setType(ev.target.value as HealthRecordType)}
-            options={healthTypeOptions(e)}
+            options={options("health_type")}
           />
         </Field>
         <Field label={t("health.dateGiven")}>

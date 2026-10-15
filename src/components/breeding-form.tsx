@@ -1,13 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { HEAT_SIGNS } from "@/lib/breeding";
 import type { ActionState } from "@/lib/types";
 import { ActionForm } from "./action-form";
 import { useI18n } from "./i18n-provider";
 import { Field, Input, Select, Textarea } from "./ui";
 
-const eventTypes = ["heat", "insemination", "pregnancy_check", "calving", "dry_off"] as const;
 
 export function BreedingForm({
   action,
@@ -24,8 +22,12 @@ export function BreedingForm({
   cattleId?: string;
   defaultType?: string;
 }) {
-  const { t } = useI18n();
+  const { t, options } = useI18n();
   const [type, setType] = useState(defaultType);
+  // A newborn is usually a female non-milking type (heifer) by default.
+  const calfTypes = options("cattle_category");
+  const defaultCalfType =
+    calfTypes.find((c) => c.meta.sex === "female" && !c.meta.milking)?.value ?? calfTypes[0]?.value ?? "";
 
   return (
     <ActionForm action={action} submitLabel={t("breeding.submit")} className="grid gap-4">
@@ -51,7 +53,7 @@ export function BreedingForm({
             name="event_type"
             value={type}
             onChange={(e) => setType(e.target.value)}
-            options={eventTypes.map((v) => ({ value: v, label: t(`breeding.opt.${v}`) }))}
+            options={options("breeding_event")}
           />
         </Field>
         <Field label={t("common.date")}>
@@ -62,10 +64,10 @@ export function BreedingForm({
       {type === "heat" && (
         <fieldset className="grid gap-1.5">
           <legend className="mb-1 text-sm font-medium text-stone-700">{t("breeding.signsSeen")}</legend>
-          {HEAT_SIGNS.map((s) => (
-            <label key={s} className="flex items-center gap-2 text-sm">
-              <input type="checkbox" name="heat_sign" value={s} className="accent-emerald-700" />
-              {t(`sign.${s}`)}
+          {options("heat_sign").map((s) => (
+            <label key={s.value} className="flex items-center gap-2 text-sm">
+              <input type="checkbox" name="heat_sign" value={s.value} className="accent-emerald-700" />
+              {s.label}
             </label>
           ))}
         </fieldset>
@@ -95,12 +97,7 @@ export function BreedingForm({
               name="result"
               required
               defaultValue=""
-              options={[
-                { value: "", label: t("breeding.chooseResult") },
-                { value: "positive", label: t("breeding.resultPositive") },
-                { value: "negative", label: t("breeding.resultNegative") },
-                { value: "uncertain", label: t("breeding.resultUncertain") },
-              ]}
+              options={[{ value: "", label: t("breeding.chooseResult") }, ...options("pregnancy_result")]}
             />
           </Field>
           <Field label={t("breeding.checkedBy")}>
@@ -116,14 +113,8 @@ export function BreedingForm({
             <Field label={t("breeding.calfTag")} hint={t("breeding.calfTagHint")}>
               <Input name="calf_tag" />
             </Field>
-            <Field label={t("breeding.calfSex")}>
-              <Select
-                name="calf_sex"
-                options={[
-                  { value: "female", label: t("enum.female") },
-                  { value: "male", label: t("enum.male") },
-                ]}
-              />
+            <Field label={t("breeding.calfType")}>
+              <Select name="calf_category" defaultValue={defaultCalfType} options={calfTypes} />
             </Field>
           </div>
           <Field label={t("breeding.calfName")}>

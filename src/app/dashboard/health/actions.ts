@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireFarm } from "@/lib/auth";
 import { dbError, int, num, str } from "@/lib/form";
-import { healthTypes, nextDue } from "@/lib/health";
+import { nextDue } from "@/lib/health";
 import { getI18n } from "@/lib/i18n/server";
 import { today } from "@/lib/format";
 import type { ActionState, HealthRecord } from "@/lib/types";
@@ -11,14 +11,14 @@ import type { ActionState, HealthRecord } from "@/lib/types";
 /** Records one vaccine / pesticide / treatment for one or many animals. */
 export async function recordHealth(_: ActionState, formData: FormData): Promise<ActionState> {
   const { supabase, farm } = await requireFarm();
-  const { t } = await getI18n();
+  const { t, options } = await getI18n();
 
   const cattleIds = [...new Set(formData.getAll("cattle_id").filter((v): v is string => typeof v === "string" && v !== ""))];
   const type = str(formData, "record_type");
   const product = str(formData, "product");
   const recordDate = str(formData, "record_date");
   if (cattleIds.length === 0) return { error: t("health.selectOne") };
-  if (!type || !(healthTypes as string[]).includes(type)) return { error: t("health.chooseWhat") };
+  if (!type || !options("health_type").some((x) => x.value === type)) return { error: t("health.chooseWhat") };
   if (!product) return { error: t("health.enterProduct") };
   if (!recordDate) return { error: t("health.chooseDate") };
   if (recordDate > today()) return { error: t("health.dateFuture") };

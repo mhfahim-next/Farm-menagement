@@ -2,19 +2,22 @@
 
 import { createContext, useContext, useMemo, type ReactNode } from "react";
 import { createI18n, type I18n, type Locale, type Messages } from "@/lib/i18n/core";
+import type { OptionRow } from "@/lib/options";
 
 const I18nContext = createContext<I18n | null>(null);
 
 export function I18nProvider({
   locale,
   messages,
+  optionRows,
   children,
 }: {
   locale: Locale;
   messages: Messages;
+  optionRows: OptionRow[];
   children: ReactNode;
 }) {
-  const value = useMemo(() => createI18n(locale, messages), [locale, messages]);
+  const value = useMemo(() => createI18n(locale, messages, optionRows), [locale, messages, optionRows]);
   return <I18nContext value={value}>{children}</I18nContext>;
 }
 

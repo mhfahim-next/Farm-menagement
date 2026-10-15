@@ -22,7 +22,6 @@ export async function loadBreedingBoard({ supabase, farm }: Pick<FarmContext, "s
       .eq("farm_id", farm.id)
       .eq("status", "active")
       .eq("sex", "female")
-      .in("category", ["cow", "heifer"])
       .is("deleted_at", null)
       .order("tag_number"),
     supabase

@@ -44,8 +44,20 @@ A super admin controls the whole system from `/admin` (only they can open it; ev
 | Overview | Users, farms, active cattle/flocks, 30-day milk and eggs, farms per plan |
 | Users | Search; **suspend / restore** (signs them out immediately), **make / remove super admin**, delete |
 | Farms | Search; change **plan**, **suspend / restore** a farm (its members are locked out), delete a farm and all its data; open a farm's summary |
+| Dropdowns | Every dropdown in the app (see below) |
 | Audit log | Every admin action: who, what, when |
 | Announcement | A banner shown at the top of every user's dashboard, with separate English and Bangla text |
+
+### Dropdowns
+
+All 13 dropdowns are stored in the database (`dropdown_options`), so web and mobile share them. In *Admin → Dropdowns* a super admin can rename options in English and Bangla, reorder them and hide them:
+
+- **Fully editable** (add new options too): animal type, income & expense categories, vaccine/treatment quick picks, heat signs, currencies.
+- **Fixed** (rename and reorder only, because the app's logic relies on the values): animal/flock status, milking session, health record type, breeding event, pregnancy result, transaction type and module.
+
+Options are never deleted: a hidden option disappears from forms, but older records keep showing its name.
+
+**Animal type sets the sex.** By default the types are Cow (গাভী) and Heifer (বকনা), which are female, and Bull (ষাঁড়), which is male. There is no separate sex field. Each type has a *sex* and a *milking animal* setting; milking types appear on the milking sheet.
 
 **Create your first super admin** (a normal user must sign up first), in the Supabase SQL editor:
 

@@ -5,7 +5,8 @@ import { HealthForm } from "@/components/health-form";
 import { Badge, Button, Card, EmptyState, PageHeader, Select, StatCard, Table, Td } from "@/components/ui";
 import { requireFarm } from "@/lib/auth";
 import { today } from "@/lib/format";
-import { dueItems, dueLabel, healthTypeOptions } from "@/lib/health";
+import { milkingCategories } from "@/lib/cattle";
+import { dueItems, dueLabel } from "@/lib/health";
 import { getI18n } from "@/lib/i18n/server";
 import type { HealthRecord } from "@/lib/types";
 import { recordHealth, renewHealth } from "./actions";
@@ -26,10 +27,10 @@ const typeTone = {
 export default async function HealthPage({ searchParams }: PageProps<"/dashboard/health">) {
   const { supabase, farm } = await requireFarm();
   if (!farm.has_dairy) notFound();
-  const { t, e, f } = await getI18n();
+  const { t, f, o, options, rows } = await getI18n();
 
   const sp = await searchParams;
-  const typeOptions = healthTypeOptions(e);
+  const typeOptions = options("health_type");
   const typeFilter = typeOptions.find((o) => o.value === sp.type)?.value;
 
   let historyQuery = supabase
@@ -55,6 +56,7 @@ export default async function HealthPage({ searchParams }: PageProps<"/dashboard
     return c ? `${c.tag_number}${c.name ? ` · ${c.name}` : ""}` : "—";
   };
 
+  const milking = milkingCategories(rows);
   const day = today();
   const due = dueItems((scheduleRes.data ?? []) as HealthRecord[], day, 30).filter(
     (d) => byId.get(d.record.cattle_id)?.status === "active",
@@ -89,7 +91,7 @@ export default async function HealthPage({ searchParams }: PageProps<"/dashboard
                     </Td>
                     <Td>
                       {d.record.product ?? d.record.description}
-                      <span className="block text-xs text-stone-500">{e(d.record.record_type)}</span>
+                      <span className="block text-xs text-stone-500">{o("health_type", d.record.record_type)}</span>
                     </Td>
                     <Td>
                       <Badge tone={d.overdue ? "red" : d.daysUntilDue <= 7 ? "amber" : "default"}>{dueLabel(t, d.daysUntilDue)}</Badge>
@@ -136,7 +138,7 @@ export default async function HealthPage({ searchParams }: PageProps<"/dashboard
                       </Link>
                     </Td>
                     <Td>
-                      <Badge tone={typeTone[h.record_type]}>{e(h.record_type)}</Badge>
+                      <Badge tone={typeTone[h.record_type]}>{o("health_type", h.record_type)}</Badge>
                       <span className="mt-0.5 block">{h.product ?? h.description}</span>
                       {h.dose && <span className="block text-xs text-stone-500">{h.dose}</span>}
                     </Td>
@@ -160,7 +162,7 @@ export default async function HealthPage({ searchParams }: PageProps<"/dashboard
               animals={active.map((c) => ({
                 id: c.id,
                 label: `${c.tag_number}${c.name ? ` · ${c.name}` : ""}`,
-                category: c.category,
+                milking: milking.includes(c.category),
               }))}
             />
           )}

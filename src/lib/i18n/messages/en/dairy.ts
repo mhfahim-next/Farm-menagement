@@ -153,6 +153,7 @@ export const dairy = {
   "breeding.calfTag": "Calf tag no.",
   "breeding.calfTagHint": "Adds the calf to your herd.",
   "breeding.calfSex": "Sex",
+  "breeding.calfType": "Calf type",
   "breeding.calfName": "Calf name",
   "breeding.dryOffHint": "Stop milking this cow ahead of calving to let her udder rest.",
   "breeding.submit": "Save",
