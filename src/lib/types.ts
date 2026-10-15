@@ -25,7 +25,7 @@ export type Cattle = {
   sex: "female" | "male";
   /** Value from the admin-managed cattle_category list. */
   category: string;
-  status: "active" | "sold" | "dead";
+  status: "active" | "sold" | "dead" | "archived";
   date_of_birth: string | null;
   purchase_date: string | null;
   purchase_price: number | null;

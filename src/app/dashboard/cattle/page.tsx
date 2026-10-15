@@ -19,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("cattle.meta") };
 }
 
-const statusFilters = ["active", "sold", "dead", "all"] as const;
+const statusFilters = ["active", "sold", "dead", "archived", "all"] as const;
 
 export default async function CattlePage({ searchParams }: PageProps<"/dashboard/cattle">) {
   const { supabase, farm, role } = await requireFarm();

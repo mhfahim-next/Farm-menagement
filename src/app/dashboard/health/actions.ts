@@ -50,6 +50,49 @@ export async function recordHealth(_: ActionState, formData: FormData): Promise<
   return { success: t("health.recorded", { product, n: rows.length }) };
 }
 
+/** Edits one existing record (any member who can write health records, including vets). */
+export async function updateHealth(_: ActionState, formData: FormData): Promise<ActionState> {
+  const { supabase, farm } = await requireFarm();
+  const { t, options } = await getI18n();
+
+  const id = str(formData, "id");
+  const type = str(formData, "record_type");
+  const product = str(formData, "product");
+  const recordDate = str(formData, "record_date");
+  if (!id) return { error: t("common.errorGeneric") };
+  if (!type || !options("health_type").some((x) => x.value === type)) return { error: t("health.chooseWhat") };
+  if (!product) return { error: t("health.enterProduct") };
+  if (!recordDate) return { error: t("health.chooseDate") };
+  if (recordDate > today()) return { error: t("health.dateFuture") };
+  const interval = int(formData, "interval_days");
+  if (interval !== null && interval <= 0) return { error: t("health.intervalMin") };
+
+  const { data, error } = await supabase
+    .from("health_records")
+    .update({
+      record_date: recordDate,
+      record_type: type,
+      description: str(formData, "description") ?? product,
+      product,
+      dose: str(formData, "dose"),
+      batch_number: str(formData, "batch_number"),
+      interval_days: interval,
+      next_due_date: nextDue(recordDate, interval),
+      medicine: product,
+      vet_name: str(formData, "vet_name"),
+      cost: num(formData, "cost"),
+      withdrawal_until: str(formData, "withdrawal_until"),
+    })
+    .eq("id", id)
+    .eq("farm_id", farm.id)
+    .select("id");
+  if (error) return { error: dbError(t, error) };
+  if (!data?.length) return { error: t("health.recordMissing") };
+
+  revalidatePath("/dashboard", "layout");
+  return { success: t("health.updated", { product }) };
+}
+
 /** "Done today": repeats a scheduled record and pushes the next due date out. */
 export async function renewHealth(_: ActionState, formData: FormData): Promise<ActionState> {
   const { supabase, farm } = await requireFarm();

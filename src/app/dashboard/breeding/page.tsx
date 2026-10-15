@@ -152,7 +152,7 @@ export default async function BreedingPage() {
             {recent.length === 0 ? (
               <EmptyState title={t("breeding.noEvents")} />
             ) : (
-              <Table head={[t("breeding.colDate"), t("breeding.colCow"), t("breeding.colEvent"), t("breeding.colDetails")]}>
+              <Table head={[t("breeding.colDate"), t("breeding.colCow"), t("breeding.colEvent"), t("breeding.colDetails"), ""]}>
                 {recent.map((ev) => {
                   const cow = byId.get(ev.cattle_id);
                   const details = [
@@ -168,6 +168,11 @@ export default async function BreedingPage() {
                       <Td>{cow ? cowLabel(cow) : "—"}</Td>
                       <Td>{o("breeding_event", ev.event_type)}</Td>
                       <Td className="text-xs">{details.join(" · ") || "—"}</Td>
+                      <Td className="text-right">
+                        <Link href={`/dashboard/breeding/${ev.id}/edit`} className="text-sm text-emerald-700 hover:underline" data-testid="edit-breeding">
+                          {t("common.edit")}
+                        </Link>
+                      </Td>
                     </tr>
                   );
                 })}

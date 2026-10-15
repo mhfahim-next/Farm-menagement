@@ -170,4 +170,12 @@ export const dairy: Record<keyof typeof en, string> = {
   "breeding.calfFailed": "বাছুর প্রসব সংরক্ষিত হয়েছে, কিন্তু বাছুরটি যোগ করা যায়নি: {error}",
   "breeding.aiSaved": "প্রজনন লেখা হয়েছে। বাছুর হওয়ার সম্ভাব্য তারিখ {date}।",
   "breeding.heatSaved": "গরম লেখা হয়েছে। পরবর্তী গরম হতে পারে প্রায় {date}।",
+  "health.editTitle": "স্বাস্থ্য রেকর্ড সম্পাদনা",
+  "health.updated": "{product} আপডেট হয়েছে।",
+  "health.recordMissing": "রেকর্ডটি আর নেই।",
+  "breeding.editTitle": "প্রজনন রেকর্ড সম্পাদনা",
+  "breeding.updated": "প্রজনন রেকর্ড আপডেট হয়েছে।",
+  "breeding.recordMissing": "রেকর্ডটি আর নেই।",
+  "breeding.expectedCalving": "বাছুর হওয়ার সম্ভাব্য তারিখ",
+  "breeding.expectedCalvingHint": "ফাঁকা রাখলে প্রজননের তারিখ থেকে হিসাব হবে।",
 };

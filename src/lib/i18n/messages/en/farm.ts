@@ -255,4 +255,13 @@ export const farm = {
   "settings.nameRequired": "Farm name is required.",
   "settings.keepOne": "Keep at least one module enabled.",
   "settings.saved": "Farm settings saved.",
+  "cattle.archive": "Archive",
+  "cattle.restore": "Restore",
+  "cattle.delete": "Delete",
+  "cattle.archiveConfirm": "Archive {tag}? It is hidden from lists and no longer counts toward your plan limit. All its records are kept and you can restore it any time. The tag number stays reserved.",
+  "cattle.deleteConfirm": "Permanently delete {tag} and ALL its milk, health and breeding records? This cannot be undone. Use Archive instead if you only want to hide it.",
+  "cattle.archivedToast": "{tag} archived.",
+  "cattle.restoredToast": "{tag} restored.",
+  "cattle.deletedToast": "{tag} deleted.",
+  "cattle.archivedNotice": "This animal is archived: it is hidden from lists and not counted in your plan. Restore it to use it again.",
 } as const;

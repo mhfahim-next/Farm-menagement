@@ -170,4 +170,12 @@ export const dairy = {
   "breeding.calfFailed": "Calving was saved, but the calf could not be added: {error}",
   "breeding.aiSaved": "Insemination recorded. Expected calving {date}.",
   "breeding.heatSaved": "Heat recorded. Next heat expected around {date}.",
+  "health.editTitle": "Edit health record",
+  "health.updated": "{product} updated.",
+  "health.recordMissing": "That record no longer exists.",
+  "breeding.editTitle": "Edit breeding record",
+  "breeding.updated": "Breeding record updated.",
+  "breeding.recordMissing": "That record no longer exists.",
+  "breeding.expectedCalving": "Expected calving date",
+  "breeding.expectedCalvingHint": "Leave empty to calculate it from the insemination date.",
 } as const;

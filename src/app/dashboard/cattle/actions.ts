@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireRole, STAFF } from "@/lib/auth";
+import { MANAGERS, requireRole, STAFF } from "@/lib/auth";
 import { dbError, num, str } from "@/lib/form";
 import { getI18n } from "@/lib/i18n/server";
 import type { ActionState } from "@/lib/types";
@@ -93,4 +93,53 @@ export async function updateCattle(_: ActionState, formData: FormData): Promise<
   revalidatePath(`/dashboard/cattle/${id}`);
   revalidatePath("/dashboard/cattle");
   return { success: t("cattle.saved") };
+}
+
+async function setStatus(formData: FormData, status: "archived" | "active"): Promise<ActionState> {
+  const { supabase, farm } = await requireRole(STAFF);
+  const { t } = await getI18n();
+  const id = str(formData, "id");
+  if (!id) return { error: t("cattle.missing") };
+
+  const { data, error } = await supabase
+    .from("cattle")
+    .update({ status })
+    .eq("id", id)
+    .eq("farm_id", farm.id)
+    .select("tag_number");
+  if (error) return { error: dbError(t, error) };
+  if (!data?.length) return { error: t("cattle.missing") };
+
+  revalidatePath("/dashboard", "layout");
+  return { success: t(status === "archived" ? "cattle.archivedToast" : "cattle.restoredToast", { tag: data[0].tag_number }) };
+}
+
+/** Hides an animal from lists and pickers but keeps all its records. */
+export async function archiveCattle(_: ActionState, formData: FormData): Promise<ActionState> {
+  return setStatus(formData, "archived");
+}
+
+/** Brings an archived animal back (the plan limit is checked by the database). */
+export async function restoreCattle(_: ActionState, formData: FormData): Promise<ActionState> {
+  return setStatus(formData, "active");
+}
+
+/** Permanently deletes an animal with its milk, health and breeding records. Owners and managers only. */
+export async function deleteCattle(_: ActionState, formData: FormData): Promise<ActionState> {
+  const { supabase, farm } = await requireRole(MANAGERS);
+  const { t } = await getI18n();
+  const id = str(formData, "id");
+  if (!id) return { error: t("cattle.missing") };
+
+  const { data, error } = await supabase
+    .from("cattle")
+    .delete()
+    .eq("id", id)
+    .eq("farm_id", farm.id)
+    .select("tag_number");
+  if (error) return { error: dbError(t, error) };
+  if (!data?.length) return { error: t("cattle.missing") };
+
+  revalidatePath("/dashboard", "layout");
+  return { success: t("cattle.deletedToast", { tag: data[0].tag_number }) };
 }

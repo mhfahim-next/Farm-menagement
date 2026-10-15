@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { nextDue } from "@/lib/health";
-import type { ActionState, HealthRecordType } from "@/lib/types";
+import type { ActionState, HealthRecord, HealthRecordType } from "@/lib/types";
 import { ActionForm } from "./action-form";
 import { useI18n } from "./i18n-provider";
 import { Field, Input, Select } from "./ui";
@@ -66,19 +66,22 @@ export function HealthForm({
   currency,
   animals,
   cattleId,
+  record,
 }: {
   action: (state: ActionState, formData: FormData) => Promise<ActionState>;
   today: string;
   currency: string;
   animals?: PickerAnimal[];
   cattleId?: string;
+  /** Edit mode: an existing record to change. */
+  record?: HealthRecord;
 }) {
   const { t, f, options } = useI18n();
   const presets = options("health_preset");
-  const [type, setType] = useState<HealthRecordType>("vaccination");
-  const [product, setProduct] = useState("");
-  const [interval, setInterval] = useState("");
-  const [date, setDate] = useState(today);
+  const [type, setType] = useState<HealthRecordType>(record?.record_type ?? "vaccination");
+  const [product, setProduct] = useState(record ? (record.product ?? record.description) : "");
+  const [interval, setInterval] = useState(record?.interval_days ? String(record.interval_days) : "");
+  const [date, setDate] = useState(record?.record_date ?? today);
 
   const due = nextDue(date, Number(interval) || null);
 
@@ -91,10 +94,12 @@ export function HealthForm({
   }
 
   return (
-    <ActionForm action={action} submitLabel={t("health.submit")} className="grid gap-4">
+    <ActionForm action={action} submitLabel={record ? t("cattle.saveChanges") : t("health.submit")} className="grid gap-4">
       {cattleId && <input type="hidden" name="cattle_id" value={cattleId} />}
+      {record && <input type="hidden" name="id" value={record.id} />}
       {animals && <AnimalPicker animals={animals} />}
 
+      {!record && (
       <Field label={t("health.quickPick")}>
         <select
           defaultValue=""
@@ -109,6 +114,7 @@ export function HealthForm({
           ))}
         </select>
       </Field>
+      )}
 
       <div className="grid grid-cols-2 gap-3">
         <Field label={t("common.type")}>
@@ -137,27 +143,27 @@ export function HealthForm({
 
       <div className="grid grid-cols-2 gap-3">
         <Field label={t("health.dose")}>
-          <Input name="dose" placeholder={t("health.dosePlaceholder")} />
+          <Input name="dose" defaultValue={record?.dose ?? ""} placeholder={t("health.dosePlaceholder")} />
         </Field>
         <Field label={t("health.batch")}>
-          <Input name="batch_number" />
+          <Input name="batch_number" defaultValue={record?.batch_number ?? ""} />
         </Field>
         <Field label={t("health.givenBy")}>
-          <Input name="vet_name" />
+          <Input name="vet_name" defaultValue={record?.vet_name ?? ""} />
         </Field>
         <Field label={t("health.costPerAnimal", { cur: currency })}>
-          <Input name="cost" type="number" min="0" step="0.01" inputMode="decimal" />
+          <Input name="cost" type="number" min="0" step="0.01" inputMode="decimal" defaultValue={record?.cost ?? ""} />
         </Field>
       </div>
 
       {(type === "treatment" || type === "parasite_control") && (
         <Field label={t("health.withdrawalUntil")} hint={t("health.withdrawalHint")}>
-          <Input name="withdrawal_until" type="date" />
+          <Input name="withdrawal_until" type="date" defaultValue={record?.withdrawal_until ?? ""} />
         </Field>
       )}
 
       <Field label={t("common.notes")}>
-        <Input name="description" placeholder={t("health.notesPlaceholder")} />
+        <Input name="description" defaultValue={record && record.description !== (record.product ?? "") ? record.description : ""} placeholder={t("health.notesPlaceholder")} />
       </Field>
     </ActionForm>
   );

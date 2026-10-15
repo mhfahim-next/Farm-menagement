@@ -109,3 +109,56 @@ export async function logBreedingEvent(_: ActionState, formData: FormData): Prom
   revalidatePath("/dashboard", "layout");
   return { success: message };
 }
+
+/** Edits an existing event. The event type is fixed (a calving also created a calf, a heat has no result, …). */
+export async function updateBreedingEvent(_: ActionState, formData: FormData): Promise<ActionState> {
+  const { supabase, farm } = await requireFarm();
+  const { t } = await getI18n();
+
+  const id = str(formData, "id");
+  const eventDate = str(formData, "event_date");
+  if (!id) return { error: t("common.errorGeneric") };
+  if (!eventDate) return { error: t("breeding.chooseDate") };
+  if (eventDate > today()) return { error: t("breeding.dateFuture") };
+
+  const { data: existing } = await supabase
+    .from("breeding_events")
+    .select("event_type")
+    .eq("id", id)
+    .eq("farm_id", farm.id)
+    .maybeSingle();
+  if (!existing) return { error: t("breeding.recordMissing") };
+  const eventType = existing.event_type as string;
+
+  const result = eventType === "pregnancy_check" ? (str(formData, "result")?.toLowerCase() ?? null) : null;
+  if (eventType === "pregnancy_check" && (!result || !PREGNANCY_RESULTS.includes(result))) {
+    return { error: t("breeding.chooseResultError") };
+  }
+
+  let expected: string | null = null;
+  if (eventType === "insemination") expected = str(formData, "expected_calving_date") ?? addDays(eventDate, GESTATION_DAYS);
+
+  const heatSigns = formData
+    .getAll("heat_sign")
+    .filter((v): v is string => typeof v === "string" && v !== "")
+    .join(", ");
+
+  const { error } = await supabase
+    .from("breeding_events")
+    .update({
+      event_date: eventDate,
+      bull_or_semen: eventType === "insemination" ? str(formData, "bull_or_semen") : null,
+      technician: eventType === "insemination" || eventType === "pregnancy_check" ? str(formData, "technician") : null,
+      cost: eventType === "insemination" ? num(formData, "cost") : null,
+      heat_signs: eventType === "heat" ? heatSigns || null : null,
+      result,
+      expected_calving_date: expected,
+      notes: str(formData, "notes"),
+    })
+    .eq("id", id)
+    .eq("farm_id", farm.id);
+  if (error) return { error: dbError(t, error) };
+
+  revalidatePath("/dashboard", "layout");
+  return { success: t("breeding.updated") };
+}

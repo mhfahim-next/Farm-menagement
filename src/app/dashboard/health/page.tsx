@@ -124,7 +124,7 @@ export default async function HealthPage({ searchParams }: PageProps<"/dashboard
             {history.length === 0 ? (
               <EmptyState title={t("health.noRecords")} />
             ) : (
-              <Table head={[t("health.colDate"), t("health.colAnimal"), t("health.colWhat"), t("health.colNextDue"), t("health.colCost")]}>
+              <Table head={[t("health.colDate"), t("health.colAnimal"), t("health.colWhat"), t("health.colNextDue"), t("health.colCost"), ""]}>
                 {history.map((h) => (
                   <tr key={h.id}>
                     <Td>{f.date(h.record_date)}</Td>
@@ -140,6 +140,11 @@ export default async function HealthPage({ searchParams }: PageProps<"/dashboard
                     </Td>
                     <Td>{f.date(h.next_due_date)}</Td>
                     <Td>{h.cost != null ? f.money(h.cost, farm.currency) : "—"}</Td>
+                    <Td className="text-right">
+                      <Link href={`/dashboard/health/${h.id}/edit`} className="text-sm text-emerald-700 hover:underline" data-testid="edit-health">
+                        {t("common.edit")}
+                      </Link>
+                    </Td>
                   </tr>
                 ))}
               </Table>

@@ -117,4 +117,5 @@ export const common: Record<keyof typeof en, string> = {
   "age.lessThanMonth": "১ মাসের কম",
   "age.months": "{n} মাস",
   "age.yearsMonths": "{y} বছর {m} মাস",
+  "common.edit": "সম্পাদনা",
 };
