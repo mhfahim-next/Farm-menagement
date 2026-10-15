@@ -51,11 +51,11 @@ export async function recordHealth(_: ActionState, formData: FormData): Promise<
 }
 
 /** "Done today": repeats a scheduled record and pushes the next due date out. */
-export async function renewHealth(formData: FormData) {
+export async function renewHealth(_: ActionState, formData: FormData): Promise<ActionState> {
   const { supabase, farm } = await requireFarm();
   const { t } = await getI18n();
   const id = str(formData, "id");
-  if (!id) return;
+  if (!id) return { error: t("common.errorGeneric") };
 
   const { data } = await supabase
     .from("health_records")
@@ -64,7 +64,7 @@ export async function renewHealth(formData: FormData) {
     .eq("farm_id", farm.id)
     .maybeSingle();
   const prev = data as HealthRecord | null;
-  if (!prev) return;
+  if (!prev) return { error: t("common.errorGeneric") };
 
   const date = today();
   const { error } = await supabase.from("health_records").insert({
@@ -79,7 +79,8 @@ export async function renewHealth(formData: FormData) {
     next_due_date: nextDue(date, prev.interval_days),
     medicine: prev.medicine,
   });
-  if (error) throw new Error(dbError(t, error));
+  if (error) return { error: dbError(t, error) };
 
   revalidatePath("/dashboard", "layout");
+  return { success: t("health.renewed", { product: prev.product ?? prev.description ?? "" }) };
 }

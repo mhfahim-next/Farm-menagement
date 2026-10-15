@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Noto_Sans_Bengali } from "next/font/google";
 import { I18nProvider } from "@/components/i18n-provider";
+import { ToastProvider } from "@/components/toast";
 import { getI18n, getOptionRows, messagesFor } from "@/lib/i18n/server";
 import "./globals.css";
 
@@ -44,7 +45,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="min-h-full flex flex-col font-sans">
         <I18nProvider locale={locale} messages={messagesFor(locale)} optionRows={optionRows}>
-          {children}
+          <ToastProvider>{children}</ToastProvider>
         </I18nProvider>
       </body>
     </html>

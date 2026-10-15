@@ -15,6 +15,7 @@ export const dairy: Record<keyof typeof en, string> = {
   "health.colAnimal": "পশু",
   "health.colWhat": "কী",
   "health.colStatus": "অবস্থা",
+  "health.renewed": "{product} আবার নথিভুক্ত হয়েছে। পরের তারিখ ঠিক করা হয়েছে।",
   "health.doneToday": "আজ দেওয়া হয়েছে",
   "health.historyTitle": "ইতিহাস",
   "health.allTypes": "সব ধরন",

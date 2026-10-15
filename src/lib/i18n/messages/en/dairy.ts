@@ -14,6 +14,7 @@ export const dairy = {
   "health.colAnimal": "Animal",
   "health.colWhat": "What",
   "health.colStatus": "Status",
+  "health.renewed": "{product} recorded again. The next due date has been set.",
   "health.doneToday": "Done today",
   "health.historyTitle": "History",
   "health.allTypes": "All types",

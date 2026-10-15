@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import { resolveRequest } from "@/app/admin/actions";
 import { useI18n } from "./i18n-provider";
-import { Button, Textarea } from "./ui";
+import { useToast } from "./toast";
+import { Button, Spinner, Textarea } from "./ui";
 
 /** Reply box + Approve / Decline (upgrade) or Mark answered (support) for the admin inbox. */
 export function RequestResolver({
@@ -18,14 +19,14 @@ export function RequestResolver({
   const { t } = useI18n();
   const [reply, setReply] = useState("");
   const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   function run(approve: boolean) {
     if (kind === "upgrade" && approve && !window.confirm(confirmApprove)) return;
-    setError(null);
     startTransition(async () => {
       const result = await resolveRequest(id, approve, reply);
-      if (result?.error) setError(result.error);
+      if (result?.error) toast("error", result.error);
+      else if (result?.success) toast("success", result.success);
     });
   }
 
@@ -39,7 +40,8 @@ export function RequestResolver({
         maxLength={2000}
         aria-label={t("admin.requests.reply")}
       />
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        {pending && <Spinner className="text-emerald-700" />}
         {kind === "upgrade" ? (
           <>
             <Button type="button" disabled={pending} onClick={() => run(true)} data-testid="approve-request">
@@ -55,7 +57,6 @@ export function RequestResolver({
           </Button>
         )}
       </div>
-      {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
     </div>
   );
 }

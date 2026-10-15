@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useTransition, type ReactNode } from "react";
+import { useTransition, type ReactNode } from "react";
 import type { ActionState } from "@/lib/types";
 import { useI18n } from "./i18n-provider";
-import { Button, type ButtonVariant } from "./ui";
+import { useToast } from "./toast";
+import { Button, Spinner, type ButtonVariant } from "./ui";
 
 /**
  * A small inline form for admin row actions. Asks for confirmation first
- * (when `confirm` is given), then runs the server action and shows any error
- * under the button instead of navigating away.
+ * (when `confirm` is given), then runs the server action and shows the result as a toast.
  */
 export function ConfirmForm({
   action,
@@ -27,7 +27,7 @@ export function ConfirmForm({
 }) {
   const { t } = useI18n();
   const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   return (
     <form
@@ -36,10 +36,10 @@ export function ConfirmForm({
         e.preventDefault();
         if (confirm && !window.confirm(confirm)) return;
         const formData = new FormData(e.currentTarget);
-        setError(null);
         startTransition(async () => {
           const result = await action(null, formData);
-          if (result?.error) setError(result.error);
+          if (result?.error) toast("error", result.error);
+          else if (result?.success) toast("success", result.success);
         });
       }}
     >
@@ -49,14 +49,10 @@ export function ConfirmForm({
       <span className="inline-flex items-center gap-1.5">
         {children}
         <Button type="submit" variant={variant} disabled={pending} className="px-2.5 py-1 text-xs">
+          {pending && <Spinner className="mr-1" />}
           {pending ? t("common.saving") : label}
         </Button>
       </span>
-      {error && (
-        <span role="alert" className="max-w-56 text-xs text-red-600">
-          {error}
-        </span>
-      )}
     </form>
   );
 }

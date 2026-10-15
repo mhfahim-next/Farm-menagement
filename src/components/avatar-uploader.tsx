@@ -5,7 +5,8 @@ import { removeAvatar, saveAvatar } from "@/app/dashboard/profile/actions";
 import { createClient } from "@/lib/supabase/client";
 import { Avatar } from "./avatar";
 import { useI18n } from "./i18n-provider";
-import { Button } from "./ui";
+import { useResultToast } from "./toast";
+import { Button, Spinner } from "./ui";
 
 const MAX_BYTES = 2 * 1024 * 1024;
 const TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -42,6 +43,7 @@ export function AvatarUploader({
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ error?: string; success?: string } | null>(null);
   const [pending, startTransition] = useTransition();
+  useResultToast(message);
 
   async function onPick(file: File | undefined) {
     if (!file) return;
@@ -84,6 +86,7 @@ export function AvatarUploader({
             onChange={(e) => onPick(e.target.files?.[0])}
           />
           <Button type="button" variant="secondary" disabled={disabled} onClick={() => input.current?.click()}>
+            {busy && <Spinner className="mr-2" />}
             {busy ? t("profile.uploading") : avatarUrl ? t("profile.change") : t("profile.upload")}
           </Button>
           {avatarUrl && (
@@ -100,9 +103,6 @@ export function AvatarUploader({
         <p className="text-xs text-stone-500">{t("profile.photoHint")}</p>
         {message?.error && (
           <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{message.error}</p>
-        )}
-        {message?.success && (
-          <p role="status" className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{message.success}</p>
         )}
       </div>
     </div>

@@ -27,6 +27,7 @@ export const common: Record<keyof typeof en, string> = {
   "common.you": "(আপনি)",
   "common.cow": "গাভী",
   "common.litersShort": "{n} লি.",
+  "common.loading": "লোড হচ্ছে…",
   "common.errorGeneric": "কিছু একটা ভুল হয়েছে। আবার চেষ্টা করুন।",
   "common.dbDuplicate": "এই তথ্য দিয়ে আগেই একটি রেকর্ড আছে।",
   "common.dbRange": "কিছু মান অনুমোদিত সীমার বাইরে।",

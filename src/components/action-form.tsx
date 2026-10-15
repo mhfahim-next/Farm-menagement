@@ -3,7 +3,8 @@
 import { Fragment, startTransition, useActionState, type ReactNode } from "react";
 import type { ActionState } from "@/lib/types";
 import { useI18n } from "./i18n-provider";
-import { Button, type ButtonVariant } from "./ui";
+import { useResultToast } from "./toast";
+import { Button, Spinner, type ButtonVariant } from "./ui";
 
 export function SubmitButton({
   children,
@@ -19,6 +20,7 @@ export function SubmitButton({
   const { t } = useI18n();
   return (
     <Button type="submit" disabled={pending} variant={variant} className={className}>
+      {pending && <Spinner className="mr-2" />}
       {pending ? t("common.saving") : children}
     </Button>
   );
@@ -56,6 +58,8 @@ export function ActionForm({
     return result ? { ...result, saves: result.success ? saves + 1 : saves } : null;
   }, null);
 
+  useResultToast(state);
+
   return (
     <form
       className={className}
@@ -69,11 +73,6 @@ export function ActionForm({
       {!pending && state?.error && (
         <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
           {state.error}
-        </p>
-      )}
-      {!pending && state?.success && (
-        <p role="status" className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-          {state.success}
         </p>
       )}
       <div>
