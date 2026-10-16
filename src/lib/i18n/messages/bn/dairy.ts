@@ -178,4 +178,6 @@ export const dairy: Record<keyof typeof en, string> = {
   "breeding.recordMissing": "রেকর্ডটি আর নেই।",
   "breeding.expectedCalving": "বাছুর হওয়ার সম্ভাব্য তারিখ",
   "breeding.expectedCalvingHint": "ফাঁকা রাখলে প্রজননের তারিখ থেকে হিসাব হবে।",
+  "breeding.time": "সময় (ঐচ্ছিক)",
+  "breeding.timeNow": "এখন",
 };

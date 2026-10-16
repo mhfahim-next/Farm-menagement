@@ -108,6 +108,17 @@ export function createI18n(locale: Locale, messages: Messages, optionRows: Optio
         timeZone: "UTC",
       });
     },
+    /** "HH:MM[:SS]" time of day, shown with the language's digits. */
+    time(value: string | null | undefined) {
+      if (!value) return "";
+      const [h, m] = value.split(":").map(Number);
+      if (!Number.isFinite(h) || !Number.isFinite(m)) return "";
+      return new Date(Date.UTC(1970, 0, 1, h, m)).toLocaleTimeString(dateLocale, {
+        hour: "numeric",
+        minute: "2-digit",
+        timeZone: "UTC",
+      });
+    },
     dateTime(value: string | null | undefined) {
       if (!value) return "—";
       return new Date(value).toLocaleString(dateLocale, {

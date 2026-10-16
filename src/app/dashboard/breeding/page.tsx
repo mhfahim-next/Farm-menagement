@@ -164,7 +164,10 @@ export default async function BreedingPage() {
                   ].filter(Boolean);
                   return (
                     <tr key={ev.id}>
-                      <Td>{f.date(ev.event_date)}</Td>
+                      <Td>
+                    {f.date(ev.event_date)}
+                    {ev.event_time && <span className="block text-xs text-stone-500">{f.time(ev.event_time)}</span>}
+                  </Td>
                       <Td>{cow ? cowLabel(cow) : "—"}</Td>
                       <Td>{o("breeding_event", ev.event_type)}</Td>
                       <Td className="text-xs">{details.join(" · ") || "—"}</Td>

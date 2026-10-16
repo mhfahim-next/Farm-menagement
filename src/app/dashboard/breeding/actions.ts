@@ -11,6 +11,12 @@ import type { ActionState } from "@/lib/types";
 const EVENT_TYPES = ["heat", "insemination", "pregnancy_check", "calving", "dry_off"];
 const PREGNANCY_RESULTS = ["positive", "negative", "uncertain"];
 
+/** Optional "HH:MM" from a time input; anything else is ignored as empty. */
+function timeOf(formData: FormData) {
+  const v = str(formData, "event_time");
+  return v && /^([01]\d|2[0-3]):[0-5]\d$/.test(v) ? v : null;
+}
+
 export async function logBreedingEvent(_: ActionState, formData: FormData): Promise<ActionState> {
   const { supabase, farm } = await requireFarm();
   const { t, f } = await getI18n();
@@ -41,6 +47,7 @@ export async function logBreedingEvent(_: ActionState, formData: FormData): Prom
     cattle_id: cattleId,
     event_type: eventType,
     event_date: eventDate,
+    event_time: timeOf(formData),
     bull_or_semen: str(formData, "bull_or_semen"),
     technician: str(formData, "technician"),
     cost: num(formData, "cost"),
@@ -147,6 +154,7 @@ export async function updateBreedingEvent(_: ActionState, formData: FormData): P
     .from("breeding_events")
     .update({
       event_date: eventDate,
+      event_time: timeOf(formData),
       bull_or_semen: eventType === "insemination" ? str(formData, "bull_or_semen") : null,
       technician: eventType === "insemination" || eventType === "pregnancy_check" ? str(formData, "technician") : null,
       cost: eventType === "insemination" ? num(formData, "cost") : null,

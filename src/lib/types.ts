@@ -74,6 +74,7 @@ export type BreedingEvent = {
   id: string;
   cattle_id: string;
   event_date: string;
+  event_time: string | null;
   event_type: "heat" | "insemination" | "pregnancy_check" | "calving" | "dry_off";
   bull_or_semen: string | null;
   result: string | null;

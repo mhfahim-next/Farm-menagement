@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { ActionState, BreedingEvent } from "@/lib/types";
 import { ActionForm } from "./action-form";
 import { useI18n } from "./i18n-provider";
@@ -29,6 +29,7 @@ export function BreedingForm({
 }) {
   const { t, options } = useI18n();
   const [type, setType] = useState(record?.event_type ?? defaultType);
+  const timeInput = useRef<HTMLInputElement>(null);
   // A newborn is usually a female non-milking type (heifer) by default.
   const calfTypes = options("cattle_category");
   const defaultCalfType =
@@ -54,7 +55,7 @@ export function BreedingForm({
       )}
 
       <div className="grid grid-cols-2 gap-3">
-        <Field label={t("breeding.whatHappened")}>
+        <Field label={t("breeding.whatHappened")} className="col-span-2">
           <Select
             name="event_type"
             value={type}
@@ -66,6 +67,21 @@ export function BreedingForm({
         </Field>
         <Field label={t("common.date")}>
           <Input name="event_date" type="date" defaultValue={record?.event_date ?? today} max={today} required />
+        </Field>
+        <Field label={t("breeding.time")}>
+          <span className="flex gap-2">
+            <Input ref={timeInput} name="event_time" type="time" defaultValue={record?.event_time?.slice(0, 5) ?? ""} />
+            <button
+              type="button"
+              className="shrink-0 rounded-lg border border-stone-300 px-3 text-sm text-stone-700 hover:bg-stone-50"
+              onClick={() => {
+                const d = new Date();
+                if (timeInput.current) timeInput.current.value = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+              }}
+            >
+              {t("breeding.timeNow")}
+            </button>
+          </span>
         </Field>
       </div>
 

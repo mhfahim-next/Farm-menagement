@@ -36,6 +36,7 @@ export async function loadBreedingBoard({ supabase, farm }: Pick<FarmContext, "s
       .select("*")
       .eq("farm_id", farm.id)
       .order("event_date", { ascending: false })
+      .order("event_time", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false }),
   ]);
   if (cowsRes.error) throw new Error(cowsRes.error.message);
