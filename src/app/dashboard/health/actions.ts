@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { queueIfVet } from "@/lib/approvals";
 import { requireFarm } from "@/lib/auth";
 import { dbError, int, num, str } from "@/lib/form";
 import { nextDue } from "@/lib/health";
@@ -10,8 +11,10 @@ import type { ActionState, HealthRecord } from "@/lib/types";
 
 /** Records one vaccine / pesticide / treatment for one or many animals. */
 export async function recordHealth(_: ActionState, formData: FormData): Promise<ActionState> {
-  const { supabase, farm } = await requireFarm();
+  const { supabase, farm, role } = await requireFarm();
   const { t, options } = await getI18n();
+  const queued = await queueIfVet({ supabase, farm, role }, "record_health", formData);
+  if (queued) return queued;
 
   const cattleIds = [...new Set(formData.getAll("cattle_id").filter((v): v is string => typeof v === "string" && v !== ""))];
   const type = str(formData, "record_type");
@@ -52,8 +55,10 @@ export async function recordHealth(_: ActionState, formData: FormData): Promise<
 
 /** Edits one existing record (any member who can write health records, including vets). */
 export async function updateHealth(_: ActionState, formData: FormData): Promise<ActionState> {
-  const { supabase, farm } = await requireFarm();
+  const { supabase, farm, role } = await requireFarm();
   const { t, options } = await getI18n();
+  const queued = await queueIfVet({ supabase, farm, role }, "update_health", formData);
+  if (queued) return queued;
 
   const id = str(formData, "id");
   const type = str(formData, "record_type");
@@ -95,8 +100,10 @@ export async function updateHealth(_: ActionState, formData: FormData): Promise<
 
 /** "Done today": repeats a scheduled record and pushes the next due date out. */
 export async function renewHealth(_: ActionState, formData: FormData): Promise<ActionState> {
-  const { supabase, farm } = await requireFarm();
+  const { supabase, farm, role } = await requireFarm();
   const { t } = await getI18n();
+  const queued = await queueIfVet({ supabase, farm, role }, "renew_health", formData);
+  if (queued) return queued;
   const id = str(formData, "id");
   if (!id) return { error: t("common.errorGeneric") };
 

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { queueIfVet } from "@/lib/approvals";
 import { requireFarm } from "@/lib/auth";
 import { dbError, num, str } from "@/lib/form";
 import { addDays, GESTATION_DAYS } from "@/lib/breeding";
@@ -18,8 +19,10 @@ function timeOf(formData: FormData) {
 }
 
 export async function logBreedingEvent(_: ActionState, formData: FormData): Promise<ActionState> {
-  const { supabase, farm } = await requireFarm();
+  const { supabase, farm, role } = await requireFarm();
   const { t, f } = await getI18n();
+  const queued = await queueIfVet({ supabase, farm, role }, "log_breeding", formData);
+  if (queued) return queued;
 
   const cattleId = str(formData, "cattle_id");
   const eventType = str(formData, "event_type");
@@ -119,8 +122,10 @@ export async function logBreedingEvent(_: ActionState, formData: FormData): Prom
 
 /** Edits an existing event. The event type is fixed (a calving also created a calf, a heat has no result, …). */
 export async function updateBreedingEvent(_: ActionState, formData: FormData): Promise<ActionState> {
-  const { supabase, farm } = await requireFarm();
+  const { supabase, farm, role } = await requireFarm();
   const { t } = await getI18n();
+  const queued = await queueIfVet({ supabase, farm, role }, "update_breeding", formData);
+  if (queued) return queued;
 
   const id = str(formData, "id");
   const eventDate = str(formData, "event_date");
