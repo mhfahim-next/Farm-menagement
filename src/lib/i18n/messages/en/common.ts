@@ -120,4 +120,6 @@ export const common = {
   "pwa.installButton": "Install",
   "pwa.iosBody": "To install: tap the Share button, then \"Add to Home Screen\".",
   "pwa.dismiss": "Not now",
+  "common.menu": "Menu",
+  "common.close": "Close",
 } as const;
