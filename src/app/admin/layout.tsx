@@ -13,6 +13,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
     { href: "/admin/farms", label: t("nav.adminFarms") },
     { href: "/admin/plans", label: t("nav.adminPlans") },
     { href: "/admin/requests", label: t("nav.adminRequests") },
+    { href: "/admin/blog", label: t("nav.adminBlog") },
     { href: "/admin/options", label: t("nav.adminOptions") },
     { href: "/admin/audit", label: t("nav.adminAudit") },
     { href: "/admin/settings", label: t("nav.adminSettings") },
