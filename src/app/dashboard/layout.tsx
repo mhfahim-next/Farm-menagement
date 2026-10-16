@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import type { NavItem } from "@/components/dashboard-nav";
+import { AiAssistant } from "@/components/ai-assistant";
 import { FarmSwitcher } from "@/components/farm-switcher";
 import { getProfile, MANAGERS, requireFarm, STAFF } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
@@ -83,6 +84,14 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
 
   const invitesCount = invites?.length ?? 0;
 
+  // AI assistant (staff only): how many prompts this farm has used this month.
+  let aiStatus: { used: number; max: number | null } | null = null;
+  if (isStaff) {
+    const { data } = await supabase.rpc("ai_prompts_status", { p_farm: farm.id });
+    const st = data as { used?: number; max?: number | null } | null;
+    aiStatus = { used: st?.used ?? 0, max: st?.max ?? null };
+  }
+
   return (
     <AppShell
       logoHref={isVet ? "/doctor" : "/dashboard"}
@@ -142,6 +151,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
         </p>
       )}
       {children}
+      {aiStatus && <AiAssistant initial={aiStatus} />}
     </AppShell>
   );
 }

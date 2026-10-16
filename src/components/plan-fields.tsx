@@ -35,6 +35,9 @@ export function PlanFields({ t, plan }: { t: I18n["t"]; plan?: Plan }) {
           <Input name="max_farms" type="number" min="1" defaultValue={num(plan?.max_farms)} />
         </Field>
       </div>
+      <Field label={t("admin.plans.maxAi")} hint={t("admin.plans.maxAiHint")}>
+        <Input name="max_ai_prompts" type="number" min="0" defaultValue={num(plan?.max_ai_prompts)} className="max-w-48" />
+      </Field>
       <p className="-mt-1 text-xs text-stone-500">{t("admin.plans.unlimitedHint")}</p>
       <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
         <label className="flex items-center gap-2">

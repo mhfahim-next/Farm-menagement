@@ -10,6 +10,8 @@ export type Plan = {
   max_flocks: number | null;
   max_members: number | null;
   max_farms: number | null;
+  /** AI assistant prompts per farm per month; null = unlimited. */
+  max_ai_prompts: number | null;
   can_export: boolean;
   priority_support: boolean;
   active: boolean;
@@ -46,6 +48,13 @@ export function planFeatures(t: I18n["t"], plan: Plan): string[] {
   out.push(plan.max_flocks === null ? t("plans.feat.flocksUnlimited") : t("plans.feat.flocks", { n: plan.max_flocks }));
   out.push(plan.max_members === null ? t("plans.feat.membersUnlimited") : t("plans.feat.members", { n: plan.max_members }));
   out.push(plan.max_farms === null ? t("plans.feat.farmsUnlimited") : t("plans.feat.farms", { n: plan.max_farms }));
+  out.push(
+    plan.max_ai_prompts === null
+      ? t("plans.feat.aiUnlimited")
+      : plan.max_ai_prompts === 0
+        ? t("plans.feat.aiNone")
+        : t("plans.feat.ai", { n: plan.max_ai_prompts }),
+  );
   if (plan.can_export) out.push(t("plans.feat.export"));
   if (plan.priority_support) out.push(t("plans.feat.prioritySupport"));
   return out;

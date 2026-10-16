@@ -5,7 +5,7 @@ import { UsageMeter } from "@/components/usage-meter";
 import { Badge, Card, EmptyState, Field, Input, PageHeader, Textarea } from "@/components/ui";
 import { MANAGERS, requireRole } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
-import { farmQuota, planFeatures, planName, priceText, USAGE_KEYS, type Plan } from "@/lib/plan-utils";
+import { farmQuota, limitState, planFeatures, planName, priceText, USAGE_KEYS, type Plan } from "@/lib/plan-utils";
 import { getPlanContext } from "@/lib/plans";
 import { cancelRequest, requestUpgrade, sendSupport } from "./actions";
 
@@ -33,6 +33,8 @@ export default async function PlanPage({ searchParams }: PageProps<"/dashboard/p
   const i18n = await getI18n();
   const { t, f, locale } = i18n;
   const { plans, plan, usage, limits, states } = await getPlanContext();
+  const { data: aiRaw } = await supabase.rpc("ai_prompts_status", { p_farm: farm.id });
+  const ai = { used: (aiRaw as { used?: number } | null)?.used ?? 0, max: (aiRaw as { max?: number | null } | null)?.max ?? null };
   const sp = await searchParams;
   const highlight = typeof sp.choose === "string" ? sp.choose : null;
 
@@ -71,6 +73,13 @@ export default async function PlanPage({ searchParams }: PageProps<"/dashboard/p
                 text={limits[k] === null ? t("plan.usageUnlimited", { used: usage[k] }) : t("plan.usageOf", { used: usage[k], max: limits[k]! })}
               />
             ))}
+            <UsageMeter
+              label={t("plan.usage.ai")}
+              used={ai.used}
+              max={ai.max}
+              state={limitState(ai.used, ai.max)}
+              text={ai.max === null ? t("plan.usageUnlimited", { used: ai.used }) : t("plan.usageOf", { used: ai.used, max: ai.max })}
+            />
             <UsageMeter
               label={t("plan.usage.farms")}
               used={owned.length}

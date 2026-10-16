@@ -27,6 +27,7 @@ function fields(fd: FormData) {
     max_flocks: limit(fd, "max_flocks"),
     max_members: limit(fd, "max_members"),
     max_farms: limit(fd, "max_farms"),
+    max_ai_prompts: limit(fd, "max_ai_prompts"),
   };
   const bad =
     price === undefined ||
