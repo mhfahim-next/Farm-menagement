@@ -161,4 +161,9 @@ export const plans = {
   "farm.created": "Farm created.",
   "farm.role": "Your role: {role}",
   "reports.col.time": "Time",
+  "plans.feat.ai": "{n} AI assistant prompts / month",
+  "plans.feat.aiUnlimited": "Unlimited AI assistant prompts",
+  "plans.feat.aiNone": "No AI assistant",
+  "plan.limit.ai": "You have used all {n} AI prompts for this month. Upgrade your plan for more.",
+  "plan.usage.ai": "AI prompts this month",
 } as const;

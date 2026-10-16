@@ -121,3 +121,7 @@ main .flex > * {
     font-size: 16px;
   }
 }
+
+.safe-bottom-fab {
+  bottom: max(1rem, env(safe-area-inset-bottom));
+}

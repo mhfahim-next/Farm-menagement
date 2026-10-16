@@ -77,4 +77,6 @@ export const adminplans = {
   "admin.action.request.reject": "Declined an upgrade request",
   "admin.action.request.resolve": "Answered a support message",
   "admin.action.settings.payment": "Updated payment instructions",
+  "admin.plans.maxAi": "AI prompts per month",
+  "admin.plans.maxAiHint": "Per farm, per calendar month. Empty = unlimited, 0 = no AI assistant.",
 } as const;

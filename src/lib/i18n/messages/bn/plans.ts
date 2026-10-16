@@ -159,4 +159,9 @@ export const plans: Record<keyof typeof en, string> = {
   "farm.created": "খামার তৈরি হয়েছে।",
   "farm.role": "আপনার ভূমিকা: {role}",
   "reports.col.time": "সময়",
+  "plans.feat.ai": "মাসে {n}টি এআই সহকারী প্রম্পট",
+  "plans.feat.aiUnlimited": "সীমাহীন এআই সহকারী প্রম্পট",
+  "plans.feat.aiNone": "এআই সহকারী নেই",
+  "plan.limit.ai": "এই মাসের {n}টি এআই প্রম্পটই শেষ। আরও পেতে প্ল্যান আপগ্রেড করুন।",
+  "plan.usage.ai": "এই মাসে এআই প্রম্পট",
 };

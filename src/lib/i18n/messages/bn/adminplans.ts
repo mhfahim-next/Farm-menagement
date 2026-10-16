@@ -79,4 +79,6 @@ export const adminplans: Record<keyof typeof en, string> = {
   "admin.action.request.reject": "আপগ্রেডের অনুরোধ প্রত্যাখ্যান করেছেন",
   "admin.action.request.resolve": "সাপোর্ট বার্তার উত্তর দিয়েছেন",
   "admin.action.settings.payment": "পেমেন্টের নির্দেশনা হালনাগাদ করেছেন",
+  "admin.plans.maxAi": "মাসে এআই প্রম্পট",
+  "admin.plans.maxAiHint": "প্রতি খামার, প্রতি ক্যালেন্ডার মাসে। ফাঁকা = সীমাহীন, ০ = এআই সহকারী নেই।",
 };
