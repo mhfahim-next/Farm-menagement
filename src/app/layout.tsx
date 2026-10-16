@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Noto_Sans_Bengali } from "next/font/google";
 import { I18nProvider } from "@/components/i18n-provider";
+import { PwaRegister } from "@/components/pwa";
 import { ToastProvider } from "@/components/toast";
 import { getI18n, getOptionRows, messagesFor } from "@/lib/i18n/server";
 import "./globals.css";
@@ -35,6 +36,16 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: { default: t("meta.title"), template: "%s · FarmFlow" },
     description: t("meta.description"),
+    applicationName: "FarmFlow",
+    appleWebApp: { capable: true, title: "FarmFlow", statusBarStyle: "default" },
+    formatDetection: { telephone: false },
+    icons: {
+      icon: [
+        { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+        { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+      ],
+      apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
+    },
   };
 }
 
@@ -56,6 +67,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col font-sans">
         <I18nProvider locale={locale} messages={messagesFor(locale)} optionRows={optionRows}>
           <ToastProvider>{children}</ToastProvider>
+          <PwaRegister />
         </I18nProvider>
       </body>
     </html>
