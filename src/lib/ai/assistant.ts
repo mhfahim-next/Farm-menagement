@@ -502,10 +502,10 @@ async function runClaude(ctx: Ctx, cfg: AiConfig, turns: Turn[]): Promise<Assist
 
 // ------------------------ OpenAI-compatible (Gemini etc.) -------------------
 
-type OaiToolCall = { id?: string; type?: string; function?: { name?: string; arguments?: string } };
+type OaiToolCall = { id?: string; type?: string; function?: { name?: string; arguments?: string }; extra_content?: unknown };
 type OaiMessage =
   | { role: "system" | "user"; content: string }
-  | { role: "assistant"; content: string | null; tool_calls?: { id: string; type: "function"; function: { name: string; arguments: string } }[] }
+  | { role: "assistant"; content: string | null; tool_calls?: { id: string; type: "function"; function: { name: string; arguments: string }; extra_content?: unknown }[] }
   | { role: "tool"; tool_call_id: string; name: string; content: string };
 
 /**
@@ -557,11 +557,13 @@ async function runOpenAICompatible(ctx: Ctx, cfg: AiConfig, turns: Turn[]): Prom
     if (calls.length === 0) break;
 
     // Some providers leave tool call ids empty; make sure every call has one.
-    const withIds = calls.map((c, i) => ({ id: c.id || `call_${round}_${i}`, name: c.function!.name!, args: c.function!.arguments ?? "{}" }));
+    // Gemini 3 attaches a "thought signature" to function calls (in extra_content) and
+    // rejects the next request if it is not sent back unchanged, so keep it.
+    const withIds = calls.map((c, i) => ({ id: c.id || `call_${round}_${i}`, name: c.function!.name!, args: c.function!.arguments ?? "{}", extra: c.extra_content }));
     messages.push({
       role: "assistant",
       content: msg.content ?? null,
-      tool_calls: withIds.map((c) => ({ id: c.id, type: "function" as const, function: { name: c.name, arguments: c.args } })),
+      tool_calls: withIds.map((c) => ({ id: c.id, type: "function" as const, function: { name: c.name, arguments: c.args }, ...(c.extra !== undefined ? { extra_content: c.extra } : {}) })),
     });
     for (const c of withIds) {
       let input: Input = {};
