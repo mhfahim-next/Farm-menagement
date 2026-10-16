@@ -41,6 +41,6 @@ export async function testAiConnection(): Promise<ActionState> {
     return { success: t("admin.ai.testOk", { provider: cfg.provider, model: cfg.model, reply: reply.slice(0, 60) || "—" }) };
   } catch (e) {
     const detail = e instanceof AiError ? e.message : e instanceof Error ? e.message : "";
-    return { error: t("admin.ai.testFailed", { detail: detail.slice(0, 200) }) };
+    return { error: t("admin.ai.testFailed", { detail: detail.slice(0, 400) }) };
   }
 }

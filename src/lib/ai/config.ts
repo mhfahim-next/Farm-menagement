@@ -7,7 +7,7 @@ export const AI_PROVIDERS: AiProvider[] = ["anthropic", "gemini", "custom"];
 /** Used when the super admin leaves the model blank. */
 export const DEFAULT_MODELS: Record<AiProvider, string> = {
   anthropic: "claude-haiku-5-5", // the cheapest current Claude model
-  gemini: "gemini-2.5-flash", // has a free tier
+  gemini: "gemini-3.8-flash", // has a free tier (Google retires models; update here or set the model in Admin → AI assistant)
   custom: "",
 };
 
