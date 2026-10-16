@@ -27,6 +27,7 @@ A multi-tenant farm management web app built with **Next.js 16 (App Router)** an
   - Every product gets a **next due date**. The *Due & overdue* board lists what is late or due in 30 days, and **Done today** repeats it and schedules the next one.
   - Dose, batch number, who gave it, cost, and **milk withdrawal period** warnings.
 - **Breeding** (`/dashboard/breeding`): heat tracking, artificial insemination, pregnancy checks, calving, dry-off.
+  - Every event can carry an optional **time of day** (with a "Now" button); it is shown under the date, can be edited, and is included in the CSV export.
   - Heat is recorded with the signs seen; the **next heat is predicted** (21-day cycle) and flagged ±3 days around it.
   - AI records bull/semen, technician and cost; expected calving is set at **283 days**; a **pregnancy check is due ~45 days** after AI, and **return-to-heat** is watched at day 21.
   - Each cow shows as **Open / Inseminated / Pregnant**, with dry-off date (60 days before calving) and cows **not yet served 60+ days after calving** flagged.

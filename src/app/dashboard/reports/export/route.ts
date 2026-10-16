@@ -69,8 +69,8 @@ export async function GET(request: NextRequest) {
     rows = data.map((r) => [r.record_date as string, tagOf.get(r.cattle_id as string), o("health_type", r.record_type as string), (r.product ?? r.description) as string, r.dose as string, r.batch_number as string, r.vet_name as string, r.cost as number, r.next_due_date as string, r.withdrawal_until as string, r.description as string]);
   } else if (kind === "breeding") {
     const data = await fetchAll((a, b) => range("event_date")(base("breeding_events")).range(a, b));
-    header = (["date", "animal", "event", "bullSemen", "technician", "result", "expectedCalving", "signs", "cost", "notes"] as const).map((k) => col(`reports.col.${k}`));
-    rows = data.map((r) => [r.event_date as string, tagOf.get(r.cattle_id as string), o("breeding_event", r.event_type as string), r.bull_or_semen as string, r.technician as string, r.result ? o("pregnancy_result", r.result as string) : "", r.expected_calving_date as string, r.heat_signs ? String(r.heat_signs).split(",").map((s) => o("heat_sign", s.trim())).join("; ") : "", r.cost as number, r.notes as string]);
+    header = (["date", "time", "animal", "event", "bullSemen", "technician", "result", "expectedCalving", "signs", "cost", "notes"] as const).map((k) => col(`reports.col.${k}`));
+    rows = data.map((r) => [r.event_date as string, r.event_time ? String(r.event_time).slice(0, 5) : "", tagOf.get(r.cattle_id as string), o("breeding_event", r.event_type as string), r.bull_or_semen as string, r.technician as string, r.result ? o("pregnancy_result", r.result as string) : "", r.expected_calving_date as string, r.heat_signs ? String(r.heat_signs).split(",").map((s) => o("heat_sign", s.trim())).join("; ") : "", r.cost as number, r.notes as string]);
   } else if (kind === "flocks") {
     const { data: fl } = await supabase.from("flocks").select("id, name").eq("farm_id", farm.id);
     const flockName = new Map((fl ?? []).map((x) => [x.id, x.name]));

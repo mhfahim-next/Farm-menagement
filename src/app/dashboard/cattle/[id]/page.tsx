@@ -42,7 +42,7 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
       .gte("record_date", today(-29))
       .order("record_date", { ascending: false }),
     supabase.from("health_records").select("*").eq("cattle_id", id).order("record_date", { ascending: false }),
-    supabase.from("breeding_events").select("*").eq("cattle_id", id).order("event_date", { ascending: false }),
+    supabase.from("breeding_events").select("*").eq("cattle_id", id).order("event_date", { ascending: false }).order("event_time", { ascending: false, nullsFirst: false }),
     supabase
       .from("cattle")
       .select("id, tag_number, name, category, status")
@@ -217,7 +217,10 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
             <Table head={[t("cattle.colDate"), t("cattle.colEvent"), t("cattle.colDetails"), ""]}>
               {breeding.map((b) => (
                 <tr key={b.id}>
-                  <Td>{f.date(b.event_date)}</Td>
+                  <Td>
+                    {f.date(b.event_date)}
+                    {b.event_time && <span className="block text-xs text-stone-500">{f.time(b.event_time)}</span>}
+                  </Td>
                   <Td>{o("breeding_event", b.event_type)}</Td>
                   <Td className="text-xs">
                     {[

@@ -158,4 +158,5 @@ export const plans: Record<keyof typeof en, string> = {
   "farm.addLocked_one": "আপনার প্ল্যানে {n}টি খামার রাখা যায়। একাধিক খামার চালাতে বিজনেসে আপগ্রেড করুন।",
   "farm.created": "খামার তৈরি হয়েছে।",
   "farm.role": "আপনার ভূমিকা: {role}",
+  "reports.col.time": "সময়",
 };

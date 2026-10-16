@@ -178,4 +178,6 @@ export const dairy = {
   "breeding.recordMissing": "That record no longer exists.",
   "breeding.expectedCalving": "Expected calving date",
   "breeding.expectedCalvingHint": "Leave empty to calculate it from the insemination date.",
+  "breeding.time": "Time (optional)",
+  "breeding.timeNow": "Now",
 } as const;

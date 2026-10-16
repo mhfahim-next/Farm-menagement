@@ -160,4 +160,5 @@ export const plans = {
   "farm.addLocked_one": "Your plan allows {n} farm. Upgrade to Business to manage multiple farms.",
   "farm.created": "Farm created.",
   "farm.role": "Your role: {role}",
+  "reports.col.time": "Time",
 } as const;

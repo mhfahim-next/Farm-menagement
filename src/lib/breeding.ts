@@ -28,6 +28,7 @@ export function heatSignsText(o: (list: "heat_sign", value: string) => string, r
 export type BreedingEventLite = {
   event_type: "heat" | "insemination" | "pregnancy_check" | "calving" | "dry_off";
   event_date: string; // YYYY-MM-DD
+  event_time?: string | null; // HH:MM[:SS]
   result: string | null;
   expected_calving_date: string | null;
   created_at?: string;
@@ -73,10 +74,11 @@ export function reproStatus(
   today: string,
   pregnancyCheckDays: number = PREGNANCY_CHECK_AFTER_DAYS,
 ): ReproStatus {
-  // Oldest → newest; ties broken by insertion time so same-day events keep order.
+  // Oldest → newest; same-day ties use the time of day when both have one, then insertion time.
   const sorted = [...events].sort(
     (a, b) =>
       a.event_date.localeCompare(b.event_date) ||
+      (a.event_time && b.event_time ? a.event_time.localeCompare(b.event_time) : 0) ||
       (a.created_at ?? "").localeCompare(b.created_at ?? ""),
   );
   const last = (type: BreedingEventLite["event_type"]) =>
