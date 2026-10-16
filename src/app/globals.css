@@ -80,72 +80,32 @@ main .flex > * {
 }
 
 @media (max-width: 639px) {
-  /* Tables become a stack of cards. */
+  /* Tables stay one row per record; they scroll sideways when they do not
+     fit, with the first column (tag / date) pinned on the left. */
   .rtable {
-    overflow: visible;
-    margin-left: 0;
-    margin-right: 0;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
   }
-  .rtable table,
-  .rtable tbody,
-  .rtable tr,
-  .rtable td {
-    display: block;
-    width: 100%;
+  .rtable table {
+    min-width: calc(var(--cols, 4) * 6.75rem);
   }
-  .rtable thead {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
+  .rtable td,
+  .rtable th {
+    padding-top: 0.625rem;
+    padding-bottom: 0.625rem;
   }
-  .rtable tbody {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0.625rem;
+  .rtable td:first-child,
+  .rtable th:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: #fff;
+    box-shadow: 1px 0 0 var(--color-stone-200);
   }
-  .rtable tbody > tr {
-    min-width: 0;
-    border: 1px solid var(--color-stone-200);
-    border-radius: 0.75rem;
-    padding: 0.25rem 0;
-    background: var(--color-stone-50);
-  }
-  .rtable td {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 1rem;
-    padding: 0.4rem 0.875rem;
-    text-align: right;
-    overflow-wrap: anywhere;
-  }
-  .rtable td[data-label]::before {
-    content: attr(data-label);
-    flex: none;
-    max-width: 45%;
-    text-align: left;
-    font-size: 0.6875rem;
-    font-weight: 500;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--color-stone-500);
-    padding-top: 0.15rem;
-  }
-  .rtable td:not([data-label]) {
-    justify-content: flex-end;
-  }
-  .rtable td > * {
-    min-width: 0;
-    max-width: 100%;
-  }
-  .rtable td .block {
-    display: block;
-  }
-  .rtable tr.rtable-keep {
-    display: table-row;
-  }
+}
+.dark .rtable td:first-child,
+.dark .rtable th:first-child {
+  background: #1c1917;
 }
 
 /* Keep fixed UI clear of phone notches and home indicators. */
