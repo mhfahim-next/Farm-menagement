@@ -122,4 +122,6 @@ export const common: Record<keyof typeof en, string> = {
   "pwa.installButton": "ইনস্টল করুন",
   "pwa.iosBody": "ইনস্টল করতে: Share বোতামে চেপে \"Add to Home Screen\" বেছে নিন।",
   "pwa.dismiss": "এখন নয়",
+  "common.menu": "মেনু",
+  "common.close": "বন্ধ করুন",
 };
