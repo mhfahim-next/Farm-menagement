@@ -36,6 +36,7 @@ A multi-tenant farm management web app built with **Next.js 16 (App Router)** an
 - **Feedback**: toast pop-ups confirm every add / update / delete (and show errors on row actions), buttons show a spinner while saving, and the sidebar links and pages show a loader while data loads.
 - **Mobile friendly**: the sidebar becomes a slide-in menu, tables keep one row per record and scroll sideways on phones (first column pinned), forms use 16px fields (no iOS zoom) and bigger tap targets, and nothing scrolls sideways from 320px up. Checked on every page in English and Bangla.
 - **Installable app (PWA)**: add FarmFlow to the home screen of an Android or iPhone and it opens full-screen with its own icon and shortcuts (Milk, Cattle, Health). An *Install* banner appears when the browser supports it (on iPhone it explains Share → Add to Home Screen). A service worker caches only build assets and icons; pages and data are never cached, and a bilingual "no connection" page shows when offline. It works over HTTPS (any deployment, e.g. Vercel).
+- **Blog** (`/blog`): public articles in Bangla and English, with a first article on how to organise cattle tag numbers. Super admins write, edit, publish / unpublish and delete articles in *Admin → Blog* (Markdown with headings, lists, tables and links; drafts are only visible to admins; every change is in the audit log). Writes go through `admin_*` database functions, so only super admins can change posts.
 - **Dark & light mode**: toggle in the top bar, remembered per device, no flash on load.
 - **Left sidebar** (a slide-in menu on phones) holds the navigation; the **top bar** has language and theme toggles beside the profile picture; the avatar opens *Dashboard / Profile / Admin panel (super admins) / Log out*.
 - **Profile** (`/dashboard/profile`): upload a profile photo (cropped to a square, stored in Supabase Storage), edit name and phone, change password.
@@ -56,6 +57,7 @@ A super admin controls the whole system from `/admin` (only they can open it; ev
 | Farms | Search; change **plan**, **suspend / restore** a farm (its members are locked out), delete a farm and all its data; open a farm's summary |
 | Plans | Edit plan prices, limits and payment instructions |
 | Requests | Approve / reject upgrade and support requests |
+| Blog | Write, edit, publish and delete public blog articles (Bangla + English) |
 | Dropdowns | Every dropdown in the app (see below) |
 | Audit log | Every admin action: who, what, when |
 | Announcement | A banner shown at the top of every user's dashboard (English + Bangla), the payment instructions, and the **breeding rules** (pregnancy check due N days after AI, default 45) |

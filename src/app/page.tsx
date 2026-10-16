@@ -1,7 +1,5 @@
 import Link from "next/link";
-import { LanguageSwitcher } from "@/components/language-switcher";
-import { Logo } from "@/components/logo";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { PublicFooter, PublicHeader } from "@/components/public-header";
 import { ButtonLink } from "@/components/ui";
 import { getI18n } from "@/lib/i18n/server";
 import { planFeatures, planName, priceText } from "@/lib/plan-utils";
@@ -18,22 +16,7 @@ export default async function Home() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="border-b border-stone-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-3">
-          <Logo />
-          <nav className="flex items-center gap-1.5 sm:gap-2">
-            <LanguageSwitcher />
-            <ThemeToggle />
-            <ButtonLink href="/doctor/signup" variant="ghost" className="max-md:hidden">
-              {t("doctor.landingLink")}
-            </ButtonLink>
-            <ButtonLink href="/login" variant="ghost" className="max-sm:hidden">
-              {t("landing.login")}
-            </ButtonLink>
-            <ButtonLink href="/signup" className="px-3 sm:px-4">{t("landing.startFree")}</ButtonLink>
-          </nav>
-        </div>
-      </header>
+      <PublicHeader />
 
       <main className="flex-1">
         <section className="bg-gradient-to-b from-emerald-50 to-stone-50">
@@ -113,9 +96,7 @@ export default async function Home() {
         </section>
       </main>
 
-      <footer className="border-t border-stone-200 py-8 text-center text-sm text-stone-500">
-        {t("landing.footer", { year: new Date().getFullYear() })}
-      </footer>
+      <PublicFooter />
     </div>
   );
 }
