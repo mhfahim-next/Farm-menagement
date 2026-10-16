@@ -11,7 +11,7 @@ import { getPlanContext, getPlans } from "@/lib/plans";
 export default async function DashboardLayout({ children }: LayoutProps<"/dashboard">) {
   const { farm, user, role, farms, supabase } = await requireFarm();
   const profile = await getProfile();
-  const { t, o, locale } = await getI18n();
+  const { t, f, o, locale } = await getI18n();
   const isManager = MANAGERS.includes(role);
   const isStaff = STAFF.includes(role);
   const isVet = role === "vet";
@@ -54,11 +54,19 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
     }
   }
 
+  // Entries doctors submitted that wait for an owner / manager to approve.
+  let pendingApprovals = 0;
+  if (isManager) {
+    const { count } = await supabase.from("pending_entries").select("id", { count: "exact", head: true }).eq("farm_id", farm.id).eq("status", "pending");
+    pendingApprovals = count ?? 0;
+  }
+
   const nav: NavItem[] = isVet
     ? [
         { href: "/dashboard/cattle", label: t("nav.cattle") },
         { href: "/dashboard/health", label: t("nav.health") },
         { href: "/dashboard/breeding", label: t("nav.breeding") },
+        { href: "/dashboard/approvals", label: t("nav.approvals") },
         { href: "/doctor", label: `← ${t("doctor.consoleNav")}` },
       ]
     : [
@@ -78,6 +86,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
               { href: "/dashboard/reports", label: t("nav.reports") },
             ]
           : []),
+        ...(isManager ? [{ href: "/dashboard/approvals", label: pendingApprovals > 0 ? `${t("nav.approvals")} (${f.number(pendingApprovals)})` : t("nav.approvals") }] : []),
         ...(isManager ? [{ href: "/dashboard/plan", label: t("nav.plan") }] : []),
         { href: "/dashboard/settings", label: t("nav.settings") },
       ];
@@ -131,6 +140,14 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
               ✉ {t(invitesCount === 1 ? "invites.banner" : "invites.bannerMany", { n: invitesCount })}{" "}
               <Link href="/invites" className="font-medium underline">
                 {t("invites.bannerLink")}
+              </Link>
+            </div>
+          )}
+          {pendingApprovals > 0 && (
+            <div role="status" data-testid="approvals-banner" className="border-b border-sky-200 bg-sky-100 px-4 py-2 text-center text-sm text-sky-800">
+              ✎ {t(pendingApprovals === 1 ? "approvals.banner" : "approvals.bannerMany", { n: f.number(pendingApprovals) })}{" "}
+              <Link href="/dashboard/approvals" className="font-medium underline">
+                {t("approvals.bannerLink")}
               </Link>
             </div>
           )}
