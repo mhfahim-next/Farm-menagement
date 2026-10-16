@@ -51,7 +51,7 @@ export function UserMenu({ user, inAdmin = false }: { user: MenuUser; inAdmin?: 
         <span className="hidden max-w-32 truncate text-sm font-medium text-stone-800 sm:block">
           {user.name ?? user.email}
         </span>
-        <svg viewBox="0 0 24 24" className={`h-4 w-4 text-stone-500 transition-transform ${open ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <svg viewBox="0 0 24 24" className={`h-4 w-4 text-stone-500 transition-transform max-sm:hidden ${open ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
           <path d="m6 9 6 6 6-6" />
         </svg>
       </button>
