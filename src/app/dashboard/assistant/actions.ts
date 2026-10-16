@@ -1,8 +1,8 @@
 "use server";
 
-import Anthropic from "@anthropic-ai/sdk";
 import { requireRole, STAFF } from "@/lib/auth";
-import { AI_MODEL, runAssistant } from "@/lib/ai/assistant";
+import { AiError, runAssistant } from "@/lib/ai/assistant";
+import { getAiConfig } from "@/lib/ai/config";
 import { PROPOSAL_KINDS, type AskResult, type ChatTurn, type ProposalKind } from "@/lib/ai/types";
 import { getI18n } from "@/lib/i18n/server";
 import type { ActionState } from "@/lib/types";
@@ -30,7 +30,8 @@ export async function askAssistant(history: ChatTurn[], text: string): Promise<A
 
   const message = typeof text === "string" ? text.trim() : "";
   if (!message) return { error: t("ai.err.empty") };
-  if (!process.env.ANTHROPIC_API_KEY) return { error: t("ai.err.notConfigured") };
+  const cfg = await getAiConfig(supabase);
+  if (!cfg.apiKey || !cfg.model) return { error: t("ai.err.notConfigured") };
 
   const safeHistory: ChatTurn[] = Array.isArray(history)
     ? history
@@ -48,8 +49,8 @@ export async function askAssistant(history: ChatTurn[], text: string): Promise<A
   }
 
   try {
-    const out = await runAssistant({ supabase, farm, i18n }, safeHistory, message);
-    await supabase.rpc("ai_record_usage", { p_id: usageId as string, p_model: AI_MODEL, p_in: out.inputTokens, p_out: out.outputTokens });
+    const out = await runAssistant({ supabase, farm, i18n }, cfg, safeHistory, message);
+    await supabase.rpc("ai_record_usage", { p_id: usageId as string, p_model: `${cfg.provider}:${cfg.model}`, p_in: out.inputTokens, p_out: out.outputTokens });
     return {
       reply: out.reply || (out.proposals.length ? t("ai.defaultReply") : t("ai.err.noReply")),
       proposals: out.proposals,
@@ -58,9 +59,9 @@ export async function askAssistant(history: ChatTurn[], text: string): Promise<A
   } catch (e) {
     // The service failed: give the prompt back.
     await supabase.rpc("ai_cancel_prompt", { p_id: usageId as string });
-    console.error("AI assistant failed:", e instanceof Anthropic.APIError ? `${e.status} ${e.message}` : e);
-    const busy = e instanceof Anthropic.RateLimitError || (e instanceof Anthropic.APIError && (e.status ?? 0) >= 500);
-    return { error: t(busy ? "ai.err.busy" : "ai.err.failed"), status: await statusOf(supabase, farm.id) };
+    console.error("AI assistant failed:", e instanceof AiError ? `${e.kind}: ${e.message}` : e);
+    const kind = e instanceof AiError ? e.kind : "failed";
+    return { error: t(kind === "busy" ? "ai.err.busy" : kind === "auth" ? "ai.err.badKey" : "ai.err.failed"), status: await statusOf(supabase, farm.id) };
   }
 }
 
