@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Children, cloneElement, isValidElement, type ComponentProps, type ReactElement, type ReactNode } from "react";
+import type { ComponentProps, CSSProperties, ReactNode } from "react";
 
 function cx(...classes: (string | false | null | undefined)[]) {
   return classes.filter(Boolean).join(" ");
@@ -205,8 +205,8 @@ export function Badge({
 }
 
 /**
- * On phones each row becomes a small card, with the column name shown beside
- * every value (see .rtable in globals.css); from `sm` up it is a normal table.
+ * One row per record. On phones the table scrolls sideways when it is wider
+ * than the screen, with its first column pinned (see .rtable in globals.css).
  */
 export function Table({
   head,
@@ -215,19 +215,9 @@ export function Table({
   head: ReactNode[];
   children: ReactNode;
 }) {
-  const rows = Children.map(children, (row) => {
-    if (!isValidElement<{ children?: ReactNode }>(row)) return row;
-    let col = 0;
-    const cells = Children.map(row.props.children, (cell) => {
-      if (!isValidElement<{ label?: ReactNode }>(cell)) return cell;
-      const label = head[col++];
-      return cloneElement(cell as ReactElement<{ label?: ReactNode }>, { label: typeof label === "string" ? label : undefined });
-    });
-    return cloneElement(row, {}, cells);
-  });
   return (
     <div className="rtable -mx-4 overflow-x-auto sm:-mx-5">
-      <table className="w-full text-left text-sm">
+      <table className="w-full text-left text-sm" style={{ "--cols": head.length } as CSSProperties}>
         <thead>
           <tr className="border-b border-stone-200 text-xs uppercase tracking-wide text-stone-500">
             {head.map((h, i) => (
@@ -237,18 +227,14 @@ export function Table({
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-stone-100">{rows}</tbody>
+        <tbody className="divide-y divide-stone-100">{children}</tbody>
       </table>
     </div>
   );
 }
 
-export function Td({ children, className, label }: { children: ReactNode; className?: string; label?: string }) {
-  return (
-    <td data-label={label || undefined} className={cx("px-4 py-2.5 text-stone-700 sm:px-5", className)}>
-      {children}
-    </td>
-  );
+export function Td({ children, className }: { children: ReactNode; className?: string }) {
+  return <td className={cx("px-4 py-2.5 text-stone-700 sm:px-5", className)}>{children}</td>;
 }
 
 export function Spinner({ className }: { className?: string }) {
