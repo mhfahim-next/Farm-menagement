@@ -9,7 +9,7 @@ export function Logo({ href = "/" }: { href?: string }) {
           <path d="M9 21v-6h6v6" />
         </svg>
       </span>
-      FarmFlow
+      <span className="max-[339px]:hidden">FarmFlow</span>
     </Link>
   );
 }

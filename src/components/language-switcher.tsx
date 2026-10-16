@@ -24,9 +24,9 @@ export function LanguageSwitcher({ className = "" }: { className?: string }) {
           disabled={pending}
           aria-pressed={locale === l}
           onClick={() => locale !== l && startTransition(() => setLocale(l))}
-          className={`rounded-md px-2.5 py-1 font-medium transition-colors ${
+          className={`rounded-md px-2.5 py-1.5 font-medium sm:py-1 transition-colors ${
             locale === l
-              ? "bg-emerald-700 text-white"
+              ? "bg-emerald-700 text-white max-sm:hidden"
               : "text-stone-600 hover:bg-stone-100 hover:text-stone-900"
           }`}
         >

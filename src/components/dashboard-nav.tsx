@@ -31,7 +31,7 @@ export function DashboardNav({ items }: { items: NavItem[] }) {
             key={item.href}
             href={item.href}
             aria-current={active ? "page" : undefined}
-            className={`flex items-center whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+            className={`flex items-center whitespace-nowrap rounded-lg px-3 py-2.5 text-sm font-medium transition-colors md:py-2 ${
               active
                 ? "bg-emerald-50 text-emerald-800"
                 : "text-stone-600 hover:bg-stone-100 hover:text-stone-900"

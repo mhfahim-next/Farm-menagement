@@ -24,13 +24,13 @@ export default async function Home() {
           <nav className="flex items-center gap-1.5 sm:gap-2">
             <LanguageSwitcher />
             <ThemeToggle />
-            <ButtonLink href="/doctor/signup" variant="ghost" className="hidden md:inline-flex">
+            <ButtonLink href="/doctor/signup" variant="ghost" className="max-md:hidden">
               {t("doctor.landingLink")}
             </ButtonLink>
-            <ButtonLink href="/login" variant="ghost" className="hidden sm:inline-flex">
+            <ButtonLink href="/login" variant="ghost" className="max-sm:hidden">
               {t("landing.login")}
             </ButtonLink>
-            <ButtonLink href="/signup">{t("landing.startFree")}</ButtonLink>
+            <ButtonLink href="/signup" className="px-3 sm:px-4">{t("landing.startFree")}</ButtonLink>
           </nav>
         </div>
       </header>
