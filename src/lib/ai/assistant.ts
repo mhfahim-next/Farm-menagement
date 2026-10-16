@@ -4,18 +4,13 @@ import type { FarmContext } from "@/lib/auth";
 import { animalLabel } from "@/lib/cattle";
 import { today } from "@/lib/format";
 import type { I18n } from "@/lib/i18n/core";
-import type { ChatTurn, Proposal, ProposalKind } from "./types";
-
-/**
- * The cheapest current Claude model; plenty for turning a sentence into a
- * record. Override with AI_MODEL if you want to try another one.
- */
-export const AI_MODEL = process.env.AI_MODEL || "claude-haiku-5-5";
+import type { AiConfig } from "./config";
+import type { ChatTurn, Proposal } from "./types";
 
 const MAX_TOOL_ROUNDS = 4;
 const MAX_INPUT_CHARS = 1000;
 
-type Ctx = Pick<FarmContext, "supabase" | "farm"> & { i18n: I18n };
+export type Ctx = Pick<FarmContext, "supabase" | "farm"> & { i18n: I18n };
 
 // ---------------------------------------------------------------------------
 // Tools: every write tool only *prepares* a proposal. Nothing is saved until
@@ -25,7 +20,7 @@ type Ctx = Pick<FarmContext, "supabase" | "farm"> & { i18n: I18n };
 const str = (description: string) => ({ type: "string" as const, description });
 const num = (description: string) => ({ type: "number" as const, description });
 
-function tools(i18n: I18n): Anthropic.Tool[] {
+export function tools(i18n: I18n): Anthropic.Tool[] {
   const vals = (list: Parameters<I18n["options"]>[0]) => i18n.options(list).map((o) => o.value);
   return [
     {
@@ -392,28 +387,51 @@ export type AssistantOutput = {
   outputTokens: number;
 };
 
-/**
- * Runs one user message through Claude with the farm tools. Returns the
- * assistant's text and any records it prepared (not saved).
- */
-export async function runAssistant(ctx: Ctx, history: ChatTurn[], text: string): Promise<AssistantOutput> {
-  const client = new Anthropic({ maxRetries: 1, timeout: 45_000 });
+/** Why a call to the AI service failed, in terms the UI can explain. */
+export class AiError extends Error {
+  constructor(public kind: "busy" | "auth" | "failed", message: string) {
+    super(message);
+  }
+}
 
-  const messages: Anthropic.MessageParam[] = [];
+type Turn = { role: "user" | "assistant"; content: string };
+
+/** Last turns of the chat plus the new message, alternating and starting with the user. */
+function buildTurns(history: ChatTurn[], text: string): Turn[] {
+  const turns: Turn[] = [];
   for (const turn of history.slice(-12)) {
     const content = turn.text.slice(0, 2000).trim();
     if (!content) continue;
-    const last = messages.at(-1);
-    if (last && last.role === turn.role) last.content = `${last.content as string}\n${content}`;
-    else messages.push({ role: turn.role, content });
+    const last = turns.at(-1);
+    if (last && last.role === turn.role) last.content += `\n${content}`;
+    else turns.push({ role: turn.role, content });
   }
-  // The conversation must start with the user.
-  while (messages.length && messages[0].role !== "user") messages.shift();
+  while (turns.length && turns[0].role !== "user") turns.shift();
   const clean = text.slice(0, MAX_INPUT_CHARS).trim();
-  const lastMsg = messages.at(-1);
-  if (lastMsg && lastMsg.role === "user") lastMsg.content = `${lastMsg.content as string}\n${clean}`;
-  else messages.push({ role: "user", content: clean });
+  const lastTurn = turns.at(-1);
+  if (lastTurn && lastTurn.role === "user") lastTurn.content += `\n${clean}`;
+  else turns.push({ role: "user", content: clean });
+  return turns;
+}
 
+/** Runs one tool call from the model. Write tools only prepare a proposal. */
+async function executeTool(ctx: Ctx, name: string, input: Input, proposals: Proposal[]): Promise<{ content: string; isError: boolean }> {
+  try {
+    if (name === "find_animals") return { content: await findAnimals(ctx, String(input.query ?? "")), isError: false };
+    const p = await propose(ctx, name, input);
+    proposals.push(p);
+    return { content: "Prepared for the user to confirm. NOT saved yet. Tell the user briefly and ask them to confirm.", isError: false };
+  } catch (e) {
+    if (!(e instanceof ToolError)) console.error("AI tool failed:", e);
+    return { content: e instanceof ToolError ? e.message : "Could not prepare this record.", isError: true };
+  }
+}
+
+// --------------------------------- Claude ----------------------------------
+
+async function runClaude(ctx: Ctx, cfg: AiConfig, turns: Turn[]): Promise<AssistantOutput> {
+  const client = new Anthropic({ apiKey: cfg.apiKey ?? undefined, maxRetries: 1, timeout: 45_000 });
+  const messages: Anthropic.MessageParam[] = turns.map((t) => ({ role: t.role, content: t.content }));
   const system = systemPrompt(ctx);
   const toolDefs = tools(ctx.i18n);
   const proposals: Proposal[] = [];
@@ -421,51 +439,157 @@ export async function runAssistant(ctx: Ctx, history: ChatTurn[], text: string):
   let outputTokens = 0;
   let reply = "";
 
-  for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
-    const res = await client.messages.create({
-      model: AI_MODEL,
-      max_tokens: 2000,
-      system,
-      tools: toolDefs,
-      messages,
-      output_config: { effort: "low" },
-    });
-    inputTokens += res.usage.input_tokens;
-    outputTokens += res.usage.output_tokens;
+  try {
+    for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+      const res = await client.messages.create({
+        model: cfg.model,
+        max_tokens: 2000,
+        system,
+        tools: toolDefs,
+        messages,
+        output_config: { effort: "low" },
+      });
+      inputTokens += res.usage.input_tokens;
+      outputTokens += res.usage.output_tokens;
+      reply = res.content
+        .filter((b): b is Anthropic.TextBlock => b.type === "text")
+        .map((b) => b.text)
+        .join("\n")
+        .trim();
 
-    reply = res.content
-      .filter((b): b is Anthropic.TextBlock => b.type === "text")
-      .map((b) => b.text)
-      .join("\n")
-      .trim();
+      const uses = res.content.filter((b): b is Anthropic.ToolUseBlock => b.type === "tool_use");
+      if (res.stop_reason !== "tool_use" || uses.length === 0) break;
 
-    const uses = res.content.filter((b): b is Anthropic.ToolUseBlock => b.type === "tool_use");
-    if (res.stop_reason !== "tool_use" || uses.length === 0) break;
-
-    const results: Anthropic.ToolResultBlockParam[] = [];
-    for (const use of uses) {
-      const input = (use.input ?? {}) as Input;
-      try {
-        if (use.name === "find_animals") {
-          results.push({ type: "tool_result", tool_use_id: use.id, content: await findAnimals(ctx, String(input.query ?? "")) });
-        } else {
-          const p = await propose(ctx, use.name, input);
-          proposals.push(p);
-          results.push({ type: "tool_result", tool_use_id: use.id, content: "Prepared for the user to confirm. NOT saved yet. Tell the user briefly and ask them to confirm." });
-        }
-      } catch (e) {
-        const message = e instanceof ToolError ? e.message : "Could not prepare this record.";
-        if (!(e instanceof ToolError)) console.error("AI tool failed:", e);
-        results.push({ type: "tool_result", tool_use_id: use.id, content: message, is_error: true });
+      const results: Anthropic.ToolResultBlockParam[] = [];
+      for (const use of uses) {
+        const out = await executeTool(ctx, use.name, (use.input ?? {}) as Input, proposals);
+        results.push({ type: "tool_result", tool_use_id: use.id, content: out.content, ...(out.isError ? { is_error: true } : {}) });
       }
+      messages.push({ role: "assistant", content: res.content });
+      messages.push({ role: "user", content: results });
     }
-    messages.push({ role: "assistant", content: res.content });
-    messages.push({ role: "user", content: results });
+  } catch (e) {
+    if (e instanceof Anthropic.AuthenticationError || e instanceof Anthropic.PermissionDeniedError) throw new AiError("auth", e.message);
+    if (e instanceof Anthropic.RateLimitError || (e instanceof Anthropic.APIError && (e.status ?? 0) >= 500)) throw new AiError("busy", String(e.message));
+    if (e instanceof Anthropic.APIError) throw new AiError("failed", `${e.status} ${e.message}`);
+    throw e;
   }
-
   return { reply, proposals, inputTokens, outputTokens };
 }
 
-export const PROPOSAL_ACTIONS: Record<ProposalKind, true> = {
-  milk: true, health: true, breeding: true, animal: true, flock_log: true, transaction: true,
-};
+// ------------------------ OpenAI-compatible (Gemini etc.) -------------------
+
+type OaiToolCall = { id?: string; type?: string; function?: { name?: string; arguments?: string } };
+type OaiMessage =
+  | { role: "system" | "user"; content: string }
+  | { role: "assistant"; content: string | null; tool_calls?: { id: string; type: "function"; function: { name: string; arguments: string } }[] }
+  | { role: "tool"; tool_call_id: string; name: string; content: string };
+
+/**
+ * Chat Completions API shape, spoken by Google Gemini (its OpenAI-compatible
+ * endpoint), Groq, OpenRouter, Ollama and others.
+ */
+async function runOpenAICompatible(ctx: Ctx, cfg: AiConfig, turns: Turn[]): Promise<AssistantOutput> {
+  if (!cfg.baseUrl) throw new AiError("failed", "No base URL configured.");
+  const url = cfg.baseUrl.replace(/\/+$/, "") + "/chat/completions";
+  const messages: OaiMessage[] = [{ role: "system", content: systemPrompt(ctx) }, ...turns.map((t) => ({ role: t.role, content: t.content }) as OaiMessage)];
+  const toolDefs = tools(ctx.i18n).map((t) => ({ type: "function" as const, function: { name: t.name, description: t.description, parameters: t.input_schema } }));
+  const proposals: Proposal[] = [];
+  let inputTokens = 0;
+  let outputTokens = 0;
+  let reply = "";
+
+  for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: `Bearer ${cfg.apiKey ?? ""}` },
+        body: JSON.stringify({ model: cfg.model, messages, tools: toolDefs, tool_choice: "auto", max_tokens: 2000 }),
+        signal: AbortSignal.timeout(45_000),
+      });
+    } catch (e) {
+      throw new AiError("busy", e instanceof Error ? e.message : "network error");
+    }
+    if (!res.ok) {
+      const detail = (await res.text().catch(() => "")).slice(0, 300);
+      if (res.status === 401 || res.status === 403) throw new AiError("auth", `${res.status} ${detail}`);
+      if (res.status === 429 || res.status >= 500) throw new AiError("busy", `${res.status} ${detail}`);
+      throw new AiError("failed", `${res.status} ${detail}`);
+    }
+    const json = (await res.json()) as {
+      choices?: { message?: { content?: string | null; tool_calls?: OaiToolCall[] }; finish_reason?: string }[];
+      usage?: { prompt_tokens?: number; completion_tokens?: number };
+    };
+    inputTokens += json.usage?.prompt_tokens ?? 0;
+    outputTokens += json.usage?.completion_tokens ?? 0;
+    const msg = json.choices?.[0]?.message;
+    if (!msg) throw new AiError("failed", "Empty response");
+    reply = (msg.content ?? "").trim();
+
+    const calls = (msg.tool_calls ?? []).filter((c) => c.function?.name);
+    if (calls.length === 0) break;
+
+    // Some providers leave tool call ids empty; make sure every call has one.
+    const withIds = calls.map((c, i) => ({ id: c.id || `call_${round}_${i}`, name: c.function!.name!, args: c.function!.arguments ?? "{}" }));
+    messages.push({
+      role: "assistant",
+      content: msg.content ?? null,
+      tool_calls: withIds.map((c) => ({ id: c.id, type: "function" as const, function: { name: c.name, arguments: c.args } })),
+    });
+    for (const c of withIds) {
+      let input: Input = {};
+      try {
+        input = JSON.parse(c.args || "{}") as Input;
+      } catch {
+        messages.push({ role: "tool", tool_call_id: c.id, name: c.name, content: "The arguments were not valid JSON. Try again." });
+        continue;
+      }
+      const out = await executeTool(ctx, c.name, input, proposals);
+      messages.push({ role: "tool", tool_call_id: c.id, name: c.name, content: out.isError ? `Error: ${out.content}` : out.content });
+    }
+  }
+  return { reply, proposals, inputTokens, outputTokens };
+}
+
+/**
+ * Runs one user message through the configured AI service with the farm tools.
+ * Returns the assistant's text and any records it prepared (not saved).
+ */
+export async function runAssistant(ctx: Ctx, cfg: AiConfig, history: ChatTurn[], text: string): Promise<AssistantOutput> {
+  const turns = buildTurns(history, text);
+  return cfg.provider === "anthropic" ? runClaude(ctx, cfg, turns) : runOpenAICompatible(ctx, cfg, turns);
+}
+
+/** A one-line health check for the admin "Test" button (no tools, no farm data). */
+export async function pingProvider(cfg: AiConfig): Promise<string> {
+  if (cfg.provider === "anthropic") {
+    const client = new Anthropic({ apiKey: cfg.apiKey ?? undefined, maxRetries: 0, timeout: 30_000 });
+    try {
+      const res = await client.messages.create({ model: cfg.model, max_tokens: 40, messages: [{ role: "user", content: "Reply with the single word: ok" }], output_config: { effort: "low" } });
+      return res.content.filter((b): b is Anthropic.TextBlock => b.type === "text").map((b) => b.text).join(" ").trim();
+    } catch (e) {
+      if (e instanceof Anthropic.APIError) throw new AiError(e.status === 401 || e.status === 403 ? "auth" : "failed", `${e.status} ${e.message}`);
+      throw e;
+    }
+  }
+  if (!cfg.baseUrl) throw new AiError("failed", "No base URL configured.");
+  let res: Response;
+  try {
+    res = await fetch(cfg.baseUrl.replace(/\/+$/, "") + "/chat/completions", {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${cfg.apiKey ?? ""}` },
+      body: JSON.stringify({ model: cfg.model, messages: [{ role: "user", content: "Reply with the single word: ok" }], max_tokens: 40 }),
+      signal: AbortSignal.timeout(30_000),
+    });
+  } catch (e) {
+    throw new AiError("busy", e instanceof Error ? e.message : "network error");
+  }
+  const body = await res.text();
+  if (!res.ok) throw new AiError(res.status === 401 || res.status === 403 ? "auth" : "failed", `${res.status} ${body.slice(0, 300)}`);
+  try {
+    return String((JSON.parse(body) as { choices?: { message?: { content?: string } }[] }).choices?.[0]?.message?.content ?? "").trim();
+  } catch {
+    return body.slice(0, 80);
+  }
+}
