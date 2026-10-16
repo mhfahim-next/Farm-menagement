@@ -70,6 +70,9 @@ export async function updateCattle(_: ActionState, formData: FormData): Promise<
   const id = str(formData, "id");
   if (!id) return { error: t("cattle.missing") };
 
+  const tag = str(formData, "tag_number");
+  if (!tag) return { error: t("cattle.tagRequired") };
+
   const motherId = str(formData, "mother_id");
   const motherError = await validateMother(supabase, farm.id, motherId, id, t);
   if (motherError) return { error: motherError };
@@ -77,6 +80,7 @@ export async function updateCattle(_: ActionState, formData: FormData): Promise<
   const { error } = await supabase
     .from("cattle")
     .update({
+      tag_number: tag,
       name: str(formData, "name"),
       breed: str(formData, "breed"),
       ...(str(formData, "category") ? { category: str(formData, "category")! } : {}),
@@ -88,7 +92,7 @@ export async function updateCattle(_: ActionState, formData: FormData): Promise<
     })
     .eq("id", id)
     .eq("farm_id", farm.id);
-  if (error) return { error: dbError(t, error) };
+  if (error) return { error: error.code === "23505" ? t("cattle.dupTag", { tag }) : dbError(t, error) };
 
   revalidatePath(`/dashboard/cattle/${id}`);
   revalidatePath("/dashboard/cattle");
