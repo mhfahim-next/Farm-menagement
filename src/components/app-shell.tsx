@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { DashboardNav, type NavItem } from "@/components/dashboard-nav";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { Logo } from "@/components/logo";
+import { InstallBanner } from "@/components/pwa";
 import { Sidebar, SidebarToggle } from "@/components/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu, type MenuUser } from "@/components/user-menu";
@@ -55,6 +56,7 @@ export function AppShell({
         </div>
       </header>
 
+      <InstallBanner />
       {banner}
 
       <main className="min-w-0 flex-1 px-4 py-6 sm:px-8 sm:py-8">
