@@ -396,6 +396,29 @@ export class AiError extends Error {
 
 type Turn = { role: "user" | "assistant"; content: string };
 
+const RETRY_STATUS = new Set([429, 500, 502, 503, 504]);
+
+/**
+ * POST with a couple of retries for the "busy / high demand" answers that
+ * free tiers give now and then (HTTP 429/503). Waits 1s, then 2.5s.
+ */
+async function postWithRetry(url: string, init: Omit<RequestInit, "signal">, timeoutMs: number): Promise<Response> {
+  const waits = [1000, 2500];
+  let last: Response | null = null;
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const res = await fetch(url, { ...init, signal: AbortSignal.timeout(timeoutMs) });
+      if (!RETRY_STATUS.has(res.status) || attempt >= waits.length) return res;
+      last = res;
+    } catch (e) {
+      if (attempt >= waits.length) throw e;
+    }
+    await new Promise((r) => setTimeout(r, waits[attempt]));
+  }
+  // unreachable, keeps the compiler happy
+  return last as Response;
+}
+
 /** Last turns of the chat plus the new message, alternating and starting with the user. */
 function buildTurns(history: ChatTurn[], text: string): Turn[] {
   const turns: Turn[] = [];
@@ -430,7 +453,7 @@ async function executeTool(ctx: Ctx, name: string, input: Input, proposals: Prop
 // --------------------------------- Claude ----------------------------------
 
 async function runClaude(ctx: Ctx, cfg: AiConfig, turns: Turn[]): Promise<AssistantOutput> {
-  const client = new Anthropic({ apiKey: cfg.apiKey ?? undefined, maxRetries: 1, timeout: 45_000 });
+  const client = new Anthropic({ apiKey: cfg.apiKey ?? undefined, maxRetries: 2, timeout: 45_000 });
   const messages: Anthropic.MessageParam[] = turns.map((t) => ({ role: t.role, content: t.content }));
   const system = systemPrompt(ctx);
   const toolDefs = tools(ctx.i18n);
@@ -502,12 +525,15 @@ async function runOpenAICompatible(ctx: Ctx, cfg: AiConfig, turns: Turn[]): Prom
   for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
     let res: Response;
     try {
-      res = await fetch(url, {
-        method: "POST",
-        headers: { "content-type": "application/json", authorization: `Bearer ${cfg.apiKey ?? ""}` },
-        body: JSON.stringify({ model: cfg.model, messages, tools: toolDefs, tool_choice: "auto", max_tokens: 2000 }),
-        signal: AbortSignal.timeout(45_000),
-      });
+      res = await postWithRetry(
+        url,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json", authorization: `Bearer ${cfg.apiKey ?? ""}` },
+          body: JSON.stringify({ model: cfg.model, messages, tools: toolDefs, tool_choice: "auto", max_tokens: 2000 }),
+        },
+        30_000,
+      );
     } catch (e) {
       throw new AiError("busy", e instanceof Error ? e.message : "network error");
     }
@@ -576,12 +602,15 @@ export async function pingProvider(cfg: AiConfig): Promise<string> {
   if (!cfg.baseUrl) throw new AiError("failed", "No base URL configured.");
   let res: Response;
   try {
-    res = await fetch(cfg.baseUrl.replace(/\/+$/, "") + "/chat/completions", {
-      method: "POST",
-      headers: { "content-type": "application/json", authorization: `Bearer ${cfg.apiKey ?? ""}` },
-      body: JSON.stringify({ model: cfg.model, messages: [{ role: "user", content: "Reply with the single word: ok" }], max_tokens: 40 }),
-      signal: AbortSignal.timeout(30_000),
-    });
+    res = await postWithRetry(
+      cfg.baseUrl.replace(/\/+$/, "") + "/chat/completions",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: `Bearer ${cfg.apiKey ?? ""}` },
+        body: JSON.stringify({ model: cfg.model, messages: [{ role: "user", content: "Reply with the single word: ok" }], max_tokens: 40 }),
+      },
+      30_000,
+    );
   } catch (e) {
     throw new AiError("busy", e instanceof Error ? e.message : "network error");
   }

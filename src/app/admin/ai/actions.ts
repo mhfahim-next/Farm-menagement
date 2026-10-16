@@ -40,7 +40,10 @@ export async function testAiConnection(): Promise<ActionState> {
     const reply = await pingProvider(cfg);
     return { success: t("admin.ai.testOk", { provider: cfg.provider, model: cfg.model, reply: reply.slice(0, 60) || "—" }) };
   } catch (e) {
-    const detail = e instanceof AiError ? e.message : e instanceof Error ? e.message : "";
+    let detail = e instanceof AiError ? e.message : e instanceof Error ? e.message : "";
+    // Providers return JSON like {"error":{"message":"..."}}; show just the message.
+    const msg = /"message"\s*:\s*"((?:[^"\\]|\\.)*)"/.exec(detail)?.[1];
+    if (msg) detail = `${/^\d{3}/.exec(detail)?.[0] ?? ""} ${msg}`.trim();
     return { error: t("admin.ai.testFailed", { detail: detail.slice(0, 400) }) };
   }
 }
