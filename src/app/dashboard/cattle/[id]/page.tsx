@@ -316,6 +316,9 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
           <ActionForm action={updateCattle} submitLabel={t("cattle.saveChanges")} submitVariant="secondary">
             <input type="hidden" name="id" value={cow.id} />
             <div className="grid grid-cols-2 gap-3">
+              <Field label={t("cattle.tag")}>
+                <Input name="tag_number" defaultValue={cow.tag_number} required />
+              </Field>
               <Field label={t("common.name")}>
                 <Input name="name" defaultValue={cow.name ?? ""} />
               </Field>
