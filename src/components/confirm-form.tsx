@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useTransition, type ReactNode } from "react";
 import type { ActionState } from "@/lib/types";
 import { useI18n } from "./i18n-provider";
@@ -16,6 +17,7 @@ export function ConfirmForm({
   confirm,
   label,
   variant = "secondary",
+  successHref,
   children,
 }: {
   action: (state: ActionState, formData: FormData) => Promise<ActionState>;
@@ -23,11 +25,14 @@ export function ConfirmForm({
   confirm?: string;
   label: string;
   variant?: ButtonVariant;
+  /** Go here after the action succeeds (e.g. away from a page whose record was just deleted). */
+  successHref?: string;
   children?: ReactNode;
 }) {
   const { t } = useI18n();
   const [pending, startTransition] = useTransition();
   const { toast } = useToast();
+  const router = useRouter();
 
   return (
     <form
@@ -39,7 +44,10 @@ export function ConfirmForm({
         startTransition(async () => {
           const result = await action(null, formData);
           if (result?.error) toast("error", result.error);
-          else if (result?.success) toast("success", result.success);
+          else if (result?.success) {
+            toast("success", result.success);
+            if (successHref) router.push(successHref);
+          }
         });
       }}
     >

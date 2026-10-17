@@ -6,7 +6,7 @@ import { ClickRow } from "@/components/click-row";
 import { ButtonLink, Card, EmptyState, PageHeader, Select, StatCard, Table, Td } from "@/components/ui";
 import { requireRole, STAFF } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
-import type { Flock, FlockDailyLog } from "@/lib/types";
+import type { Flock, FlockDailyLog, FlockHealthRecord } from "@/lib/types";
 import { updateFlockStatus } from "../actions";
 import { flockAgeWeeks, withDailyStats } from "../utils";
 
@@ -20,10 +20,12 @@ export default async function FlockDetailPage({ params }: PageProps<"/dashboard/
   const { supabase, farm } = await requireRole(STAFF);
   const { t, f, o, options } = await getI18n();
 
-  const [flockRes, logsRes] = await Promise.all([
+  const [flockRes, logsRes, healthRes] = await Promise.all([
     supabase.from("flocks").select("*").eq("id", id).eq("farm_id", farm.id).maybeSingle(),
     supabase.from("flock_daily_logs").select("*").eq("flock_id", id).order("log_date", { ascending: true }),
+    supabase.from("flock_health_records").select("*").eq("flock_id", id).order("record_date", { ascending: false }).limit(5),
   ]);
+  const health = (healthRes.data ?? []) as FlockHealthRecord[];
   const flock = flockRes.data as Flock | null;
   if (!flock) notFound();
   const logs = (logsRes.data ?? []) as FlockDailyLog[];
@@ -111,6 +113,29 @@ export default async function FlockDetailPage({ params }: PageProps<"/dashboard/
         </Card>
 
         <div className="grid content-start gap-6">
+          <Card
+            title={t("flockHealth.title")}
+            action={<ButtonLink href={`/dashboard/flock-health/new?flock=${flock.id}`} variant="secondary">+ {t("flockHealth.recordShort")}</ButtonLink>}
+          >
+            {health.length === 0 ? (
+              <p className="text-sm text-stone-500">{t("flockHealth.noneYet")}</p>
+            ) : (
+              <ul className="divide-y divide-stone-100 text-sm">
+                {health.map((h) => (
+                  <li key={h.id}>
+                    <Link href={`/dashboard/flock-health/${h.id}/edit`} className="flex items-start justify-between gap-2 py-2 hover:text-emerald-700">
+                      <span>
+                        {h.product}
+                        <span className="block text-xs text-stone-500">{o("health_type", h.record_type)} · {f.date(h.record_date)}</span>
+                      </span>
+                      {h.next_due_date && <span className="shrink-0 text-xs text-stone-500">{t("flockHealth.nextShort", { date: f.date(h.next_due_date) })}</span>}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+
           <Card title={t("flocks.statusTitle")}>
             <ActionForm action={updateFlockStatus} submitLabel={t("flocks.update")} submitVariant="secondary" className="flex items-end gap-2">
               <input type="hidden" name="id" value={flock.id} />

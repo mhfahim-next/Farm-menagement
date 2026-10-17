@@ -207,3 +207,20 @@ export type AdminRequestRow = {
   admin_reply: string | null;
   created_at: string;
 };
+
+export type FlockHealthRecord = {
+  id: string;
+  farm_id?: string;
+  flock_id: string;
+  record_date: string;
+  record_type: HealthRecordType;
+  product: string;
+  dose: string | null;
+  batch_number: string | null;
+  vet_name: string | null;
+  cost: number | null;
+  interval_days: number | null;
+  next_due_date: string | null;
+  withdrawal_until: string | null;
+  notes: string | null;
+};
