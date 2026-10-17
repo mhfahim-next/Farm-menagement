@@ -3,7 +3,7 @@
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useI18n } from "./i18n-provider";
-import { Spinner } from "./ui";
+import { DotsLoader } from "./velora/loaders";
 
 const EVENT = "farmflow:navigate";
 
@@ -57,10 +57,10 @@ export function NavProgress() {
 
   if (!loading) return null;
   return (
-    <div role="status" aria-live="polite" data-testid="nav-progress" className="pointer-events-none fixed inset-x-0 top-0 z-[60]">
-      <div className="nav-progress-bar h-1 bg-emerald-600" />
+    <div data-testid="nav-progress" className="pointer-events-none fixed inset-x-0 top-0 z-[60]">
+      <div className="nav-progress-bar h-1 bg-gradient-to-r from-brand-from via-brand-via to-brand-to" />
       <div className="mx-auto mt-2 flex w-fit items-center gap-2 rounded-full border border-stone-200 bg-white px-3 py-1.5 text-sm text-stone-700 shadow-md">
-        <Spinner className="h-4 w-4 text-emerald-700" />
+        <DotsLoader size="sm" label={t("common.loading")} className="text-emerald-600" />
         {t("common.loading")}
       </div>
     </div>

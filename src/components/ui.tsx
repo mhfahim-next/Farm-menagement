@@ -1,5 +1,7 @@
 import Link from "next/link";
 import type { ComponentProps, CSSProperties, ReactNode } from "react";
+import { OrbitLoader } from "./velora/loaders";
+import { TextShimmer } from "./velora/text-shimmer";
 
 function cx(...classes: (string | false | null | undefined)[]) {
   return classes.filter(Boolean).join(" ");
@@ -249,10 +251,10 @@ export function Spinner({ className }: { className?: string }) {
 /** Full-area loader shown by loading.tsx while a page's data is fetched. */
 export function PageLoader({ label }: { label: string }) {
   return (
-    <div role="status" data-testid="page-loader" className="grid min-h-[50vh] place-items-center">
-      <div className="flex flex-col items-center gap-3 text-stone-500">
-        <Spinner className="h-8 w-8 text-emerald-700" />
-        <span className="text-sm">{label}</span>
+    <div data-testid="page-loader" className="grid min-h-[50vh] place-items-center">
+      <div className="flex flex-col items-center gap-4">
+        <OrbitLoader size="lg" label={label} className="size-12 text-emerald-600" />
+        <TextShimmer className="text-sm font-medium">{label}</TextShimmer>
       </div>
     </div>
   );

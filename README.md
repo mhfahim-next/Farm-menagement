@@ -53,6 +53,7 @@ A multi-tenant farm management web app built with **Next.js 16 (App Router)** an
 - **Layer flock health** (`/dashboard/flock-health`): vaccines (Newcastle, Gumboro, …), deworming, lice/mite spray and medicine per flock, with admin-editable quick picks, due/overdue board, egg-withdrawal dates and costs.
 - **Dedicated add pages & clickable rows**: add cattle, milk, health, breeding, flocks, daily logs, flock health, staff and transactions on their own pages; every table row opens its record.
 - **Grouped sidebar**: Cow farm / Layer farm / Money / Farm.
+- **Velora UI** (`src/components/velora`, registry `@velora` in `components.json`): aurora hero, rotating words, blur-fade entrances, spotlight feature cards, shimmer buttons, marquee, scroll-progress bar, velora loaders on every page load and in the AI assistant, and a footer with a hover-lit FarmFlow wordmark above an animated farm landscape (barn, windmill, cows, hens, crop rows). All animations respect "reduce motion".
 - **Breeding rules** (Admin → Announcement & settings): gestation (calving) days, heat cycle, pregnancy check, dry-off and waiting period are editable and used everywhere.
 - **Overview dashboard**: today's milk and eggs, herd and flock size, this month's P&L, and 7-day charts.
 
