@@ -58,7 +58,7 @@ export function OptionFields({
         </Field>
       )}
 
-      {list === "health_preset" && (
+      {(list === "health_preset" || list === "flock_health_preset") && (
         <div className="grid gap-3 sm:grid-cols-3">
           <Field label={t("options.recordType")}>
             <Select name="meta_record_type" defaultValue={meta.record_type ?? "vaccination"} options={options("health_type", meta.record_type)} />

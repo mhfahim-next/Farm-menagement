@@ -30,7 +30,7 @@ function metaFrom(list: ListKey, fd: FormData): OptionMeta | undefined {
   if (list === "finance_category") {
     return { txn_type: str(fd, "meta_txn_type") === "income" ? "income" : "expense" };
   }
-  if (list === "health_preset") {
+  if (list === "health_preset" || list === "flock_health_preset") {
     return {
       record_type: str(fd, "meta_record_type") ?? "",
       product: str(fd, "meta_product") ?? "",
