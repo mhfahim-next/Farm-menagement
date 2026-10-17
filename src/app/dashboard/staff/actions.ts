@@ -22,8 +22,8 @@ export async function addStaff(_: ActionState, formData: FormData): Promise<Acti
   const { t } = await getI18n();
   const name = str(formData, "name");
   if (!name) return { error: t("staff.giveName") };
-  const module = str(formData, "module") ?? "both";
-  if (!MODULES.includes(module)) return { error: t("staff.chooseModule") };
+  const worksOn = str(formData, "module") ?? "both";
+  if (!MODULES.includes(worksOn)) return { error: t("staff.chooseModule") };
   const salary = num(formData, "monthly_salary") ?? 0;
   if (salary < 0) return { error: t("staff.badSalary") };
 
@@ -32,7 +32,7 @@ export async function addStaff(_: ActionState, formData: FormData): Promise<Acti
     name,
     phone: str(formData, "phone"),
     position: str(formData, "position"),
-    module,
+    module: worksOn,
     monthly_salary: salary,
     join_date: str(formData, "join_date") ?? undefined,
     notes: str(formData, "notes"),
@@ -48,8 +48,8 @@ export async function updateStaff(_: ActionState, formData: FormData): Promise<A
   const id = str(formData, "id");
   const name = str(formData, "name");
   if (!id || !name) return { error: t("staff.giveName") };
-  const module = str(formData, "module") ?? "both";
-  if (!MODULES.includes(module)) return { error: t("staff.chooseModule") };
+  const worksOn = str(formData, "module") ?? "both";
+  if (!MODULES.includes(worksOn)) return { error: t("staff.chooseModule") };
   const salary = num(formData, "monthly_salary") ?? 0;
   if (salary < 0) return { error: t("staff.badSalary") };
 
@@ -59,7 +59,7 @@ export async function updateStaff(_: ActionState, formData: FormData): Promise<A
       name,
       phone: str(formData, "phone"),
       position: str(formData, "position"),
-      module,
+      module: worksOn,
       monthly_salary: salary,
       active: formData.get("active") === "on",
       notes: str(formData, "notes"),

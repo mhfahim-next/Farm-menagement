@@ -137,6 +137,7 @@ export const plans: Record<keyof typeof en, string> = {
   "reports.col.expectedCalving": "বাছুর হওয়ার সম্ভাব্য তারিখ",
   "reports.col.signs": "গরমের লক্ষণ",
   "reports.col.notes": "নোট",
+  "reports.col.source": "উৎস",
   "reports.col.flock": "ফ্লক",
   "reports.col.eggs": "সংগ্রহ করা ডিম",
   "reports.col.broken": "ভাঙা",

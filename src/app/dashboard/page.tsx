@@ -57,7 +57,7 @@ export default async function OverviewPage() {
           .gte("log_date", weekAgo)
       : null,
     supabase
-      .from("transactions")
+      .from("finance_ledger")
       .select("txn_type, amount")
       .eq("farm_id", farm.id)
       .gte("txn_date", monthStart()),

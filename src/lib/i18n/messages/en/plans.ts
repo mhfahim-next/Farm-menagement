@@ -138,6 +138,7 @@ export const plans = {
   "reports.col.expectedCalving": "Expected calving",
   "reports.col.signs": "Heat signs",
   "reports.col.notes": "Notes",
+  "reports.col.source": "Source",
   "reports.col.flock": "Flock",
   "reports.col.eggs": "Eggs collected",
   "reports.col.broken": "Broken",
