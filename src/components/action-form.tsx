@@ -1,6 +1,7 @@
 "use client";
 
-import { Fragment, startTransition, useActionState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import { Fragment, startTransition, useActionState, useEffect, type ReactNode } from "react";
 import type { ActionState } from "@/lib/types";
 import { useI18n } from "./i18n-provider";
 import { useResultToast } from "./toast";
@@ -43,6 +44,7 @@ export function ActionForm({
   submitVariant,
   className = "grid gap-4",
   fullWidthSubmit = false,
+  successHref,
   children,
 }: {
   action: (state: ActionState, formData: FormData) => Promise<ActionState>;
@@ -50,6 +52,8 @@ export function ActionForm({
   submitVariant?: ButtonVariant;
   className?: string;
   fullWidthSubmit?: boolean;
+  /** Go here after a successful save (used by the dedicated "add" pages). */
+  successHref?: string;
   children: ReactNode;
 }) {
   const [state, dispatch, pending] = useActionState<State, FormData>(async (prev, formData) => {
@@ -59,6 +63,12 @@ export function ActionForm({
   }, null);
 
   useResultToast(state);
+
+  const router = useRouter();
+  const saves = state?.saves ?? 0;
+  useEffect(() => {
+    if (successHref && saves > 0) router.push(successHref);
+  }, [saves, successHref, router]);
 
   return (
     <form

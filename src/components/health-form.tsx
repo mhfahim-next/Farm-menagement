@@ -67,6 +67,7 @@ export function HealthForm({
   animals,
   cattleId,
   record,
+  successHref,
 }: {
   action: (state: ActionState, formData: FormData) => Promise<ActionState>;
   today: string;
@@ -75,6 +76,8 @@ export function HealthForm({
   cattleId?: string;
   /** Edit mode: an existing record to change. */
   record?: HealthRecord;
+  /** Where to go after a successful save. */
+  successHref?: string;
 }) {
   const { t, f, options } = useI18n();
   const presets = options("health_preset");
@@ -94,7 +97,7 @@ export function HealthForm({
   }
 
   return (
-    <ActionForm action={action} submitLabel={record ? t("cattle.saveChanges") : t("health.submit")} className="grid gap-4">
+    <ActionForm action={action} submitLabel={record ? t("cattle.saveChanges") : t("health.submit")} className="grid gap-4" successHref={successHref}>
       {cattleId && <input type="hidden" name="cattle_id" value={cattleId} />}
       {record && <input type="hidden" name="id" value={record.id} />}
       {animals && <AnimalPicker animals={animals} />}

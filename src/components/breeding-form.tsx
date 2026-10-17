@@ -17,6 +17,7 @@ export function BreedingForm({
   checkDays,
   gestationDays,
   record,
+  successHref,
 }: {
   action: (state: ActionState, formData: FormData) => Promise<ActionState>;
   today: string;
@@ -28,6 +29,8 @@ export function BreedingForm({
   gestationDays: number;
   /** Edit mode: an existing event to change (its type cannot be changed). */
   record?: BreedingEvent;
+  /** Where to go after a successful save. */
+  successHref?: string;
 }) {
   const { t, options } = useI18n();
   const [type, setType] = useState(record?.event_type ?? defaultType);
@@ -38,7 +41,7 @@ export function BreedingForm({
     calfTypes.find((c) => c.meta.sex === "female" && !c.meta.milking)?.value ?? calfTypes[0]?.value ?? "";
 
   return (
-    <ActionForm action={action} submitLabel={record ? t("cattle.saveChanges") : t("breeding.submit")} className="grid gap-4">
+    <ActionForm action={action} submitLabel={record ? t("cattle.saveChanges") : t("breeding.submit")} className="grid gap-4" successHref={successHref}>
       {record && <input type="hidden" name="id" value={record.id} />}
       {cattleId ? (
         <input type="hidden" name="cattle_id" value={cattleId} />
