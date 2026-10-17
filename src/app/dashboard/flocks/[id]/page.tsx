@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ActionForm } from "@/components/action-form";
-import { Card, EmptyState, Field, Input, PageHeader, Select, StatCard, Table, Td } from "@/components/ui";
+import { ClickRow } from "@/components/click-row";
+import { ButtonLink, Card, EmptyState, PageHeader, Select, StatCard, Table, Td } from "@/components/ui";
 import { requireRole, STAFF } from "@/lib/auth";
-import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
-import type { Flock, FlockDailyLog } from "@/lib/types";
-import { saveDailyLog, updateFlockStatus } from "../actions";
+import type { Flock, FlockDailyLog, FlockHealthRecord } from "@/lib/types";
+import { updateFlockStatus } from "../actions";
 import { flockAgeWeeks, withDailyStats } from "../utils";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -15,16 +15,17 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("flocks.detailMeta") };
 }
 
-export default async function FlockDetailPage({ params, searchParams }: PageProps<"/dashboard/flocks/[id]">) {
+export default async function FlockDetailPage({ params }: PageProps<"/dashboard/flocks/[id]">) {
   const { id } = await params;
-  const sp = await searchParams;
   const { supabase, farm } = await requireRole(STAFF);
   const { t, f, o, options } = await getI18n();
 
-  const [flockRes, logsRes] = await Promise.all([
+  const [flockRes, logsRes, healthRes] = await Promise.all([
     supabase.from("flocks").select("*").eq("id", id).eq("farm_id", farm.id).maybeSingle(),
     supabase.from("flock_daily_logs").select("*").eq("flock_id", id).order("log_date", { ascending: true }),
+    supabase.from("flock_health_records").select("*").eq("flock_id", id).order("record_date", { ascending: false }).limit(5),
   ]);
+  const health = (healthRes.data ?? []) as FlockHealthRecord[];
   const flock = flockRes.data as Flock | null;
   if (!flock) notFound();
   const logs = (logsRes.data ?? []) as FlockDailyLog[];
@@ -36,9 +37,6 @@ export default async function FlockDetailPage({ params, searchParams }: PageProp
   const totalMortality = logs.reduce((s, l) => s + l.mortality, 0);
   const totalEggs = logs.reduce((s, l) => s + l.eggs_collected, 0);
   const totalFeed = logs.reduce((s, l) => s + Number(l.feed_kg ?? 0), 0);
-
-  const logDate = typeof sp.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(sp.date) ? sp.date : today();
-  const existing = logs.find((l) => l.log_date === logDate);
 
   return (
     <>
@@ -53,9 +51,12 @@ export default async function FlockDetailPage({ params, searchParams }: PageProp
           .filter(Boolean)
           .join(" · ")}
         action={
-          <Link href="/dashboard/flocks" className="text-sm text-stone-500 hover:text-stone-900">
-            {t("flocks.allFlocks")}
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/dashboard/flocks" className="text-sm text-stone-500 hover:text-stone-900">
+              {t("flocks.allFlocks")}
+            </Link>
+            <ButtonLink href={`/dashboard/flocks/${flock.id}/log`}>+ {t("flocks.logTitle")}</ButtonLink>
+          </div>
         }
       />
 
@@ -78,7 +79,7 @@ export default async function FlockDetailPage({ params, searchParams }: PageProp
         />
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_340px]">
+      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_300px]">
         <Card title={t("flocks.logsTitle")} description={t("flocks.logsDesc")}>
           {recent.length === 0 ? (
             <EmptyState title={t("flocks.logsEmptyTitle")}>{t("flocks.logsEmptyBody")}</EmptyState>
@@ -95,12 +96,8 @@ export default async function FlockDetailPage({ params, searchParams }: PageProp
               ]}
             >
               {recent.map((r) => (
-                <tr key={r.id}>
-                  <Td>
-                    <Link href={`?date=${r.log_date}`} className="text-emerald-700 hover:underline">
-                      {f.date(r.log_date)}
-                    </Link>
-                  </Td>
+                <ClickRow key={r.id} href={`/dashboard/flocks/${flock.id}/log?date=${r.log_date}`}>
+                  <Td>{f.date(r.log_date)}</Td>
                   <Td className="tabular-nums">{f.number(r.eggs_collected)}</Td>
                   <Td className="tabular-nums">{r.eggs_broken ? f.number(r.eggs_broken) : "—"}</Td>
                   <Td className="tabular-nums">{f.number(r.henDay, 1)}%</Td>
@@ -109,7 +106,7 @@ export default async function FlockDetailPage({ params, searchParams }: PageProp
                   </Td>
                   <Td className="tabular-nums">{r.feed_kg != null ? t("flocks.kg", { n: f.number(Number(r.feed_kg), 1) }) : "—"}</Td>
                   <Td className="tabular-nums">{r.feedPerBird != null ? f.number(r.feedPerBird, 0) : "—"}</Td>
-                </tr>
+                </ClickRow>
               ))}
             </Table>
           )}
@@ -117,42 +114,26 @@ export default async function FlockDetailPage({ params, searchParams }: PageProp
 
         <div className="grid content-start gap-6">
           <Card
-            title={existing ? t("flocks.logTitleEdit", { date: f.date(logDate) }) : t("flocks.logTitle")}
-            description={t("flocks.logDesc")}
+            title={t("flockHealth.title")}
+            action={<ButtonLink href={`/dashboard/flock-health/new?flock=${flock.id}`} variant="secondary">+ {t("flockHealth.recordShort")}</ButtonLink>}
           >
-            <form className="mb-3 flex items-end gap-2">
-              <Field label={t("common.date")} className="flex-1">
-                <Input name="date" type="date" defaultValue={logDate} max={today()} />
-              </Field>
-              <button className="rounded-lg border border-stone-300 px-3 py-2 text-sm hover:bg-stone-50">{t("common.load")}</button>
-            </form>
-            <ActionForm action={saveDailyLog} submitLabel={t("flocks.saveLog")} key={logDate}>
-              <input type="hidden" name="flock_id" value={flock.id} />
-              <input type="hidden" name="log_date" value={logDate} />
-              <div className="grid grid-cols-2 gap-3">
-                <Field label={t("flocks.eggsCollected")}>
-                  <Input name="eggs_collected" type="number" min="0" inputMode="numeric" defaultValue={existing?.eggs_collected ?? ""} required />
-                </Field>
-                <Field label={t("flocks.eggsBroken")}>
-                  <Input name="eggs_broken" type="number" min="0" inputMode="numeric" defaultValue={existing?.eggs_broken ?? ""} />
-                </Field>
-                <Field label={t("flocks.deaths")}>
-                  <Input name="mortality" type="number" min="0" inputMode="numeric" defaultValue={existing?.mortality ?? ""} />
-                </Field>
-                <Field label={t("flocks.culled")}>
-                  <Input name="culled" type="number" min="0" inputMode="numeric" defaultValue={existing?.culled ?? ""} />
-                </Field>
-                <Field label={t("flocks.feedKg")}>
-                  <Input name="feed_kg" type="number" min="0" step="0.1" inputMode="decimal" defaultValue={existing?.feed_kg ?? ""} />
-                </Field>
-                <Field label={t("flocks.waterL")}>
-                  <Input name="water_liters" type="number" min="0" step="0.1" inputMode="decimal" defaultValue={existing?.water_liters ?? ""} />
-                </Field>
-              </div>
-              <Field label={t("common.notes")}>
-                <Input name="notes" defaultValue={existing?.notes ?? ""} />
-              </Field>
-            </ActionForm>
+            {health.length === 0 ? (
+              <p className="text-sm text-stone-500">{t("flockHealth.noneYet")}</p>
+            ) : (
+              <ul className="divide-y divide-stone-100 text-sm">
+                {health.map((h) => (
+                  <li key={h.id}>
+                    <Link href={`/dashboard/flock-health/${h.id}/edit`} className="flex items-start justify-between gap-2 py-2 hover:text-emerald-700">
+                      <span>
+                        {h.product}
+                        <span className="block text-xs text-stone-500">{o("health_type", h.record_type)} · {f.date(h.record_date)}</span>
+                      </span>
+                      {h.next_due_date && <span className="shrink-0 text-xs text-stone-500">{t("flockHealth.nextShort", { date: f.date(h.next_due_date) })}</span>}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
           </Card>
 
           <Card title={t("flocks.statusTitle")}>

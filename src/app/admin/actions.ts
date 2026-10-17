@@ -109,9 +109,18 @@ export async function resolveRequest(id: string, approve: boolean, reply: string
   return { success: t("admin.requests.done") };
 }
 
-export async function savePregnancyCheckDays(_: ActionState, formData: FormData): Promise<ActionState> {
+export async function saveBreedingRules(_: ActionState, formData: FormData): Promise<ActionState> {
   const { t } = await getI18n();
-  const days = Number(str(formData, "pregnancy_check_days"));
-  if (!Number.isInteger(days) || days < 20 || days > 120) return { error: t("admin.breedingRules.invalid") };
-  return run((s) => s.rpc("admin_set_pregnancy_check_days", { p_days: days }), t("admin.breedingRules.saved"));
+  const n = (k: string) => Number(str(formData, k));
+  const [check, gestation, heat, dry, wait] = [
+    n("pregnancy_check_days"), n("gestation_days"), n("heat_cycle_days"), n("dry_off_days"), n("voluntary_wait_days"),
+  ];
+  const ok = (v: number, lo: number, hi: number) => Number.isInteger(v) && v >= lo && v <= hi;
+  if (!ok(check, 20, 120) || !ok(gestation, 240, 320) || !ok(heat, 14, 30) || !ok(dry, 30, 90) || !ok(wait, 20, 150)) {
+    return { error: t("admin.breedingRules.invalid") };
+  }
+  return run(
+    (s) => s.rpc("admin_set_breeding_rules", { p_check: check, p_gestation: gestation, p_heat: heat, p_dry: dry, p_wait: wait }),
+    t("admin.breedingRules.saved"),
+  );
 }

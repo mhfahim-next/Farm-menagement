@@ -1,6 +1,6 @@
 "use server";
 
-import { requireRole, STAFF } from "@/lib/auth";
+import { getProfile, requireRole, STAFF } from "@/lib/auth";
 import { AiError, runAssistant } from "@/lib/ai/assistant";
 import { getAiConfig } from "@/lib/ai/config";
 import { PROPOSAL_KINDS, type AskResult, type ChatTurn, type ProposalKind } from "@/lib/ai/types";
@@ -61,7 +61,15 @@ export async function askAssistant(history: ChatTurn[], text: string): Promise<A
     await supabase.rpc("ai_cancel_prompt", { p_id: usageId as string });
     console.error("AI assistant failed:", e instanceof AiError ? `${e.kind}: ${e.message}` : e);
     const kind = e instanceof AiError ? e.kind : "failed";
-    return { error: t(kind === "busy" ? "ai.err.busy" : kind === "auth" ? "ai.err.badKey" : "ai.err.failed"), status: await statusOf(supabase, farm.id) };
+    let message = t(kind === "busy" ? "ai.err.busy" : kind === "auth" ? "ai.err.badKey" : "ai.err.failed");
+    // Super admins also see what the AI service said, to debug the setup.
+    if (e instanceof AiError && (await getProfile())?.is_super_admin) {
+      let detail = e.message;
+      const m = /"message"\s*:\s*"((?:[^"\\]|\\.)*)"/.exec(detail)?.[1];
+      if (m) detail = `${/^\d{3}/.exec(detail)?.[0] ?? ""} ${m}`.trim();
+      message += ` [${cfg.provider}:${cfg.model}] ${detail.slice(0, 300)}`;
+    }
+    return { error: message, status: await statusOf(supabase, farm.id) };
   }
 }
 

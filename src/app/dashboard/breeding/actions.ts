@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { queueIfVet } from "@/lib/approvals";
 import { requireFarm } from "@/lib/auth";
 import { dbError, num, str } from "@/lib/form";
-import { addDays, GESTATION_DAYS } from "@/lib/breeding";
+import { addDays } from "@/lib/breeding";
+import { getBreedingRules } from "@/lib/breeding-data";
 import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import type { ActionState } from "@/lib/types";
@@ -38,7 +39,7 @@ export async function logBreedingEvent(_: ActionState, formData: FormData): Prom
   }
 
   let expected = str(formData, "expected_calving_date");
-  if (!expected && eventType === "insemination") expected = addDays(eventDate, GESTATION_DAYS);
+  if (!expected && eventType === "insemination") expected = addDays(eventDate, (await getBreedingRules({ supabase })).gestationDays);
 
   const heatSigns = formData
     .getAll("heat_sign")
@@ -113,7 +114,7 @@ export async function logBreedingEvent(_: ActionState, formData: FormData): Prom
   } else if (eventType === "insemination" && expected) {
     message = t("breeding.aiSaved", { date: f.date(expected) });
   } else if (eventType === "heat") {
-    message = t("breeding.heatSaved", { date: f.date(addDays(eventDate, 21)) });
+    message = t("breeding.heatSaved", { date: f.date(addDays(eventDate, (await getBreedingRules({ supabase })).heatCycleDays)) });
   }
 
   revalidatePath("/dashboard", "layout");
@@ -148,7 +149,7 @@ export async function updateBreedingEvent(_: ActionState, formData: FormData): P
   }
 
   let expected: string | null = null;
-  if (eventType === "insemination") expected = str(formData, "expected_calving_date") ?? addDays(eventDate, GESTATION_DAYS);
+  if (eventType === "insemination") expected = str(formData, "expected_calving_date") ?? addDays(eventDate, (await getBreedingRules({ supabase })).gestationDays);
 
   const heatSigns = formData
     .getAll("heat_sign")

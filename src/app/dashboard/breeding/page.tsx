@@ -1,14 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { BreedingForm } from "@/components/breeding-form";
-import { Badge, Card, EmptyState, PageHeader, StatCard, Table, Td } from "@/components/ui";
+import { ClickRow } from "@/components/click-row";
+import { Badge, ButtonLink, Card, EmptyState, PageHeader, StatCard, Table, Td } from "@/components/ui";
 import { requireFarm } from "@/lib/auth";
 import { daysBetween, heatSignsText, type BreedingAlertKind } from "@/lib/breeding";
 import { loadBreedingBoard, type CowRepro } from "@/lib/breeding-data";
 import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
-import { logBreedingEvent } from "./actions";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -38,7 +37,7 @@ export default async function BreedingPage() {
     if (days === -1) return t("breeding.whenYesterday");
     return days > 0 ? t("breeding.whenIn", { n: days }) : t("breeding.whenAgo", { n: -days });
   };
-  const { cows, events, checkDays } = await loadBreedingBoard({ supabase, farm });
+  const { cows, events, rules, checkDays } = await loadBreedingBoard({ supabase, farm });
   const byId = new Map(cows.map((c) => [c.id, c]));
   const cowLabel = (c: Pick<CowRepro, "tag_number" | "name">) => `${c.tag_number}${c.name ? ` · ${c.name}` : ""}`;
 
@@ -51,7 +50,11 @@ export default async function BreedingPage() {
 
   return (
     <>
-      <PageHeader title={t("breeding.title")} description={t("breeding.desc")} />
+      <PageHeader
+        title={t("breeding.title")}
+        description={t("breeding.desc")}
+        action={<ButtonLink href="/dashboard/breeding/new">+ {t("breeding.recordTitle")}</ButtonLink>}
+      />
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard label={t("breeding.pregnant")} value={f.number(count("pregnant"))} tone="good" />
@@ -60,15 +63,15 @@ export default async function BreedingPage() {
         <StatCard label={t("breeding.needAttention")} value={f.number(attention.length)} tone={attention.length ? "bad" : "default"} />
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
+      <div className="mt-6">
         <div className="grid content-start gap-6">
-          <Card title={t("breeding.attentionTitle")} description={t("breeding.attentionDesc", { days: checkDays })}>
+          <Card title={t("breeding.attentionTitle")} description={t("breeding.attentionDesc", { days: checkDays, gestation: rules.gestationDays, heat: rules.heatCycleDays })}>
             {attention.length === 0 ? (
               <EmptyState title={t("breeding.attentionEmpty")} />
             ) : (
               <Table head={[t("breeding.colCow"), t("breeding.colWhat"), t("breeding.colWhen")]}>
                 {attention.map(({ cow, alert }) => (
-                  <tr key={`${cow.id}-${alert.kind}`}>
+                  <ClickRow key={`${cow.id}-${alert.kind}`} href={`/dashboard/cattle/${cow.id}`}>
                     <Td>
                       <Link href={`/dashboard/cattle/${cow.id}`} className="font-medium text-emerald-700 hover:underline">
                         {cowLabel(cow)}
@@ -89,7 +92,7 @@ export default async function BreedingPage() {
                         "—"
                       )}
                     </Td>
-                  </tr>
+                  </ClickRow>
                 ))}
               </Table>
             )}
@@ -115,7 +118,7 @@ export default async function BreedingPage() {
                           ? t("breeding.dryOffOn", { date: f.date(s.dryOffDue) })
                           : "—";
                   return (
-                    <tr key={c.id}>
+                    <ClickRow key={c.id} href={`/dashboard/cattle/${c.id}`}>
                       <Td>
                         <Link href={`/dashboard/cattle/${c.id}`} className="font-medium text-emerald-700 hover:underline">
                           {cowLabel(c)}
@@ -141,7 +144,7 @@ export default async function BreedingPage() {
                           "—"
                         )}
                       </Td>
-                    </tr>
+                    </ClickRow>
                   );
                 })}
               </Table>
@@ -163,7 +166,7 @@ export default async function BreedingPage() {
                     ev.expected_calving_date && t("breeding.calvingOn", { date: f.date(ev.expected_calving_date) }),
                   ].filter(Boolean);
                   return (
-                    <tr key={ev.id}>
+                    <ClickRow key={ev.id} href={`/dashboard/breeding/${ev.id}/edit`}>
                       <Td>
                     {f.date(ev.event_date)}
                     {ev.event_time && <span className="block text-xs text-stone-500">{f.time(ev.event_time)}</span>}
@@ -176,7 +179,7 @@ export default async function BreedingPage() {
                           {t("common.edit")}
                         </Link>
                       </Td>
-                    </tr>
+                    </ClickRow>
                   );
                 })}
               </Table>
@@ -184,19 +187,6 @@ export default async function BreedingPage() {
           </Card>
         </div>
 
-        <Card title={t("breeding.recordTitle")}>
-          {cows.length === 0 ? (
-            <EmptyState title={t("breeding.noCowsTitle")} />
-          ) : (
-            <BreedingForm
-              action={logBreedingEvent}
-              today={day}
-              currency={farm.currency}
-              checkDays={checkDays}
-              cows={cows.map((c) => ({ id: c.id, label: cowLabel(c) }))}
-            />
-          )}
-        </Card>
       </div>
     </>
   );

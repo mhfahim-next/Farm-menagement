@@ -78,9 +78,9 @@ export async function GET(request: NextRequest) {
     header = (["date", "flock", "eggs", "broken", "deaths", "culled", "feedKg", "waterL", "notes"] as const).map((k) => col(`reports.col.${k}`));
     rows = data.map((r) => [r.log_date as string, flockName.get(r.flock_id as string), r.eggs_collected as number, r.eggs_broken as number, r.mortality as number, r.culled as number, r.feed_kg as number, r.water_liters as number, r.notes as string]);
   } else {
-    const data = await fetchAll((a, b) => range("txn_date")(base("transactions")).range(a, b));
-    header = (["date", "type", "module", "category", "amount", "description"] as const).map((k) => col(`reports.col.${k}`));
-    rows = data.map((r) => [r.txn_date as string, o("txn_type", r.txn_type as string), o("txn_module", r.module as string), o("finance_category", r.category as string), r.amount as number, r.description as string]);
+    const data = await fetchAll((a, b) => range("txn_date")(base("finance_ledger")).range(a, b));
+    header = (["date", "type", "module", "category", "amount", "description", "source"] as const).map((k) => col(`reports.col.${k}`));
+    rows = data.map((r) => [r.txn_date as string, o("txn_type", r.txn_type as string), o("txn_module", r.module as string), o("finance_category", r.category as string), r.amount as number, r.description as string, t(`finance.source.${r.source as "manual" | "health" | "breeding" | "flock_health" | "salary"}`)]);
   }
 
   const safeFarm = farm.name.replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "farm";

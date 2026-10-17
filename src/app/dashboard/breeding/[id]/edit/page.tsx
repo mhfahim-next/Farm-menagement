@@ -5,7 +5,7 @@ import { BreedingForm } from "@/components/breeding-form";
 import { Card, PageHeader } from "@/components/ui";
 import { requireFarm } from "@/lib/auth";
 import { animalLabel } from "@/lib/cattle";
-import { getPregnancyCheckDays } from "@/lib/breeding-data";
+import { getBreedingRules } from "@/lib/breeding-data";
 import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import type { BreedingEvent } from "@/lib/types";
@@ -24,9 +24,9 @@ export default async function EditBreedingPage({ params }: PageProps<"/dashboard
   const { data } = await supabase.from("breeding_events").select("*").eq("id", id).eq("farm_id", farm.id).maybeSingle();
   const record = data as BreedingEvent | null;
   if (!record) notFound();
-  const [{ data: cow }, checkDays] = await Promise.all([
+  const [{ data: cow }, rules] = await Promise.all([
     supabase.from("cattle").select("id, tag_number, name").eq("id", record.cattle_id).eq("farm_id", farm.id).maybeSingle(),
-    getPregnancyCheckDays({ supabase }),
+    getBreedingRules({ supabase }),
   ]);
 
   return (
@@ -46,7 +46,8 @@ export default async function EditBreedingPage({ params }: PageProps<"/dashboard
           today={today()}
           currency={farm.currency}
           cattleId={record.cattle_id}
-          checkDays={checkDays}
+          checkDays={rules.pregnancyCheckDays}
+          gestationDays={rules.gestationDays}
           record={record}
         />
       </Card>

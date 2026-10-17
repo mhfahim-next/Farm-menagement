@@ -1,18 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ActionForm } from "@/components/action-form";
-import { ParentsFields } from "@/components/parents-fields";
-import { Badge, Card, EmptyState, Field, Input, PageHeader, Select, Table, Td, Textarea } from "@/components/ui";
-import { LimitNotice } from "@/components/limit-notice";
-import { MANAGERS, requireFarm } from "@/lib/auth";
-import { getPlanContext } from "@/lib/plans";
-import { planName } from "@/lib/plan-utils";
-import { breedOptions, typeSexHint, type MotherCandidate } from "@/lib/cattle";
+import { ClickRow } from "@/components/click-row";
+import { Badge, ButtonLink, Card, EmptyState, Input, PageHeader, Select, Table, Td } from "@/components/ui";
+import { requireFarm } from "@/lib/auth";
 import { ageInMonths } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import type { Cattle } from "@/lib/types";
-import { addCattle } from "./actions";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -25,10 +19,8 @@ export default async function CattlePage({ searchParams }: PageProps<"/dashboard
   const { supabase, farm, role } = await requireFarm();
   if (!farm.has_dairy) notFound();
   const i18n = await getI18n();
-  const { t, e, o, options, locale } = i18n;
+  const { t, e, o } = i18n;
   const canWrite = role !== "vet";
-  const { plan, usage, limits, states } = await getPlanContext();
-  const atLimit = states.cattle === "full" || states.cattle === "over";
 
   const { status: rawStatus, q } = await searchParams;
   const status = statusFilters.find((s) => s === rawStatus) ?? "active";
@@ -45,20 +37,9 @@ export default async function CattlePage({ searchParams }: PageProps<"/dashboard
     const term = search.replace(/[%,()"\\*]/g, "");
     query = query.or(`tag_number.ilike.%${term}%,name.ilike.%${term}%,breed.ilike.%${term}%`);
   }
-  const [{ data, error }, mothersRes] = await Promise.all([
-    query,
-    // Every female on the farm can be picked as a mother (even if sold or dead).
-    supabase
-      .from("cattle")
-      .select("id, tag_number, name, category, status")
-      .eq("farm_id", farm.id)
-      .eq("sex", "female")
-      .is("deleted_at", null)
-      .order("tag_number"),
-  ]);
+  const { data, error } = await query;
   if (error) throw new Error(error.message);
   const cattle = (data ?? []) as Cattle[];
-  const mothers = (mothersRes.data ?? []) as MotherCandidate[];
 
   const age = (dob: string | null) => {
     const months = ageInMonths(dob);
@@ -70,9 +51,13 @@ export default async function CattlePage({ searchParams }: PageProps<"/dashboard
 
   return (
     <>
-      <PageHeader title={t("cattle.title")} description={t("cattle.desc")} />
+      <PageHeader
+        title={t("cattle.title")}
+        description={t("cattle.desc")}
+        action={canWrite ? <ButtonLink href="/dashboard/cattle/new">+ {t("cattle.addTitle")}</ButtonLink> : undefined}
+      />
 
-      <div className={`grid gap-6 ${canWrite ? "lg:grid-cols-[1fr_340px]" : ""}`}>
+      <div>
         <Card>
           <form className="mb-4 flex flex-wrap gap-2">
             <Input name="q" defaultValue={search} placeholder={t("cattle.searchPlaceholder")} className="max-w-xs" />
@@ -101,7 +86,7 @@ export default async function CattlePage({ searchParams }: PageProps<"/dashboard
               ]}
             >
               {cattle.map((c) => (
-                <tr key={c.id} className="hover:bg-stone-50">
+                <ClickRow key={c.id} href={`/dashboard/cattle/${c.id}`}>
                   <Td>
                     <Link href={`/dashboard/cattle/${c.id}`} className="font-medium text-emerald-700 hover:underline">
                       {c.tag_number}
@@ -116,58 +101,12 @@ export default async function CattlePage({ searchParams }: PageProps<"/dashboard
                       {o("cattle_status", c.status)}
                     </Badge>
                   </Td>
-                </tr>
+                </ClickRow>
               ))}
             </Table>
           )}
         </Card>
 
-        {canWrite && (
-        <Card title={t("cattle.addTitle")}>
-          <LimitNotice
-            t={t}
-            kind="cattle"
-            state={states.cattle}
-            used={usage.cattle}
-            max={limits.cattle}
-            plan={planName(plan, locale)}
-            canUpgrade={MANAGERS.includes(role)}
-          />
-          {!atLimit && (
-          <ActionForm action={addCattle} submitLabel={t("cattle.addSubmit")}>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label={t("cattle.tag")}>
-                <Input name="tag_number" required />
-              </Field>
-              <Field label={t("common.name")}>
-                <Input name="name" />
-              </Field>
-            </div>
-            <Field label={t("common.category")} hint={typeSexHint(i18n)}>
-              <Select name="category" required options={options("cattle_category")} />
-            </Field>
-            <Field label={t("common.breed")}>
-              <Select name="breed" options={breedOptions(i18n, "cattle_breed")} />
-            </Field>
-            <Field label={t("cattle.dob")}>
-              <Input name="date_of_birth" type="date" />
-            </Field>
-            <ParentsFields candidates={mothers} i18n={i18n} />
-            <div className="grid grid-cols-2 gap-3">
-              <Field label={t("cattle.purchaseDate")}>
-                <Input name="purchase_date" type="date" />
-              </Field>
-              <Field label={t("cattle.price", { cur: farm.currency })}>
-                <Input name="purchase_price" type="number" min="0" step="0.01" />
-              </Field>
-            </div>
-            <Field label={t("common.notes")}>
-              <Textarea name="notes" rows={2} />
-            </Field>
-          </ActionForm>
-          )}
-        </Card>
-        )}
       </div>
     </>
   );

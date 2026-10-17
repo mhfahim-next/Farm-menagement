@@ -48,7 +48,12 @@ A multi-tenant farm management web app built with **Next.js 16 (App Router)** an
 - **Super admin panel** (`/admin`, see below).
 - **Layer flocks**: batches with breed, shed and age. Daily logs cover eggs, broken eggs, deaths, culls, feed and water.
   KPIs: live birds, **hen-day production %**, mortality %, feed per dozen eggs, grams of feed per bird.
-- **Finance**: income and expenses by category and module (dairy / layer / general), with monthly profit.
+- **Finance** (`/dashboard/finance`): one ledger for all money. Manual income/expenses plus costs recorded elsewhere appear automatically (cow medicine, breeding/AI cost, layer flock health cost, staff salary payments), tagged by source; tap one to edit it at its source. Switch *Whole farm / Cow farm / Layer farm* (farms with both) with correct totals and profit, plus a by-category breakdown. The overview and CSV export include the same rows (database view `finance_ledger`).
+- **Staff & salary** (`/dashboard/staff`, owners and managers only): workers need no login. Monthly salary, daily attendance sheet (present / absent / half day / leave), advances, bonuses and salary payments; absences are deducted per day and the balance is shown. Payments flow into finance as *Labour*.
+- **Layer flock health** (`/dashboard/flock-health`): vaccines (Newcastle, Gumboro, …), deworming, lice/mite spray and medicine per flock, with admin-editable quick picks, due/overdue board, egg-withdrawal dates and costs.
+- **Dedicated add pages & clickable rows**: add cattle, milk, health, breeding, flocks, daily logs, flock health, staff and transactions on their own pages; every table row opens its record.
+- **Grouped sidebar**: Cow farm / Layer farm / Money / Farm.
+- **Breeding rules** (Admin → Announcement & settings): gestation (calving) days, heat cycle, pregnancy check, dry-off and waiting period are editable and used everywhere.
 - **Overview dashboard**: today's milk and eggs, herd and flock size, this month's P&L, and 7-day charts.
 
 ## Super admin

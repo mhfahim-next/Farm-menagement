@@ -18,6 +18,10 @@ export const LIST_KEYS = [
   "currency",
   "member_role",
   "doctor_specialty",
+  "attendance_status",
+  "staff_pay_type",
+  "staff_position",
+  "flock_health_preset",
 ] as const;
 
 export type ListKey = (typeof LIST_KEYS)[number];
