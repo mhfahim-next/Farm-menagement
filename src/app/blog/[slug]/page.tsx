@@ -7,6 +7,7 @@ import { ButtonLink } from "@/components/ui";
 import { localized, type BlogPost } from "@/lib/blog";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
+import { ScrollProgress } from "@/components/velora/scroll-progress";
 
 async function load(slug: string) {
   const supabase = await createClient();
@@ -33,6 +34,7 @@ export default async function BlogPostPage({ params }: PageProps<"/blog/[slug]">
 
   return (
     <div className="flex flex-1 flex-col">
+      <ScrollProgress />
       <PublicHeader />
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:py-12">
         <Link href="/blog" className="text-sm text-stone-500 hover:text-stone-900">

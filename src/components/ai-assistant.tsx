@@ -8,6 +8,8 @@ import type { ChatTurn, Proposal } from "@/lib/ai/types";
 import { useI18n } from "./i18n-provider";
 import { useToast } from "./toast";
 import { Button, Spinner } from "./ui";
+import { DotsLoader } from "./velora/loaders";
+import { TextShimmer } from "./velora/text-shimmer";
 
 type PState = Proposal & { state: "pending" | "saving" | "saved" | "cancelled" };
 type Msg = { id: number; role: "user" | "assistant"; text: string; error?: boolean; note?: boolean; proposals?: PState[] };
@@ -238,8 +240,9 @@ export function AiAssistant({ initial }: { initial: Status }) {
             )}
 
             {busy && (
-              <p className="flex items-center gap-2 text-sm text-stone-500">
-                <Spinner className="text-emerald-700" /> {t("ai.thinking")}
+              <p className="flex items-center gap-2 text-sm">
+                <DotsLoader size="sm" label={t("ai.thinking")} className="text-emerald-600" />
+                <TextShimmer>{t("ai.thinking")}</TextShimmer>
               </p>
             )}
             <div ref={bottom} />

@@ -44,14 +44,5 @@ export async function PublicHeader() {
   );
 }
 
-export async function PublicFooter() {
-  const { t } = await getI18n();
-  return (
-    <footer className="border-t border-stone-200 py-8 text-center text-sm text-stone-500">
-      <Link href="/blog" className="mr-4 hover:text-stone-800 hover:underline">
-        {t("blog.nav")}
-      </Link>
-      {t("landing.footer", { year: new Date().getFullYear() })}
-    </footer>
-  );
-}
+/** Kept for existing imports; the public footer is now <SiteFooter />. */
+export { SiteFooter as PublicFooter } from "@/components/site-footer";
