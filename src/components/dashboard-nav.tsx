@@ -4,7 +4,7 @@ import Link, { useLinkStatus } from "next/link";
 import { Spinner } from "./ui";
 import { usePathname } from "next/navigation";
 
-export type NavItem = { href: string; label: string };
+export type NavItem = { href: string; label: string; /** Heading shown above this item when it starts a new group. */ group?: string };
 
 /** Fixed-size slot so the spinner never shifts the label. */
 function PendingHint() {
@@ -21,12 +21,13 @@ export function DashboardNav({ items }: { items: NavItem[] }) {
 
   return (
     <nav aria-label="Main" className="flex flex-col gap-1">
-      {items.map((item) => {
+      {items.map((item, i) => {
+        const heading = item.group && item.group !== items[i - 1]?.group ? item.group : null;
         const active =
           item.href === "/dashboard" || item.href === "/admin"
             ? pathname === item.href
             : pathname.startsWith(item.href);
-        return (
+        const link = (
           <Link
             key={item.href}
             href={item.href}
@@ -40,6 +41,14 @@ export function DashboardNav({ items }: { items: NavItem[] }) {
             {item.label}
             <PendingHint />
           </Link>
+        );
+        return heading ? (
+          <div key={item.href} className="mt-3 flex flex-col gap-1 first:mt-0">
+            <p className="px-3 pb-0.5 text-[11px] font-semibold uppercase tracking-wider text-stone-400">{heading}</p>
+            {link}
+          </div>
+        ) : (
+          link
         );
       })}
     </nav>

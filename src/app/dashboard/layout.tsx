@@ -77,18 +77,26 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
               { href: "/dashboard/milk", label: t("nav.milk") },
               { href: "/dashboard/health", label: t("nav.health") },
               { href: "/dashboard/breeding", label: t("nav.breeding") },
-            ]
+            ].map((i) => ({ ...i, group: t("nav.group.cow") }))
           : []),
-        ...(farm.has_layer ? [{ href: "/dashboard/flocks", label: t("nav.flocks") }] : []),
+        ...(farm.has_layer
+          ? [
+              { href: "/dashboard/flocks", label: t("nav.flocks") },
+              ...(isStaff ? [{ href: "/dashboard/flock-health", label: t("nav.flockHealth") }] : []),
+            ].map((i) => ({ ...i, group: t("nav.group.layer") }))
+          : []),
         ...(isStaff
           ? [
               { href: "/dashboard/finance", label: t("nav.finance") },
+              ...(isManager ? [{ href: "/dashboard/staff", label: t("nav.staff") }] : []),
               { href: "/dashboard/reports", label: t("nav.reports") },
-            ]
+            ].map((i) => ({ ...i, group: t("nav.group.finance") }))
           : []),
-        ...(isManager ? [{ href: "/dashboard/approvals", label: pendingApprovals > 0 ? `${t("nav.approvals")} (${f.number(pendingApprovals)})` : t("nav.approvals") }] : []),
-        ...(isManager ? [{ href: "/dashboard/plan", label: t("nav.plan") }] : []),
-        { href: "/dashboard/settings", label: t("nav.settings") },
+        ...[
+          ...(isManager ? [{ href: "/dashboard/approvals", label: pendingApprovals > 0 ? `${t("nav.approvals")} (${f.number(pendingApprovals)})` : t("nav.approvals") }] : []),
+          ...(isManager ? [{ href: "/dashboard/plan", label: t("nav.plan") }] : []),
+          { href: "/dashboard/settings", label: t("nav.settings") },
+        ].map((i) => ({ ...i, group: t("nav.group.farm") })),
       ];
 
   const invitesCount = invites?.length ?? 0;
