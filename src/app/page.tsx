@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { PublicFooter, PublicHeader } from "@/components/public-header";
 import { ButtonLink } from "@/components/ui";
+import { Marquee } from "@/components/velora/marquee";
 import { getI18n } from "@/lib/i18n/server";
 import { planFeatures, planName, priceText } from "@/lib/plan-utils";
 import { getPlans } from "@/lib/plans";
@@ -43,6 +44,16 @@ export default async function Home() {
               </Link>
             </p>
           </div>
+        </section>
+
+        <section aria-label={t("landing.marqueeLabel")} className="border-y border-stone-200 bg-white py-5">
+          <Marquee pauseOnHover className="[--duration:35s]" repeat={3}>
+            {([1, 2, 3, 4, 5, 6, 7, 8] as const).map((n) => (
+              <span key={n} className="whitespace-nowrap rounded-full bg-emerald-50 px-4 py-1.5 text-sm font-medium text-emerald-800">
+                {t(`landing.marquee.${n}`)}
+              </span>
+            ))}
+          </Marquee>
         </section>
 
         <section className="mx-auto max-w-6xl px-4 py-20">
