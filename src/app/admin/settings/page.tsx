@@ -3,7 +3,7 @@ import { ActionForm } from "@/components/action-form";
 import { Card, Field, Input, PageHeader, Textarea } from "@/components/ui";
 import { requireSuperAdmin } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
-import { saveAnnouncement, savePaymentInstructions, savePregnancyCheckDays } from "../actions";
+import { saveAnnouncement, savePaymentInstructions, saveBreedingRules } from "../actions";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -39,7 +39,7 @@ export default async function AdminSettingsPage() {
       </Card>
 
       <Card title={t("admin.breedingRules.title")} description={t("admin.breedingRules.desc")} className="mt-6 max-w-2xl">
-        <ActionForm action={savePregnancyCheckDays} submitLabel={t("admin.breedingRules.save")}>
+        <ActionForm action={saveBreedingRules} submitLabel={t("admin.breedingRules.save")}>
           <Field label={t("admin.breedingRules.checkDays")} hint={t("admin.breedingRules.checkDaysHint")}>
             <Input
               name="pregnancy_check_days"
@@ -51,6 +51,26 @@ export default async function AdminSettingsPage() {
               defaultValue={data?.pregnancy_check_days ?? 45}
             />
           </Field>
+          {(
+            [
+              ["gestation_days", "gestation", 240, 320, 283],
+              ["heat_cycle_days", "heat", 14, 30, 21],
+              ["dry_off_days", "dryOff", 30, 90, 60],
+              ["voluntary_wait_days", "wait", 20, 150, 60],
+            ] as const
+          ).map(([name, key, min, max, def]) => (
+            <Field key={name} label={t(`admin.breedingRules.${key}`)} hint={t(`admin.breedingRules.${key}Hint`)}>
+              <Input
+                name={name}
+                type="number"
+                min={min}
+                max={max}
+                step={1}
+                required
+                defaultValue={(data as Record<string, number> | null)?.[name] ?? def}
+              />
+            </Field>
+          ))}
         </ActionForm>
       </Card>
 

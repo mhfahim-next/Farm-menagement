@@ -11,6 +11,23 @@ export const DRY_OFF_BEFORE_CALVING_DAYS = 60;
 /** Cow still not bred this long after calving → flag for service. */
 export const VOLUNTARY_WAIT_DAYS = 60;
 
+/** All the admin-editable numbers behind the breeding calendar. */
+export type BreedingRules = {
+  pregnancyCheckDays: number;
+  gestationDays: number;
+  heatCycleDays: number;
+  dryOffDays: number;
+  voluntaryWaitDays: number;
+};
+
+export const DEFAULT_BREEDING_RULES: BreedingRules = {
+  pregnancyCheckDays: PREGNANCY_CHECK_AFTER_DAYS,
+  gestationDays: GESTATION_DAYS,
+  heatCycleDays: HEAT_CYCLE_DAYS,
+  dryOffDays: DRY_OFF_BEFORE_CALVING_DAYS,
+  voluntaryWaitDays: VOLUNTARY_WAIT_DAYS,
+};
+
 /**
  * Turns the stored "standing, mucus" into labels from the admin-managed
  * heat_sign list. Older free-text values are shown as they are.
@@ -72,8 +89,12 @@ const isPositive = (r: string | null) => r?.trim().toLowerCase() === "positive";
 export function reproStatus(
   events: BreedingEventLite[],
   today: string,
-  pregnancyCheckDays: number = PREGNANCY_CHECK_AFTER_DAYS,
+  rulesOrCheckDays: Partial<BreedingRules> | number = {},
 ): ReproStatus {
+  const rules: BreedingRules = {
+    ...DEFAULT_BREEDING_RULES,
+    ...(typeof rulesOrCheckDays === "number" ? { pregnancyCheckDays: rulesOrCheckDays } : rulesOrCheckDays),
+  };
   // Oldest → newest; same-day ties use the time of day when both have one, then insertion time.
   const sorted = [...events].sort(
     (a, b) =>
@@ -110,11 +131,11 @@ export function reproStatus(
 
     if (lastCheck && isPositive(lastCheck.result)) {
       state = "pregnant";
-      expectedCalving = lastInsem.expected_calving_date ?? addDays(lastInsem.event_date, GESTATION_DAYS);
+      expectedCalving = lastInsem.expected_calving_date ?? addDays(lastInsem.event_date, rules.gestationDays);
     } else if (!lastCheck && !heatAfter) {
       state = "inseminated";
-      pregnancyCheckDue = addDays(lastInsem.event_date, pregnancyCheckDays);
-      returnToHeatBy = addDays(lastInsem.event_date, HEAT_CYCLE_DAYS);
+      pregnancyCheckDue = addDays(lastInsem.event_date, rules.pregnancyCheckDays);
+      returnToHeatBy = addDays(lastInsem.event_date, rules.heatCycleDays);
     }
   }
 
@@ -123,7 +144,7 @@ export function reproStatus(
   const nextHeatExpected =
     state === "open"
       ? lastHeatDate
-        ? addDays(lastHeatDate, HEAT_CYCLE_DAYS)
+        ? addDays(lastHeatDate, rules.heatCycleDays)
         : null
       : null;
 
@@ -133,9 +154,9 @@ export function reproStatus(
     lastCalvingDate !== null &&
     inseminations.length === 0 &&
     daysSinceCalving !== null &&
-    daysSinceCalving > VOLUNTARY_WAIT_DAYS;
+    daysSinceCalving > rules.voluntaryWaitDays;
 
-  const dryOffDue = expectedCalving ? addDays(expectedCalving, -DRY_OFF_BEFORE_CALVING_DAYS) : null;
+  const dryOffDue = expectedCalving ? addDays(expectedCalving, -rules.dryOffDays) : null;
 
   return {
     state,

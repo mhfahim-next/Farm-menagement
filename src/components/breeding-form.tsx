@@ -15,6 +15,7 @@ export function BreedingForm({
   cattleId,
   defaultType = "heat",
   checkDays,
+  gestationDays,
   record,
 }: {
   action: (state: ActionState, formData: FormData) => Promise<ActionState>;
@@ -24,6 +25,7 @@ export function BreedingForm({
   cattleId?: string;
   defaultType?: string;
   checkDays: number;
+  gestationDays: number;
   /** Edit mode: an existing event to change (its type cannot be changed). */
   record?: BreedingEvent;
 }) {
@@ -121,7 +123,7 @@ export function BreedingForm({
               <Input name="expected_calving_date" type="date" defaultValue={record.expected_calving_date ?? ""} />
             </Field>
           ) : (
-            <p className="rounded-lg bg-stone-50 px-3 py-2 text-xs text-stone-600">{t("breeding.aiHint", { days: checkDays })}</p>
+            <p className="rounded-lg bg-stone-50 px-3 py-2 text-xs text-stone-600">{t("breeding.aiHint", { days: checkDays, gestation: gestationDays })}</p>
           )}
         </>
       )}

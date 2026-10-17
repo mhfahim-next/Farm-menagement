@@ -11,7 +11,7 @@ import { Badge, Card, EmptyState, Field, Input, PageHeader, Select, StatCard, Ta
 import { MANAGERS, requireFarm } from "@/lib/auth";
 import { animalLabel, breedOptions, typeSexHint, type MotherCandidate } from "@/lib/cattle";
 import { heatSignsText, reproStatus } from "@/lib/breeding";
-import { getPregnancyCheckDays } from "@/lib/breeding-data";
+import { getBreedingRules } from "@/lib/breeding-data";
 import { ageInMonths, today } from "@/lib/format";
 import { dueItems, dueLabel } from "@/lib/health";
 import { getI18n } from "@/lib/i18n/server";
@@ -71,8 +71,9 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
   const milkTotal = milk.reduce((s, m) => s + Number(m.quantity_liters), 0);
   const milkDays = new Set(milk.map((m) => m.record_date)).size;
   const withdrawal = health.find((h) => h.withdrawal_until && h.withdrawal_until >= today());
-  const checkDays = await getPregnancyCheckDays({ supabase });
-  const repro = reproStatus(breeding, today(), checkDays);
+  const rules = await getBreedingRules({ supabase });
+  const checkDays = rules.pregnancyCheckDays;
+  const repro = reproStatus(breeding, today(), rules);
   const dues = dueItems(health, today(), 60);
 
   const months = ageInMonths(cow.date_of_birth);
@@ -246,7 +247,7 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
             <details className="mt-4 border-t border-stone-100 pt-4">
               <summary className="cursor-pointer text-sm font-medium text-emerald-700">{t("cattle.recordBreeding")}</summary>
               <div className="mt-4">
-                <BreedingForm action={logBreedingEvent} today={today()} currency={farm.currency} cattleId={cow.id} checkDays={checkDays} />
+                <BreedingForm action={logBreedingEvent} today={today()} currency={farm.currency} cattleId={cow.id} checkDays={checkDays} gestationDays={rules.gestationDays} />
               </div>
             </details>
           )}

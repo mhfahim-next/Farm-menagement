@@ -38,7 +38,7 @@ export default async function BreedingPage() {
     if (days === -1) return t("breeding.whenYesterday");
     return days > 0 ? t("breeding.whenIn", { n: days }) : t("breeding.whenAgo", { n: -days });
   };
-  const { cows, events, checkDays } = await loadBreedingBoard({ supabase, farm });
+  const { cows, events, rules, checkDays } = await loadBreedingBoard({ supabase, farm });
   const byId = new Map(cows.map((c) => [c.id, c]));
   const cowLabel = (c: Pick<CowRepro, "tag_number" | "name">) => `${c.tag_number}${c.name ? ` · ${c.name}` : ""}`;
 
@@ -62,7 +62,7 @@ export default async function BreedingPage() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
         <div className="grid content-start gap-6">
-          <Card title={t("breeding.attentionTitle")} description={t("breeding.attentionDesc", { days: checkDays })}>
+          <Card title={t("breeding.attentionTitle")} description={t("breeding.attentionDesc", { days: checkDays, gestation: rules.gestationDays, heat: rules.heatCycleDays })}>
             {attention.length === 0 ? (
               <EmptyState title={t("breeding.attentionEmpty")} />
             ) : (
@@ -193,6 +193,7 @@ export default async function BreedingPage() {
               today={day}
               currency={farm.currency}
               checkDays={checkDays}
+              gestationDays={rules.gestationDays}
               cows={cows.map((c) => ({ id: c.id, label: cowLabel(c) }))}
             />
           )}

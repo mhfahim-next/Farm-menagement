@@ -1,5 +1,5 @@
 import "server-only";
-import { PREGNANCY_CHECK_AFTER_DAYS, breedingAlerts, reproStatus, type BreedingAlert, type BreedingEventLite, type ReproStatus } from "@/lib/breeding";
+import { DEFAULT_BREEDING_RULES, breedingAlerts, reproStatus, type BreedingAlert, type BreedingEventLite, type BreedingRules, type ReproStatus } from "@/lib/breeding";
 import type { FarmContext } from "@/lib/auth";
 import { today } from "@/lib/format";
 import type { BreedingEvent } from "@/lib/types";
@@ -13,16 +13,26 @@ export type CowRepro = {
   alerts: BreedingAlert[];
 };
 
-/** Days after AI when a pregnancy check is due (admin-editable, global). */
-export async function getPregnancyCheckDays({ supabase }: Pick<FarmContext, "supabase">) {
-  const { data } = await supabase.from("system_settings").select("pregnancy_check_days").eq("id", 1).maybeSingle();
-  return data?.pregnancy_check_days ?? PREGNANCY_CHECK_AFTER_DAYS;
+/** Breeding calendar numbers (admin-editable, global). */
+export async function getBreedingRules({ supabase }: Pick<FarmContext, "supabase">): Promise<BreedingRules> {
+  const { data } = await supabase
+    .from("system_settings")
+    .select("pregnancy_check_days, gestation_days, heat_cycle_days, dry_off_days, voluntary_wait_days")
+    .eq("id", 1)
+    .maybeSingle();
+  return {
+    pregnancyCheckDays: data?.pregnancy_check_days ?? DEFAULT_BREEDING_RULES.pregnancyCheckDays,
+    gestationDays: data?.gestation_days ?? DEFAULT_BREEDING_RULES.gestationDays,
+    heatCycleDays: data?.heat_cycle_days ?? DEFAULT_BREEDING_RULES.heatCycleDays,
+    dryOffDays: data?.dry_off_days ?? DEFAULT_BREEDING_RULES.dryOffDays,
+    voluntaryWaitDays: data?.voluntary_wait_days ?? DEFAULT_BREEDING_RULES.voluntaryWaitDays,
+  };
 }
 
 /** Loads every breeding-age female and works out where she is in her cycle. */
 export async function loadBreedingBoard({ supabase, farm }: Pick<FarmContext, "supabase" | "farm">) {
-  const [checkDays, cowsRes, eventsRes] = await Promise.all([
-    getPregnancyCheckDays({ supabase }),
+  const [rules, cowsRes, eventsRes] = await Promise.all([
+    getBreedingRules({ supabase }),
     supabase
       .from("cattle")
       .select("id, tag_number, name, category")
@@ -48,9 +58,9 @@ export async function loadBreedingBoard({ supabase, farm }: Pick<FarmContext, "s
 
   const day = today();
   const cows: CowRepro[] = (cowsRes.data ?? []).map((c) => {
-    const status = reproStatus((byCow.get(c.id) ?? []) as BreedingEventLite[], day, checkDays);
+    const status = reproStatus((byCow.get(c.id) ?? []) as BreedingEventLite[], day, rules);
     return { ...c, status, alerts: breedingAlerts(status, day) };
   });
 
-  return { cows, events, checkDays };
+  return { cows, events, rules, checkDays: rules.pregnancyCheckDays };
 }
