@@ -118,4 +118,9 @@ export const farmops = {
   "finance.source.breeding": "Breeding",
   "finance.source.flock_health": "Flock health",
   "finance.source.salary": "Salary",
+  "finance.quantity": "Quantity",
+  "finance.rate": "Rate per unit ({cur})",
+  "finance.calcHint": "Total = {qty} × {rate}",
+  "finance.manualHint": "Enter quantity and rate to calculate, or type the total.",
+  "finance.badQtyRate": "Quantity must be above zero and rate cannot be negative.",
 } as const;

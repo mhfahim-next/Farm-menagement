@@ -14,6 +14,8 @@ export type LedgerRow = {
   source: LedgerSource;
   source_id: string;
   ref_id: string | null;
+  quantity: number | null;
+  unit_price: number | null;
 };
 
 /** Where a row came from, so the user can open and fix it there. Manual rows stay here. */

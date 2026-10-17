@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AmountCalculator } from "@/components/amount-calculator";
 import { ActionForm } from "@/components/action-form";
 import { ButtonLink, Card, Field, Input, PageHeader, Select } from "@/components/ui";
 import { requireRole, STAFF } from "@/lib/auth";
@@ -42,14 +43,10 @@ export default async function NewTransactionPage() {
             <Field label={t("common.category")}>
               <Select name="category" options={options("finance_category")} />
             </Field>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label={t("finance.module")}>
-                <Select name="module" options={moduleOptions} />
-              </Field>
-              <Field label={t("finance.amountWith", { cur: farm.currency })}>
-                <Input name="amount" type="number" min="0.01" step="0.01" inputMode="decimal" required />
-              </Field>
-            </div>
+            <Field label={t("finance.module")}>
+              <Select name="module" options={moduleOptions} />
+            </Field>
+            <AmountCalculator currency={farm.currency} />
             <Field label={t("finance.description")}>
               <Input name="description" />
             </Field>

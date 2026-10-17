@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useTransition, type ReactNode } from "react";
 import type { ActionState } from "@/lib/types";
 import { useI18n } from "./i18n-provider";
+import { announceNavigation } from "./nav-progress";
 import { useToast } from "./toast";
 import { Button, Spinner, type ButtonVariant } from "./ui";
 
@@ -46,7 +47,10 @@ export function ConfirmForm({
           if (result?.error) toast("error", result.error);
           else if (result?.success) {
             toast("success", result.success);
-            if (successHref) router.push(successHref);
+            if (successHref) {
+              announceNavigation();
+              router.push(successHref);
+            }
           }
         });
       }}

@@ -117,4 +117,9 @@ export const farmops: Record<keyof typeof en, string> = {
   "finance.source.breeding": "প্রজনন",
   "finance.source.flock_health": "ফ্লকের স্বাস্থ্য",
   "finance.source.salary": "বেতন",
+  "finance.quantity": "পরিমাণ",
+  "finance.rate": "প্রতি একক দর ({cur})",
+  "finance.calcHint": "মোট = {qty} × {rate}",
+  "finance.manualHint": "পরিমাণ ও দর দিলে হিসাব হবে, নয়তো মোট টাকা লিখুন।",
+  "finance.badQtyRate": "পরিমাণ শূন্যের বেশি হতে হবে এবং দর ঋণাত্মক হতে পারবে না।",
 };
