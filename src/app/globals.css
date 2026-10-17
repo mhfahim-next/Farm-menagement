@@ -8,6 +8,20 @@
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
+/* Marquee (velora): animation tokens + keyframes. */
+@theme {
+  --animate-marquee: marquee var(--duration, 40s) linear infinite;
+  --animate-marquee-vertical: marquee-vertical var(--duration, 40s) linear infinite;
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(calc(-100% - var(--gap))); }
+  }
+  @keyframes marquee-vertical {
+    from { transform: translateY(0); }
+    to { transform: translateY(calc(-100% - var(--gap))); }
+  }
+}
+
 :root {
   color-scheme: light;
   --app-bg: #fafaf9;
