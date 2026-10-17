@@ -3,15 +3,15 @@ import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
-    name: "FarmFlow — Farm management",
-    short_name: "FarmFlow",
+    name: "FarmFlows — Farm management",
+    short_name: "FarmFlows",
     description: "Cattle, dairy and layer farm management. গবাদিপশু, দুধ ও ডিমপাড়া মুরগির খামার ব্যবস্থাপনা।",
     start_url: "/dashboard",
     scope: "/",
     display: "standalone",
     orientation: "portrait",
     background_color: "#fafaf9",
-    theme_color: "#047857",
+    theme_color: "#16a34a",
     categories: ["business", "productivity"],
     icons: [
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },

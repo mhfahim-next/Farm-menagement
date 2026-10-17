@@ -26,7 +26,7 @@ function readDismissed() {
 }
 
 /**
- * "Install FarmFlow" banner. Chrome/Android shows the native install prompt;
+ * "Install FarmFlows" banner. Chrome/Android shows the native install prompt;
  * on iPhone it explains Share → Add to Home Screen. Hidden once installed
  * or dismissed.
  */

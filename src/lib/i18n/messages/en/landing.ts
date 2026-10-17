@@ -1,5 +1,5 @@
 export const landing = {
-  "meta.title": "FarmFlow — Dairy, Cattle & Layer Farm Management",
+  "meta.title": "FarmFlows — Dairy, Cattle & Layer Farm Management",
   "meta.description": "Manage cattle, milk production, layer flocks, egg collection, health and farm finances in one place.",
   "landing.login": "Log in",
   "landing.startFree": "Start free",
@@ -19,7 +19,7 @@ export const landing = {
   "landing.step3.title": "See what pays",
   "landing.step3.body": "Reminders for what is due, and profit for the cow farm and the layer farm.",
   "landing.ctaTitle": "Your farm, in your pocket",
-  "landing.ctaBody": "Join FarmFlow today. The free plan is free forever — upgrade only when your farm grows.",
+  "landing.ctaBody": "Join FarmFlows today. The free plan is free forever — upgrade only when your farm grows.",
   "footer.tagline": "Simple records for dairy, cattle and layer-poultry farms — in Bangla and English, on phone or computer.",
   "footer.madeFor": "Made for farmers of Bangladesh",
   "footer.product": "Product",
@@ -33,7 +33,7 @@ export const landing = {
   "footer.trackMoney": "Income, expenses & profit",
   "footer.trackTeam": "Staff, attendance & salary",
   "footer.rights": "Grow more. Worry less.",
-  "landing.marqueeLabel": "What FarmFlow tracks",
+  "landing.marqueeLabel": "What FarmFlows tracks",
   "landing.marquee.1": "Milk records",
   "landing.marquee.2": "Egg & flock logs",
   "landing.marquee.3": "Vaccine reminders",
@@ -62,5 +62,5 @@ export const landing = {
   "landing.pricingTitle": "Simple pricing",
   "landing.pricingSub": "Per farm, per month.",
   "landing.getStarted": "Get started",
-  "landing.footer": "© {year} FarmFlow",
+  "landing.footer": "© {year} FarmFlows",
 } as const;

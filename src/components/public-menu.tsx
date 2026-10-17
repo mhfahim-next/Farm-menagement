@@ -29,7 +29,7 @@ export function PublicMenu({ links, closeLabel, menuLabel }: { links: PublicLink
   }, [open]);
 
   return (
-    <div className="md:hidden">
+    <div>
       <button
         type="button"
         aria-label={menuLabel}

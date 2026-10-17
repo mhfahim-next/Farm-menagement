@@ -39,4 +39,14 @@ export const auth = {
 
   "suspended.farmTitle": "This farm is suspended",
   "suspended.farmBody": "Access to this farm has been paused by the administrator. Please contact support to restore it.",
+  "auth.panel.title": "Your whole farm, in one simple app",
+  "auth.panel.body": "FarmFlows keeps cows, layer flocks, health, staff and money together — so you always know what to do today and what is making a profit.",
+  "auth.panel.p1": "Milk and egg records in a few taps, even from the shed",
+  "auth.panel.p2": "Reminders for vaccines, deworming, heat and calving",
+  "auth.panel.p3": "Staff attendance and salary, with costs added to finance",
+  "auth.panel.p4": "Profit for the cow farm and layer farm, separately",
+  "auth.panel.example": "What you will see every day",
+  "auth.panel.milk": "Today's milk",
+  "auth.panel.eggs": "Eggs collected",
+  "auth.panel.due": "Vaccines due",
 } as const;

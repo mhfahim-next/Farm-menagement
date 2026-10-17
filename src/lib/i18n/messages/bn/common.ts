@@ -124,7 +124,7 @@ export const common: Record<keyof typeof en, string> = {
   "age.months": "{n} মাস",
   "age.yearsMonths": "{y} বছর {m} মাস",
   "common.edit": "সম্পাদনা",
-  "pwa.installBody": "এক ট্যাপে খুলতে FarmFlow আপনার ফোনে ইনস্টল করুন।",
+  "pwa.installBody": "এক ট্যাপে খুলতে FarmFlows আপনার ফোনে ইনস্টল করুন।",
   "pwa.installButton": "ইনস্টল করুন",
   "pwa.iosBody": "ইনস্টল করতে: Share বোতামে চেপে \"Add to Home Screen\" বেছে নিন।",
   "pwa.dismiss": "এখন নয়",
