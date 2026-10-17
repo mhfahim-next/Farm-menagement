@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Fragment, startTransition, useActionState, type ReactNode } from "react";
 import type { ActionState } from "@/lib/types";
 import { useI18n } from "./i18n-provider";
+import { announceNavigation } from "./nav-progress";
 import { useResultToast } from "./toast";
 import { Button, Spinner, type ButtonVariant } from "./ui";
 
@@ -61,7 +62,10 @@ export function ActionForm({
     const result = await action(prev, formData);
     // Navigate from here, not an effect: a save can re-render the page so this form unmounts
     // (e.g. the plan limit is now reached) before an effect would run.
-    if (result?.success && successHref) router.push(successHref);
+    if (result?.success && successHref) {
+      announceNavigation();
+      router.push(successHref);
+    }
     const saves = prev?.saves ?? 0;
     return result ? { ...result, saves: result.success ? saves + 1 : saves } : null;
   }, null);

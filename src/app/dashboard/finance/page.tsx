@@ -112,6 +112,11 @@ export default async function FinancePage({ searchParams }: PageProps<"/dashboar
                     </Td>
                     <Td>
                       {x.description ?? "—"}
+                      {x.quantity != null && x.unit_price != null && (
+                        <span className="block text-xs text-stone-500">
+                          {f.number(Number(x.quantity), 3)} × {money(Number(x.unit_price))}
+                        </span>
+                      )}
                       {x.source !== "manual" && (
                         <span className="mt-0.5 block">
                           <Badge tone="blue">{t(`finance.source.${x.source}`)}</Badge>

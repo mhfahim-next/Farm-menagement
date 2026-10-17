@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { announceNavigation } from "./nav-progress";
 import type { ReactNode } from "react";
 
 /**
@@ -19,11 +20,15 @@ export function ClickRow({ href, children }: { href: string; children: ReactNode
       onClick={(e) => {
         if (interactive(e.target)) return;
         if (e.metaKey || e.ctrlKey) window.open(href, "_blank");
-        else router.push(href);
+        else {
+          announceNavigation();
+          router.push(href);
+        }
       }}
       onKeyDown={(e) => {
         if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) {
           e.preventDefault();
+          announceNavigation();
           router.push(href);
         }
       }}

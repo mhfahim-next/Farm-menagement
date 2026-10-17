@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Noto_Sans_Bengali } from "next/font/google";
 import { I18nProvider } from "@/components/i18n-provider";
+import { NavProgress } from "@/components/nav-progress";
 import { PwaRegister } from "@/components/pwa";
 import { ToastProvider } from "@/components/toast";
+import { Suspense } from "react";
 import { getI18n, getOptionRows, messagesFor } from "@/lib/i18n/server";
 import "./globals.css";
 
@@ -67,6 +69,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col font-sans">
         <I18nProvider locale={locale} messages={messagesFor(locale)} optionRows={optionRows}>
           <ToastProvider>{children}</ToastProvider>
+          <Suspense fallback={null}>
+            <NavProgress />
+          </Suspense>
           <PwaRegister />
         </I18nProvider>
       </body>
