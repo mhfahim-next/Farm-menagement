@@ -1,7 +1,7 @@
 import type { landing as en } from "../en/landing";
 
 export const landing: Record<keyof typeof en, string> = {
-  "meta.title": "FarmFlow — ডেইরি, গবাদিপশু ও লেয়ার খামার ব্যবস্থাপনা",
+  "meta.title": "FarmFlows — ডেইরি, গবাদিপশু ও লেয়ার খামার ব্যবস্থাপনা",
   "meta.description": "গবাদিপশু, দুধ উৎপাদন, লেয়ার ফ্লক, ডিম সংগ্রহ, স্বাস্থ্য ও খামারের আয়-ব্যয় এক জায়গায় পরিচালনা করুন।",
   "landing.login": "লগ ইন",
   "landing.startFree": "বিনামূল্যে শুরু করুন",
@@ -21,7 +21,7 @@ export const landing: Record<keyof typeof en, string> = {
   "landing.step3.title": "লাভ দেখুন",
   "landing.step3.body": "কোন কাজ বাকি তার রিমাইন্ডার, আর গরুর খামার ও লেয়ার খামারের আলাদা লাভ-ক্ষতি।",
   "landing.ctaTitle": "আপনার খামার, আপনার হাতের মুঠোয়",
-  "landing.ctaBody": "আজই ফার্মফ্লো শুরু করুন। ফ্রি প্ল্যান সবসময় ফ্রি — খামার বড় হলে তবেই আপগ্রেড করুন।",
+  "landing.ctaBody": "আজই FarmFlows শুরু করুন। ফ্রি প্ল্যান সবসময় ফ্রি — খামার বড় হলে তবেই আপগ্রেড করুন।",
   "footer.tagline": "ডেইরি, গবাদিপশু ও লেয়ার মুরগির খামারের সহজ হিসাব — বাংলা ও ইংরেজিতে, ফোনে বা কম্পিউটারে।",
   "footer.madeFor": "বাংলাদেশের খামারিদের জন্য তৈরি",
   "footer.product": "প্রোডাক্ট",
@@ -35,7 +35,7 @@ export const landing: Record<keyof typeof en, string> = {
   "footer.trackMoney": "আয়, ব্যয় ও লাভ",
   "footer.trackTeam": "কর্মী, হাজিরা ও বেতন",
   "footer.rights": "বেশি ফলন, কম দুশ্চিন্তা।",
-  "landing.marqueeLabel": "ফার্মফ্লো যা যা হিসাব রাখে",
+  "landing.marqueeLabel": "FarmFlows যা যা হিসাব রাখে",
   "landing.marquee.1": "দুধের হিসাব",
   "landing.marquee.2": "ডিম ও ফ্লক লগ",
   "landing.marquee.3": "টিকার রিমাইন্ডার",
@@ -64,5 +64,5 @@ export const landing: Record<keyof typeof en, string> = {
   "landing.pricingTitle": "সহজ মূল্য",
   "landing.pricingSub": "প্রতি খামার, প্রতি মাসে।",
   "landing.getStarted": "শুরু করুন",
-  "landing.footer": "© {year} FarmFlow",
+  "landing.footer": "© {year} FarmFlows",
 };

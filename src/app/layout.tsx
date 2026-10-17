@@ -36,13 +36,14 @@ export const viewport: Viewport = {
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
   return {
-    title: { default: t("meta.title"), template: "%s · FarmFlow" },
+    title: { default: t("meta.title"), template: "%s · FarmFlows" },
     description: t("meta.description"),
-    applicationName: "FarmFlow",
-    appleWebApp: { capable: true, title: "FarmFlow", statusBarStyle: "default" },
+    applicationName: "FarmFlows",
+    appleWebApp: { capable: true, title: "FarmFlows", statusBarStyle: "default" },
     formatDetection: { telephone: false },
     icons: {
       icon: [
+        { url: "/favicon.svg", type: "image/svg+xml" },
         { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
         { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
       ],

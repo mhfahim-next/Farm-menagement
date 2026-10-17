@@ -1,15 +1,18 @@
 import Link from "next/link";
 
-export function Logo({ href = "/" }: { href?: string }) {
+/**
+ * FarmFlows logo (files in public/brand). The horizontal logo has a light and
+ * a dark version; very narrow screens show only the app icon.
+ */
+export function Logo({ href = "/", size = "md" }: { href?: string; size?: "md" | "lg" }) {
+  const h = size === "lg" ? "h-10" : "h-8";
   return (
-    <Link href={href} className="flex items-center gap-2 font-bold text-stone-900">
-      <span className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-700 text-white">
-        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          <path d="M3 21V10l9-6 9 6v11" />
-          <path d="M9 21v-6h6v6" />
-        </svg>
-      </span>
-      <span className="max-[339px]:hidden">FarmFlow</span>
+    <Link href={href} aria-label="FarmFlows" className="inline-flex shrink-0 items-center">
+      {/* eslint-disable @next/next/no-img-element -- small static SVGs, no optimisation needed */}
+      <img src="/brand/logo-horizontal.svg" alt="FarmFlows" width={252} height={64} className={`${h} w-auto dark:hidden max-[339px]:hidden`} />
+      <img src="/brand/logo-horizontal-dark.svg" alt="FarmFlows" width={252} height={64} className={`${h} hidden w-auto dark:block max-[339px]:!hidden`} />
+      <img src="/brand/icon.svg" alt="FarmFlows" width={64} height={64} className={`${h} hidden w-auto max-[339px]:block`} />
+      {/* eslint-enable @next/next/no-img-element */}
     </Link>
   );
 }

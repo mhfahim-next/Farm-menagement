@@ -1,4 +1,4 @@
-/* FarmFlow service worker.
+/* FarmFlows service worker.
  *
  * Keeps the app installable and fast without ever storing private data:
  *  - immutable build assets and icons are cached (cache-first);
@@ -6,13 +6,13 @@
  *    offline a small bilingual "no connection" page is shown;
  *  - pages, API and Supabase responses are never cached.
  */
-const VERSION = "v1";
+const VERSION = "v2";
 const CACHE = `farmflow-static-${VERSION}`;
 const PRECACHE = ["/icons/icon-192.png", "/icons/icon-512.png"];
 
 const OFFLINE_HTML = `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#047857"><title>FarmFlow</title>
+<meta name="theme-color" content="#16a34a"><title>FarmFlows</title>
 <style>
 body{margin:0;min-height:100vh;display:grid;place-items:center;background:#fafaf9;color:#1c1917;font-family:system-ui,sans-serif;text-align:center;padding:24px}
 .c{max-width:340px}.i{width:72px;height:72px;border-radius:18px;background:#047857;margin:0 auto 20px}

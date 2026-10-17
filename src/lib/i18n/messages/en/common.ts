@@ -122,7 +122,7 @@ export const common = {
   "age.months": "{n} mo",
   "age.yearsMonths": "{y} yr {m} mo",
   "common.edit": "Edit",
-  "pwa.installBody": "Install FarmFlow on your phone for one-tap access.",
+  "pwa.installBody": "Install FarmFlows on your phone for one-tap access.",
   "pwa.installButton": "Install",
   "pwa.iosBody": "To install: tap the Share button, then \"Add to Home Screen\".",
   "pwa.dismiss": "Not now",

@@ -4,7 +4,7 @@ import { Logo } from "@/components/logo";
 import { TextHoverEffect } from "@/components/velora/text-hover-effect";
 import { getI18n } from "@/lib/i18n/server";
 
-/** Footer for public pages: link columns, a big FarmFlow wordmark, and a farm landscape underneath. */
+/** Footer for public pages: link columns, a big FarmFlows wordmark, and a farm landscape underneath. */
 export async function SiteFooter() {
   const { t } = await getI18n();
   const year = new Date().getFullYear();
@@ -64,7 +64,7 @@ export async function SiteFooter() {
       </div>
 
       <div className="mx-auto max-w-6xl px-4">
-        <TextHoverEffect text="FarmFlow" className="font-black" />
+        <TextHoverEffect text="FarmFlows" className="font-black" />
       </div>
 
       {/* Farming scene with the copyright line resting on the grass. */}

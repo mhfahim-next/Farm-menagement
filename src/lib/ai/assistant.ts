@@ -355,7 +355,7 @@ function systemPrompt(ctx: Ctx) {
   const { i18n, farm } = ctx;
   const lists = (label: string, list: Parameters<I18n["options"]>[0]) =>
     `- ${label}: ${i18n.options(list).map((o) => `${o.value} (${o.label})`).join(", ")}`;
-  return `You are the FarmFlow assistant for "${farm.name}", a cattle/dairy and layer-poultry farm in Bangladesh. You help farm staff enter records by chat.
+  return `You are the FarmFlows assistant for "${farm.name}", a cattle/dairy and layer-poultry farm in Bangladesh. You help farm staff enter records by chat.
 
 Today is ${today()}. Currency: ${farm.currency}. The user's app language is ${i18n.locale === "bn" ? "Bangla" : "English"}; reply in the language the user writes in (Bangla if they write Bangla, including Banglish).
 
