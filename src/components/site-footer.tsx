@@ -2,12 +2,14 @@ import Link from "next/link";
 import { FarmScene } from "@/components/farm-scene";
 import { Logo } from "@/components/logo";
 import { TextHoverEffect } from "@/components/velora/text-hover-effect";
+import { getViewer } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
 import { getSiteInfo, safe } from "@/lib/public-data";
 
 /** Footer for public pages: link columns, a big FarmFlows wordmark, and a farm landscape underneath. */
 export async function SiteFooter() {
   const { t } = await getI18n();
+  const viewer = await getViewer();
   const info = await safe(() => getSiteInfo(), null);
   const year = new Date().getFullYear();
 
@@ -17,8 +19,12 @@ export async function SiteFooter() {
       links: [
         { href: "/#features", label: t("footer.features") },
         { href: "/#pricing", label: t("footer.pricing") },
-        { href: "/signup", label: t("landing.startFree") },
-        { href: "/login", label: t("landing.login") },
+        ...(viewer
+          ? [{ href: viewer.home, label: t("landing.goDashboard") }]
+          : [
+              { href: "/signup", label: t("landing.startFree") },
+              { href: "/login", label: t("landing.login") },
+            ]),
       ],
     },
     {
@@ -27,7 +33,7 @@ export async function SiteFooter() {
         { href: "/blog", label: t("blog.nav") },
         { href: "/community", label: t("community.nav") },
         { href: "/#reviews", label: t("footer.reviews") },
-        { href: "/doctor/signup", label: t("footer.forDoctors") },
+        ...(viewer ? [] : [{ href: "/doctor/signup", label: t("footer.forDoctors") }]),
         { href: "/contact", label: t("contact.title") },
         { href: "/terms", label: t("legal.terms") },
         { href: "/privacy", label: t("legal.privacy") },

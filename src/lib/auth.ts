@@ -31,6 +31,23 @@ export type Profile = {
   doctor_verified: boolean;
 };
 
+/**
+ * Who is looking at a public page: the signed-in user and their profile, or null for visitors.
+ * Visitors (no Supabase auth cookie) cost nothing; the check only runs when a cookie exists.
+ */
+export const getViewer = cache(async () => {
+  const hasSession = (await cookies()).getAll().some((c) => c.name.startsWith("sb-") && c.name.includes("-auth-token"));
+  if (!hasSession) return null;
+  const [user, profile] = await Promise.all([getUser(), getProfile()]);
+  if (!user) return null;
+  return {
+    user,
+    profile,
+    /** Where "Dashboard" goes: doctors have their own console. */
+    home: profile?.account_type === "doctor" ? "/doctor" : "/dashboard",
+  };
+});
+
 export const getProfile = cache(async (): Promise<Profile | null> => {
   const user = await getUser();
   if (!user) return null;

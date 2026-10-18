@@ -64,4 +64,6 @@ export const landing = {
   "landing.pricingSub": "Per farm, per month.",
   "landing.getStarted": "Get started",
   "landing.footer": "© {year} FarmFlows",
+  "landing.goDashboard": "Go to dashboard",
+  "landing.managePlan": "Manage your plan",
 } as const;
