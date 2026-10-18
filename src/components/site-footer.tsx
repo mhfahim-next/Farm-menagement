@@ -32,6 +32,7 @@ export async function SiteFooter() {
       links: [
         { href: "/blog", label: t("blog.nav") },
         { href: "/community", label: t("community.nav") },
+        { href: "/changelog", label: t("changelog.nav") },
         { href: "/#reviews", label: t("footer.reviews") },
         ...(viewer ? [] : [{ href: "/doctor/signup", label: t("footer.forDoctors") }]),
         { href: "/contact", label: t("contact.title") },

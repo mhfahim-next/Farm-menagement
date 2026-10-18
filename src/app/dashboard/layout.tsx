@@ -105,6 +105,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
           { href: "/dashboard/settings", label: t("nav.settings") },
           { href: "/dashboard/review", label: t("nav.review") },
           { href: "/community", label: t("community.nav") },
+          { href: "/changelog", label: t("changelog.nav") },
         ].map((i) => ({ ...i, group: t("nav.group.farm") })),
       ];
 
