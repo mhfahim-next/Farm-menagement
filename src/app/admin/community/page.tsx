@@ -106,7 +106,7 @@ export default async function AdminCommunityPage({ searchParams }: PageProps<"/a
             key={k}
             href={k === "reported" ? "/admin/community" : `/admin/community?tab=${k}`}
             aria-current={k === tab ? "page" : undefined}
-            className={`whitespace-nowrap rounded-lg px-3 py-1.5 font-medium ${k === tab ? "bg-white text-emerald-800 shadow-sm" : "text-stone-600 hover:text-stone-900"}`}
+            className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-1.5 font-medium ${k === tab ? "bg-white text-emerald-800 shadow-sm" : "text-stone-600 hover:text-stone-900"}`}
           >
             {t(`admin.community.tab.${k}`)} ({f.number(counts[k])})
           </Link>

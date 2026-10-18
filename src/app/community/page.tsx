@@ -52,7 +52,7 @@ export default async function CommunityPage({ searchParams }: PageProps<"/commun
       key={to + label}
       href={to}
       aria-current={on ? "page" : undefined}
-      className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-sm font-medium transition ${
+      className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-sm font-medium transition ${
         on ? "border-emerald-700 bg-emerald-700 text-white" : "border-stone-300 text-stone-700 hover:border-emerald-600 hover:text-emerald-800"
       }`}
     >
@@ -95,7 +95,7 @@ export default async function CommunityPage({ searchParams }: PageProps<"/commun
           <button className="rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800">{t("community.search")}</button>
         </form>
 
-        <nav aria-label={t("community.topics")} className="mt-4 flex gap-2 overflow-x-auto pb-1">
+        <nav aria-label={t("community.topics")} className="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {chip(href({ topic: undefined, page: 1 }), t("community.allTopics"), !topic)}
           {topics.map((x) => chip(href({ topic: x.slug, page: 1 }), locale === "bn" ? x.name_bn : x.name_en, topic?.id === x.id))}
         </nav>
