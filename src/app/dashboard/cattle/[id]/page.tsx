@@ -7,6 +7,8 @@ import { DeleteButton } from "@/components/delete-animal";
 import { BreedingForm } from "@/components/breeding-form";
 import { ParentsFields } from "@/components/parents-fields";
 import { HealthForm } from "@/components/health-form";
+import { LineChart } from "@/components/charts/line-chart";
+import { WeightForm } from "@/components/weight-form";
 import { Badge, Card, EmptyState, Field, Input, PageHeader, Select, StatCard, Table, Td, Textarea } from "@/components/ui";
 import { MANAGERS, requireFarm } from "@/lib/auth";
 import { animalLabel, breedOptions, typeSexHint, type MotherCandidate } from "@/lib/cattle";
@@ -15,10 +17,11 @@ import { getBreedingRules } from "@/lib/breeding-data";
 import { ageInMonths, today } from "@/lib/format";
 import { dueItems, dueLabel } from "@/lib/health";
 import { getI18n } from "@/lib/i18n/server";
+import { weightSummary, type WeightRecord } from "@/lib/weights";
 import type { BreedingEvent, Cattle, HealthRecord, MilkRecord } from "@/lib/types";
 import { logBreedingEvent } from "../../breeding/actions";
 import { recordHealth } from "../../health/actions";
-import { archiveCattle, deleteCattle, restoreCattle, updateCattle } from "../actions";
+import { addWeight, archiveCattle, deleteCattle, deleteWeight, restoreCattle, updateCattle } from "../actions";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -33,7 +36,7 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
   const i18n = await getI18n();
   const { t, f, o, options } = i18n;
 
-  const [cowRes, milkRes, healthRes, breedingRes, femalesRes, calvesRes] = await Promise.all([
+  const [cowRes, milkRes, healthRes, breedingRes, femalesRes, calvesRes, weightsRes] = await Promise.all([
     supabase.from("cattle").select("*").eq("id", id).eq("farm_id", farm.id).maybeSingle(),
     supabase
       .from("milk_records")
@@ -57,7 +60,12 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
       .eq("mother_id", id)
       .is("deleted_at", null)
       .order("date_of_birth", { ascending: false }),
+    supabase.from("cattle_weights").select("*").eq("cattle_id", id).order("weigh_date", { ascending: false }).order("created_at", { ascending: false }),
   ]);
+  const weights = (weightsRes.data ?? []) as WeightRecord[];
+  const ws = weightSummary(weights);
+  const kg = (n: number, d = 1) => t("weight.kgShort", { n: f.number(n, d) });
+  const signed = (n: number, d = 1) => `${n > 0 ? "+" : n < 0 ? "−" : ""}${f.number(Math.abs(n), d)}`;
 
   const cow = cowRes.data as Cattle | null;
   if (!cow) notFound();
@@ -143,7 +151,19 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
         </p>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <StatCard
+          label={t("weight.current")}
+          value={ws.current ? kg(Number(ws.current.weight_kg)) : "—"}
+          hint={
+            ws.current
+              ? ws.change !== null
+                ? t("weight.changeHint", { change: signed(ws.change), date: f.date(ws.current.weigh_date) })
+                : f.date(ws.current.weigh_date)
+              : t("weight.none")
+          }
+          tone={ws.change !== null ? (ws.change >= 0 ? "good" : "bad") : "default"}
+        />
         <StatCard label={t("cattle.milk30")} value={t("common.litersShort", { n: f.number(milkTotal, 1) })} />
         <StatCard
           label={t("cattle.avgPerDay")}
@@ -248,6 +268,74 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
               <summary className="cursor-pointer text-sm font-medium text-emerald-700">{t("cattle.recordBreeding")}</summary>
               <div className="mt-4">
                 <BreedingForm action={logBreedingEvent} today={today()} currency={farm.currency} cattleId={cow.id} checkDays={checkDays} gestationDays={rules.gestationDays} />
+              </div>
+            </details>
+          )}
+        </Card>
+
+        <Card title={t("weight.title")} description={t("weight.desc")}>
+          {weights.length === 0 ? (
+            <EmptyState title={t("weight.none")}>{t("weight.noneBody")}</EmptyState>
+          ) : (
+            <>
+              <dl className="mb-4 grid grid-cols-3 gap-3 text-sm">
+                <div>
+                  <dt className="text-stone-500">{t("weight.current")}</dt>
+                  <dd className="text-lg font-bold tabular-nums text-stone-900">{kg(Number(ws.current!.weight_kg))}</dd>
+                </div>
+                <div>
+                  <dt className="text-stone-500">{t("weight.adg")}</dt>
+                  <dd className={`text-lg font-bold tabular-nums ${ws.adg === null ? "text-stone-400" : ws.adg >= 0 ? "text-emerald-700" : "text-red-600"}`}>
+                    {ws.adg === null ? "—" : t("weight.perDay", { n: signed(ws.adg, 2) })}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-stone-500">{t("weight.totalGain")}</dt>
+                  <dd className="text-lg font-bold tabular-nums text-stone-900">{ws.totalGain === null ? "—" : kg(ws.totalGain)}</dd>
+                </div>
+              </dl>
+              {weights.length > 1 && (
+                <LineChart
+                  title={t("weight.chartTitle", { tag: cow.tag_number })}
+                  unit={t("weight.unit")}
+                  locale={i18n.locale}
+                  points={[...weights].reverse().map((w) => ({
+                    key: w.id,
+                    x: Date.parse(w.weigh_date),
+                    label: f.date(w.weigh_date),
+                    value: Number(w.weight_kg),
+                  }))}
+                />
+              )}
+              <div className="mt-4">
+                <Table head={[t("common.date"), t("weight.kg"), t("weight.method"), ""]}>
+                  {weights.slice(0, 12).map((w) => (
+                    <tr key={w.id}>
+                      <Td>{f.date(w.weigh_date)}</Td>
+                      <Td className="font-medium tabular-nums">{kg(Number(w.weight_kg))}</Td>
+                      <Td>
+                        {t(`weight.methods.${w.method}`)}
+                        {w.method === "tape" && w.heart_girth_cm && (
+                          <span className="block text-xs text-stone-500">
+                            {t("weight.tapeDims", { g: f.number(Number(w.heart_girth_cm), 1), l: f.number(Number(w.body_length_cm ?? 0), 1) })}
+                          </span>
+                        )}
+                        {w.notes && <span className="block text-xs text-stone-500">{w.notes}</span>}
+                      </Td>
+                      <Td className="text-right">
+                        {canDelete && <ConfirmForm action={deleteWeight} fields={{ id: w.id }} label={t("common.delete")} confirm={t("weight.confirmDelete")} />}
+                      </Td>
+                    </tr>
+                  ))}
+                </Table>
+              </div>
+            </>
+          )}
+          {canWrite && (
+            <details className="mt-4 border-t border-stone-100 pt-4" open={weights.length === 0}>
+              <summary className="cursor-pointer text-sm font-medium text-emerald-700">{t("weight.add")}</summary>
+              <div className="mt-4">
+                <WeightForm action={addWeight} cattleId={cow.id} today={today()} />
               </div>
             </details>
           )}

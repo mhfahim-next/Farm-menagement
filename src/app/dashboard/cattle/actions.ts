@@ -147,3 +147,48 @@ export async function deleteCattle(_: ActionState, formData: FormData): Promise<
   revalidatePath("/dashboard", "layout");
   return { success: t("cattle.deletedToast", { tag: data[0].tag_number }) };
 }
+
+const WEIGH_METHODS = ["scale", "tape", "estimate"];
+
+export async function addWeight(_: ActionState, formData: FormData): Promise<ActionState> {
+  const { supabase, farm } = await requireRole(STAFF);
+  const { t, f } = await getI18n();
+  const cattleId = str(formData, "cattle_id");
+  const date = str(formData, "weigh_date");
+  const method = str(formData, "method") ?? "scale";
+  const girth = num(formData, "heart_girth_cm");
+  const length = num(formData, "body_length_cm");
+  let kg = num(formData, "weight_kg");
+  if (!cattleId || !date) return { error: t("weight.err.date") };
+  if (!WEIGH_METHODS.includes(method)) return { error: t("common.errorGeneric") };
+  // With the tape method the weight is worked out on the server too, from the two measurements.
+  if (method === "tape" && girth && length) kg = Math.round(((girth * girth * length) / 10838) * 10) / 10;
+  if (!kg || kg <= 0 || kg > 2000) return { error: t("weight.err.kg") };
+
+  const { error } = await supabase.from("cattle_weights").insert({
+    farm_id: farm.id,
+    cattle_id: cattleId,
+    weigh_date: date,
+    weight_kg: kg,
+    method,
+    heart_girth_cm: method === "tape" ? girth : null,
+    body_length_cm: method === "tape" ? length : null,
+    notes: str(formData, "notes"),
+  });
+  if (error) return { error: dbError(t, error) };
+  revalidatePath(`/dashboard/cattle/${cattleId}`);
+  revalidatePath("/dashboard/cattle");
+  return { success: t("weight.saved", { kg: f.number(kg, 1) }) };
+}
+
+export async function deleteWeight(_: ActionState, formData: FormData): Promise<ActionState> {
+  const { supabase, farm } = await requireRole(MANAGERS);
+  const { t } = await getI18n();
+  const id = str(formData, "id");
+  if (!id) return { error: t("common.errorGeneric") };
+  const { data, error } = await supabase.from("cattle_weights").delete().eq("id", id).eq("farm_id", farm.id).select("cattle_id").maybeSingle();
+  if (error) return { error: dbError(t, error) };
+  if (data) revalidatePath(`/dashboard/cattle/${data.cattle_id}`);
+  revalidatePath("/dashboard/cattle");
+  return { success: t("weight.deleted") };
+}

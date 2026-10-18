@@ -40,6 +40,10 @@ export default async function CattlePage({ searchParams }: PageProps<"/dashboard
   const { data, error } = await query;
   if (error) throw new Error(error.message);
   const cattle = (data ?? []) as Cattle[];
+  const { data: latest } = cattle.length
+    ? await supabase.from("cattle_latest_weight").select("cattle_id, weight_kg").eq("farm_id", farm.id)
+    : { data: [] };
+  const weightOf = new Map((latest ?? []).map((w) => [w.cattle_id as string, Number(w.weight_kg)]));
 
   const age = (dob: string | null) => {
     const months = ageInMonths(dob);
@@ -82,6 +86,7 @@ export default async function CattlePage({ searchParams }: PageProps<"/dashboard
                 t("cattle.colCategory"),
                 t("cattle.colBreed"),
                 t("cattle.colAge"),
+                t("weight.current"),
                 t("cattle.colStatus"),
               ]}
             >
@@ -96,6 +101,7 @@ export default async function CattlePage({ searchParams }: PageProps<"/dashboard
                   <Td>{o("cattle_category", c.category)}</Td>
                   <Td>{c.breed ? o("cattle_breed", c.breed) : "—"}</Td>
                   <Td>{age(c.date_of_birth)}</Td>
+                  <Td className="tabular-nums">{weightOf.has(c.id) ? t("weight.kgShort", { n: i18n.f.number(weightOf.get(c.id)!, 1) }) : "—"}</Td>
                   <Td>
                     <Badge tone={c.status === "active" ? "green" : c.status === "sold" ? "blue" : "red"}>
                       {o("cattle_status", c.status)}
