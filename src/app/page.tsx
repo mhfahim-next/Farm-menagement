@@ -9,6 +9,7 @@ import { ScrollProgress } from "@/components/velora/scroll-progress";
 import { ShimmerLink } from "@/components/velora/shimmer-link";
 import { SpotlightCard } from "@/components/velora/spotlight-card";
 import { WordRotate } from "@/components/velora/word-rotate";
+import { getViewer } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
 import { planFeatures, planName, priceText } from "@/lib/plan-utils";
 import { getPlans } from "@/lib/plans";
@@ -28,6 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function Home({ searchParams }: PageProps<"/">) {
   const i18n = await getI18n();
+  const viewer = await getViewer();
   const { t, f, locale } = i18n;
   const [allPlans, reviews, live] = await Promise.all([
     getPlans(),
@@ -109,10 +111,11 @@ export default async function Home({ searchParams }: PageProps<"/">) {
             <p className="mx-auto mt-5 max-w-2xl text-lg text-stone-600">{t("landing.heroBody")}</p>
             <BlurFade delay={0.1}>
               <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-                <ShimmerLink href="/signup" className="text-base">
-                  {t("landing.ctaPrimary")}
+                <ShimmerLink href={viewer ? viewer.home : "/signup"} className="text-base">
+                  {viewer ? t("landing.goDashboard") : t("landing.ctaPrimary")}
                 </ShimmerLink>
                 {/* Same pill shape and height as the main button, but quiet: outline + arrow. */}
+                {!viewer && (
                 <Link
                   href="/login"
                   className="group inline-flex h-12 items-center justify-center gap-2 rounded-full border border-emerald-700/25 bg-white px-7 text-base font-medium text-emerald-800 shadow-sm transition-[border-color,background-color,transform] duration-300 hover:-translate-y-0.5 hover:border-emerald-600 hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 active:translate-y-0"
@@ -122,13 +125,16 @@ export default async function Home({ searchParams }: PageProps<"/">) {
                     <path d="M4 10h12M11 5l5 5-5 5" />
                   </svg>
                 </Link>
+                )}
               </div>
-              <p className="mt-5 text-sm text-stone-700">
-                {t("doctor.areDoctor")}{" "}
-                <Link href="/doctor/signup" className="font-semibold text-emerald-800 underline-offset-2 hover:underline">
-                  {t("doctor.landingCta")}
-                </Link>
-              </p>
+              {!viewer && (
+                <p className="mt-5 text-sm text-stone-700">
+                  {t("doctor.areDoctor")}{" "}
+                  <Link href="/doctor/signup" className="font-semibold text-emerald-800 underline-offset-2 hover:underline">
+                    {t("doctor.landingCta")}
+                  </Link>
+                </p>
+              )}
             </BlurFade>
           </div>
         </section>
@@ -218,13 +224,20 @@ export default async function Home({ searchParams }: PageProps<"/">) {
                       ))}
                       <li className="text-stone-500">✓ {t("plans.feat.vets")}</li>
                     </ul>
-                    <ButtonLink
-                      href={p.price_monthly === 0 ? "/signup" : `/signup?plan=${p.key}`}
-                      variant={highlight ? "primary" : "secondary"}
-                      className="mt-6 w-full"
-                    >
-                      {p.price_monthly === 0 ? t("plans.getStarted") : t("plans.choose", { plan: planName(p, locale, p.key) })}
-                    </ButtonLink>
+                    {/* Signed-in farmers manage their plan inside the app; doctors have no farm plan. */}
+                    {(!viewer || viewer.profile?.account_type !== "doctor") && (
+                      <ButtonLink
+                        href={viewer ? "/dashboard/plan" : p.price_monthly === 0 ? "/signup" : `/signup?plan=${p.key}`}
+                        variant={highlight ? "primary" : "secondary"}
+                        className="mt-6 w-full"
+                      >
+                        {viewer
+                          ? t("landing.managePlan")
+                          : p.price_monthly === 0
+                            ? t("plans.getStarted")
+                            : t("plans.choose", { plan: planName(p, locale, p.key) })}
+                      </ButtonLink>
+                    )}
                   </div>
                   </BlurFade>
                 );
@@ -250,8 +263,8 @@ export default async function Home({ searchParams }: PageProps<"/">) {
               <div className="relative">
                 <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">{t("landing.ctaTitle")}</h2>
                 <p className="mx-auto mt-3 max-w-xl text-white/85">{t("landing.ctaBody")}</p>
-                <ShimmerLink href="/signup" className="mt-8 bg-amber-300 text-base text-emerald-950 shadow-black/20">
-                  {t("landing.ctaPrimary")}
+                <ShimmerLink href={viewer ? viewer.home : "/signup"} className="mt-8 bg-amber-300 text-base text-emerald-950 shadow-black/20">
+                  {viewer ? t("landing.goDashboard") : t("landing.ctaPrimary")}
                 </ShimmerLink>
               </div>
             </div>

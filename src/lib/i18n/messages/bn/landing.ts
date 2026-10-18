@@ -66,4 +66,6 @@ export const landing: Record<keyof typeof en, string> = {
   "landing.pricingSub": "প্রতি খামার, প্রতি মাসে।",
   "landing.getStarted": "শুরু করুন",
   "landing.footer": "© {year} FarmFlows",
+  "landing.goDashboard": "ড্যাশবোর্ডে যান",
+  "landing.managePlan": "আপনার প্ল্যান দেখুন",
 };
