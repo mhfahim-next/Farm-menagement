@@ -78,7 +78,7 @@ export function HomeGlobe({
           <span className="bg-gradient-to-r from-brand-from via-brand-via to-brand-to bg-clip-text text-transparent">{title}</span>
         </h2>
         <p className="mt-5 text-lg text-pretty text-stone-600">{body}</p>
-        <dl className="mt-10 grid grid-cols-3 gap-6 border-t border-stone-200 pt-8">
+        <dl className={`mt-10 grid gap-6 border-t border-stone-200 pt-8 ${stats.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
           {stats.map((s) => (
             <div key={s.label} className="flex flex-col-reverse justify-end gap-1">
               <dt className="text-xs text-stone-500 sm:text-sm">{s.label}</dt>

@@ -36,6 +36,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   const preview = typeof sp.cc === "string" && /^[A-Za-z]{2}$/.test(sp.cc) ? sp.cc : null;
   const copy = globeCopy(preview ?? (await readGeo()).country, locale);
   // Real platform numbers once there are enough farms; until then, plain facts.
+  // "64 districts" is about Bangladesh, so other countries don't get it.
   const stats =
     live && live.farms >= 10
       ? [
@@ -44,7 +45,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           { value: live.records, label: t("globe.records") },
         ]
       : [
-          { value: 64, label: t("globe.districts") },
+          ...(copy.country === "BD" ? [{ value: 64, label: t("globe.districts") }] : []),
           { value: 2, label: t("globe.languages") },
           { value: 24, label: t("globe.hours") },
         ];
