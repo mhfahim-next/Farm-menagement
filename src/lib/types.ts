@@ -117,6 +117,7 @@ export type FlockDailyLog = {
   mortality: number;
   culled: number;
   feed_kg: number | null;
+  feed_item_id?: string | null;
   water_liters: number | null;
   notes: string | null;
 };

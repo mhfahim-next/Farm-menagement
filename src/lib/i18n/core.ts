@@ -129,6 +129,11 @@ export function createI18n(locale: Locale, messages: Messages, optionRows: Optio
         minute: "2-digit",
       });
     },
+    /** "YYYY-MM[-DD]" as a month name and year, e.g. "Oct 2026". */
+    month(value: string) {
+      const [y, m] = value.slice(0, 7).split("-").map(Number);
+      return new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString(dateLocale, { month: "short", year: "numeric", timeZone: "UTC" });
+    },
     weekday(day: string) {
       return new Date(day + "T00:00:00Z").toLocaleDateString(dateLocale, {
         weekday: "short",
@@ -147,6 +152,19 @@ export function createI18n(locale: Locale, messages: Messages, optionRows: Optio
         }).format(amount);
       } catch {
         return `${currency} ${this.number(amount)}`;
+      }
+    },
+    /** Money with paisa/cents, for per-litre and per-egg prices. */
+    moneyExact(amount: number, currency: string) {
+      try {
+        return new Intl.NumberFormat(numberLocale, {
+          style: "currency",
+          currency,
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }).format(amount);
+      } catch {
+        return `${currency} ${this.number(amount, 2)}`;
       }
     },
   };

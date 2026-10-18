@@ -1,6 +1,6 @@
 // Helpers for the unified money ledger (the finance_ledger view).
 
-export type LedgerSource = "manual" | "health" | "breeding" | "flock_health" | "salary";
+export type LedgerSource = "manual" | "health" | "breeding" | "flock_health" | "salary" | "inventory" | "sale";
 export type LedgerView = "all" | "dairy" | "layer";
 
 export type LedgerRow = {
@@ -29,6 +29,10 @@ export function ledgerHref(row: Pick<LedgerRow, "source" | "source_id" | "ref_id
       return `/dashboard/flock-health/${row.source_id}/edit`;
     case "salary":
       return row.ref_id ? `/dashboard/staff/${row.ref_id}` : null;
+    case "inventory":
+      return row.ref_id ? `/dashboard/inventory/${row.ref_id}` : null;
+    case "sale":
+      return row.ref_id ? `/dashboard/sales/buyers/${row.ref_id}` : "/dashboard/sales";
     default:
       return null;
   }
