@@ -15,7 +15,29 @@ function forcedLocale(request: NextRequest) {
   return lang === "en" || lang === "bn" ? lang : null;
 }
 
+/**
+ * On the production deployment, visits to the *.vercel.app address are sent
+ * to the real domain (NEXT_PUBLIC_SITE_URL), so search engines see one site.
+ * Preview deployments keep working on their own addresses.
+ */
+function canonicalHostRedirect(request: NextRequest) {
+  const site = process.env.NEXT_PUBLIC_SITE_URL;
+  if (process.env.VERCEL_ENV !== "production" || !site) return null;
+  const host = request.headers.get("host") ?? "";
+  let target: URL;
+  try {
+    target = new URL(site);
+  } catch {
+    return null;
+  }
+  if (!host.endsWith(".vercel.app") || host === target.host) return null;
+  const url = new URL(request.nextUrl.pathname + request.nextUrl.search, target);
+  return NextResponse.redirect(url, 308);
+}
+
 export async function updateSession(request: NextRequest) {
+  const moved = canonicalHostRedirect(request);
+  if (moved) return moved;
   const lang = forcedLocale(request);
   const next = () => {
     if (!lang) return NextResponse.next({ request });
