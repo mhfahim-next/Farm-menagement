@@ -30,6 +30,11 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
   });
   if (error) throw new Error(error.message);
   const users = (data ?? []) as AdminUserRow[];
+  // Last known IP and approximate location (from the hosting edge's geo headers).
+  const { data: presence } = users.length
+    ? await supabase.from("user_presence").select("user_id, ip, country, region, city, last_seen_at").in("user_id", users.map((u) => u.id))
+    : { data: [] };
+  const where = new Map((presence ?? []).map((p) => [p.user_id as string, p]));
   const total = users[0]?.total_count ?? 0;
   const lastPage = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const href = (p: number) => `?${new URLSearchParams({ ...(search ? { q: search } : {}), page: String(p) })}`;
@@ -53,6 +58,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
               t("admin.colFarms"),
               t("admin.colJoined"),
               t("admin.colLastSeen"),
+              t("analytics.colLocation"),
               t("admin.colStatus"),
               t("admin.colActions"),
             ]}
@@ -84,6 +90,19 @@ export default async function AdminUsersPage({ searchParams }: PageProps<"/admin
                   <Td className="tabular-nums">{f.number(u.farm_count)}</Td>
                   <Td>{f.date(u.created_at)}</Td>
                   <Td>{u.last_sign_in_at ? f.dateTime(u.last_sign_in_at) : t("admin.never")}</Td>
+                  <Td>
+                    {(() => {
+                      const p = where.get(u.id);
+                      if (!p) return <span className="text-xs text-stone-400">—</span>;
+                      const place = [p.city, p.region, p.country].filter(Boolean).join(", ");
+                      return (
+                        <span className="block text-xs">
+                          <span className="block text-stone-700">{place || t("analytics.unknownPlace")}</span>
+                          {p.ip && <span className="block font-mono text-stone-500">{p.ip}</span>}
+                        </span>
+                      );
+                    })()}
+                  </Td>
                   <Td>
                     <span className="flex flex-wrap gap-1">
                       <Badge tone={u.banned ? "red" : "green"}>

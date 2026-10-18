@@ -1,7 +1,11 @@
+import type { Metadata } from "next";
 import { AppShell } from "@/components/app-shell";
 import type { NavItem } from "@/components/dashboard-nav";
 import { requireSuperAdmin } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
+
+/** Private app area: keep it out of search results. */
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   const { user, profile } = await requireSuperAdmin();
@@ -9,6 +13,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
 
   const nav: NavItem[] = [
     { href: "/admin", label: t("nav.adminOverview") },
+    { href: "/admin/analytics", label: t("nav.adminAnalytics") },
     { href: "/admin/users", label: t("nav.adminUsers") },
     { href: "/admin/farms", label: t("nav.adminFarms") },
     { href: "/admin/plans", label: t("nav.adminPlans") },

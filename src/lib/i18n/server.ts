@@ -1,5 +1,6 @@
 import "server-only";
 import { cache } from "react";
+import { getCachedOptionRows } from "@/lib/public-data";
 import { createClient } from "@/lib/supabase/server";
 import type { OptionRow } from "../options";
 import { cookies, headers } from "next/headers";
@@ -23,8 +24,13 @@ export const getLocale = cache(async (): Promise<Locale> => {
   return first.startsWith("bn") ? "bn" : DEFAULT_LOCALE;
 });
 
-/** All admin-managed dropdown options, read once per request. */
+/** All admin-managed dropdown options (cached across requests, see lib/public-data). */
 export const getOptionRows = cache(async (): Promise<OptionRow[]> => {
+  try {
+    return await getCachedOptionRows();
+  } catch {
+    // Cache miss that failed: fall back to a direct read.
+  }
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("dropdown_options")

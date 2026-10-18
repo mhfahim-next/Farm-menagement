@@ -1,5 +1,6 @@
 export const landing = {
   "meta.title": "FarmFlows — Dairy, Cattle & Layer Farm Management",
+  "meta.keywords": "dairy farm management software, cattle management app, layer poultry farm app, milk record app, farm accounting Bangladesh, vaccine reminder, FarmFlows",
   "meta.description": "Manage cattle, milk production, layer flocks, egg collection, health and farm finances in one place.",
   "landing.login": "Log in",
   "landing.startFree": "Start free",

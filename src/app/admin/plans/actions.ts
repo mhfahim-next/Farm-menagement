@@ -1,6 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { PLANS_TAG } from "@/lib/public-data";
 import { requireSuperAdmin } from "@/lib/auth";
 import { int, num, str } from "@/lib/form";
 import type { MessageKey } from "@/lib/i18n/core";
@@ -61,6 +62,7 @@ export async function savePlan(_: ActionState, formData: FormData): Promise<Acti
   if (error) return { error: DB_RULES[error.message] ? t(DB_RULES[error.message]) : error.message };
   if (!data?.length) return { error: t("common.dbForbidden") };
 
+  revalidateTag(PLANS_TAG, { expire: 0 });
   revalidatePath("/", "layout");
   return { success: t("admin.plans.saved") };
 }
@@ -80,6 +82,7 @@ export async function addPlan(_: ActionState, formData: FormData): Promise<Actio
     return { error: error.message };
   }
 
+  revalidateTag(PLANS_TAG, { expire: 0 });
   revalidatePath("/", "layout");
   return { success: t("admin.plans.added") };
 }

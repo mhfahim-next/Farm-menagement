@@ -8,6 +8,8 @@ import { localized, type BlogPost } from "@/lib/blog";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import { ScrollProgress } from "@/components/velora/scroll-progress";
+import { JsonLd } from "@/components/json-ld";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 
 async function load(slug: string) {
   const supabase = await createClient();
@@ -22,7 +24,20 @@ export async function generateMetadata({ params }: PageProps<"/blog/[slug]">): P
   if (!post) return {};
   const { locale } = await getI18n();
   const v = localized(post, locale);
-  return { title: v.title, description: v.summary ?? undefined, openGraph: { title: v.title, description: v.summary ?? undefined, type: "article" } };
+  return {
+    title: v.title,
+    description: v.summary ?? undefined,
+    alternates: { canonical: `/blog/${post.slug}` },
+    robots: post.published ? undefined : { index: false },
+    openGraph: {
+      title: v.title,
+      description: v.summary ?? undefined,
+      type: "article",
+      url: `/blog/${post.slug}`,
+      publishedTime: post.published_at ?? undefined,
+      modifiedTime: post.updated_at ?? undefined,
+    },
+  };
 }
 
 export default async function BlogPostPage({ params }: PageProps<"/blog/[slug]">) {
@@ -43,6 +58,19 @@ export default async function BlogPostPage({ params }: PageProps<"/blog/[slug]">
         {!post.published && (
           <p role="status" className="mt-4 rounded-lg bg-amber-50 px-4 py-2.5 text-sm text-amber-900">{t("blog.draftNotice")}</p>
         )}
+        <JsonLd
+          data={{
+            "@context": "https://schema.org",
+            "@type": "BlogPosting",
+            headline: v.title,
+            description: v.summary ?? undefined,
+            inLanguage: v.lang,
+            datePublished: post.published_at ?? post.created_at,
+            dateModified: post.updated_at ?? post.published_at ?? post.created_at,
+            mainEntityOfPage: `${SITE_URL}/blog/${post.slug}`,
+            publisher: { "@type": "Organization", name: SITE_NAME, logo: { "@type": "ImageObject", url: `${SITE_URL}/icons/icon-512.png` } },
+          }}
+        />
         <article lang={v.lang} className="mt-4">
           <p className="text-sm text-stone-500">{f.date(post.published_at ?? post.created_at)}</p>
           <h1 className="mt-1 break-words text-3xl font-bold tracking-tight text-stone-900 sm:text-4xl">{v.title}</h1>

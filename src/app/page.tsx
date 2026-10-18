@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PublicFooter, PublicHeader } from "@/components/public-header";
 import { ButtonLink } from "@/components/ui";
@@ -11,6 +12,10 @@ import { WordRotate } from "@/components/velora/word-rotate";
 import { getI18n } from "@/lib/i18n/server";
 import { planFeatures, planName, priceText } from "@/lib/plan-utils";
 import { getPlans } from "@/lib/plans";
+import { JsonLd } from "@/components/json-ld";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
+
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default async function Home() {
   const i18n = await getI18n();
@@ -25,6 +30,31 @@ export default async function Home() {
 
   return (
     <div className="flex flex-1 flex-col">
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              name: SITE_NAME,
+              url: SITE_URL,
+              logo: `${SITE_URL}/icons/icon-512.png`,
+            },
+            {
+              "@type": "SoftwareApplication",
+              name: SITE_NAME,
+              applicationCategory: "BusinessApplication",
+              operatingSystem: "Web, Android, iOS",
+              description: t("meta.description"),
+              url: SITE_URL,
+              inLanguage: ["bn", "en"],
+              offers: plans
+                .filter((p) => p.price_monthly !== null)
+                .map((p) => ({ "@type": "Offer", name: planName(p, locale, p.key), price: p.price_monthly, priceCurrency: "BDT" })),
+            },
+          ],
+        }}
+      />
       <ScrollProgress />
       <PublicHeader />
 

@@ -8,7 +8,7 @@ import { Badge, ButtonLink, Card, EmptyState, Field, Input, PageHeader, Select, 
 import { MANAGERS, requireRole } from "@/lib/auth";
 import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
-import { daysInMonth, isMonth, payroll, type AttendanceStatus } from "@/lib/staff";
+import { daysInMonth, isMonth, payroll, workDaysSoFar, type AttendanceStatus } from "@/lib/staff";
 import { addStaffPayment, deleteStaffPayment, updateStaff } from "../actions";
 import { moduleChoices } from "../module-choices";
 
@@ -33,7 +33,8 @@ export default async function StaffDetailPage({ params, searchParams }: PageProp
   ]);
   const s = staffRes.data;
   if (!s) notFound();
-  const attendance = attRes.data ?? [];
+  // Only exceptions are stored; "present" days are not listed (they are the default).
+  const attendance = (attRes.data ?? []).filter((a) => a.status !== "present");
   const payments = payRes.data ?? [];
   const monthPayments = payments.filter((p) => p.pay_month === `${month}-01`);
   const p = payroll(
@@ -41,6 +42,7 @@ export default async function StaffDetailPage({ params, searchParams }: PageProp
     month,
     attendance as { status: AttendanceStatus }[],
     monthPayments as { pay_type: "salary" | "advance" | "bonus"; amount: number }[],
+    workDaysSoFar(month, today(), s.join_date),
   );
   const money = (n: number) => f.money(n, farm.currency);
   const modules = moduleChoices(t, farm);

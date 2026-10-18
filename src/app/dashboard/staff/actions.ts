@@ -78,19 +78,34 @@ export async function saveAttendance(_: ActionState, formData: FormData): Promis
   const date = str(formData, "att_date");
   if (!date) return { error: t("staff.chooseDate") };
 
+  // Everyone is present unless marked otherwise, so only exceptions are stored:
+  // "present" removes any earlier mark for that day.
   const rows: { farm_id: string; staff_id: string; att_date: string; status: string; note: string | null }[] = [];
+  const presentIds: string[] = [];
   for (const [key, value] of formData.entries()) {
     if (!key.startsWith("status_") || typeof value !== "string") continue;
     if (!STATUSES.includes(value)) continue;
     const staffId = key.slice("status_".length);
-    rows.push({ farm_id: farm.id, staff_id: staffId, att_date: date, status: value, note: str(formData, `note_${staffId}`) });
+    if (value === "present") presentIds.push(staffId);
+    else rows.push({ farm_id: farm.id, staff_id: staffId, att_date: date, status: value, note: str(formData, `note_${staffId}`) });
   }
-  if (rows.length === 0) return { error: t("staff.noStaffToMark") };
+  if (rows.length === 0 && presentIds.length === 0) return { error: t("staff.noStaffToMark") };
 
-  const { error } = await supabase.from("staff_attendance").upsert(rows, { onConflict: "staff_id,att_date" });
-  if (error) return { error: dbError(t, error) };
+  if (presentIds.length) {
+    const { error } = await supabase
+      .from("staff_attendance")
+      .delete()
+      .eq("farm_id", farm.id)
+      .eq("att_date", date)
+      .in("staff_id", presentIds);
+    if (error) return { error: dbError(t, error) };
+  }
+  if (rows.length) {
+    const { error } = await supabase.from("staff_attendance").upsert(rows, { onConflict: "staff_id,att_date" });
+    if (error) return { error: dbError(t, error) };
+  }
   refresh();
-  return { success: t("staff.attendanceSaved", { n: rows.length }) };
+  return { success: rows.length ? t("staff.absencesSaved", { n: rows.length }) : t("staff.allPresentSaved") };
 }
 
 export async function addStaffPayment(_: ActionState, formData: FormData): Promise<ActionState> {

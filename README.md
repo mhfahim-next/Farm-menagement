@@ -49,7 +49,7 @@ A multi-tenant farm management web app built with **Next.js 16 (App Router)** an
 - **Layer flocks**: batches with breed, shed and age. Daily logs cover eggs, broken eggs, deaths, culls, feed and water.
   KPIs: live birds, **hen-day production %**, mortality %, feed per dozen eggs, grams of feed per bird.
 - **Finance** (`/dashboard/finance`): one ledger for all money. Manual income/expenses plus costs recorded elsewhere appear automatically (cow medicine, breeding/AI cost, layer flock health cost, staff salary payments), tagged by source; tap one to edit it at its source. Switch *Whole farm / Cow farm / Layer farm* (farms with both) with correct totals and profit, plus a by-category breakdown. The overview and CSV export include the same rows (database view `finance_ledger`).
-- **Staff & salary** (`/dashboard/staff`, owners and managers only): workers need no login. Monthly salary, daily attendance sheet (present / absent / half day / leave), advances, bonuses and salary payments; absences are deducted per day and the balance is shown. Payments flow into finance as *Labour*.
+- **Staff & salary** (`/dashboard/staff`, owners and managers only): workers need no login. Monthly salary, attendance that is automatic — everyone counts as present and you only mark absences, leave or half days, advances, bonuses and salary payments; absences are deducted per day and the balance is shown. Payments flow into finance as *Labour*.
 - **Layer flock health** (`/dashboard/flock-health`): vaccines (Newcastle, Gumboro, …), deworming, lice/mite spray and medicine per flock, with admin-editable quick picks, due/overdue board, egg-withdrawal dates and costs.
 - **Dedicated add pages & clickable rows**: add cattle, milk, health, breeding, flocks, daily logs, flock health, staff and transactions on their own pages; every table row opens its record.
 - **Grouped sidebar**: Cow farm / Layer farm / Money / Farm.
@@ -178,8 +178,33 @@ Sign up, create your farm, then add cattle and flocks.
 
 ## Deploy
 
-- **Web:** Vercel (set the three `NEXT_PUBLIC_*` env vars).
+- **Web:** Vercel (set the three `NEXT_PUBLIC_*` env vars). `NEXT_PUBLIC_SITE_URL` must be the real address (e.g. `https://farmflows.app`): the sitemap, robots.txt, share image links and email links use it.
 - **Database:** Supabase cloud (`npx supabase db push`).
+
+### SEO
+
+`/sitemap.xml` (home, blog, every published article, sign-up pages — refreshed hourly), `/robots.txt` (private areas `/dashboard`, `/admin`, `/doctor`, `/api` … are disallowed and also marked `noindex`), a share image (`/opengraph-image`), Open Graph / Twitter tags, canonical URLs, and schema.org JSON-LD (Organization + SoftwareApplication on the home page, BlogPosting on articles). After deploying, add the site in Google Search Console and submit `https://<your-domain>/sitemap.xml`.
+
+### Analytics, IP and location
+
+Super admin → **Analytics**: page views, visitors, sign-ups, active users, logins, new farms, daily charts, top pages, referrers, countries, devices, a globe of where users are, and the last 20 sign-ins with IP and approximate location. The users list shows each user's last IP and city. Everything is first-party (tables `page_views`, `login_events`, `user_presence`; readable only by super admins). Location comes from the hosting edge's headers, so it works automatically on **Vercel** (`x-vercel-ip-*`) or **Cloudflare** (turn on *Add visitor location headers*); when running locally there is no location. Anonymous visits are counted without IP addresses; mention IP collection in your privacy policy.
+
+### Branded account emails (instead of "Supabase Auth")
+
+By default Supabase sends sign-up emails from its own address with its own text, and only a few per hour. To send them as **FarmFlows** from your domain:
+
+1. **Get an SMTP sender**, e.g. [Resend](https://resend.com) (free 3,000 emails/month), Brevo or Amazon SES. Add and verify your domain there (DNS records) and create an SMTP password / API key.
+2. Supabase Dashboard → **Project Settings → Authentication → SMTP Settings** → *Enable custom SMTP*:
+   sender email `noreply@your-domain`, sender name `FarmFlows`, host/port/user/password from step 1 (Resend: `smtp.resend.com`, port `465`, user `resend`, password = API key).
+3. **Authentication → Email Templates**: paste the files from `supabase/templates/` (`confirmation.html` → *Confirm signup*, `recovery.html` → *Reset password*, `magic_link.html`, `email_change.html`, `invite.html`) and the subjects from `supabase/config.toml`. They are bilingual (Bangla + English), use the FarmFlows logo and link to `/auth/confirm` on your site.
+4. **Authentication → URL Configuration**: *Site URL* = your domain, and add `https://<your-domain>/auth/confirm` to *Redirect URLs*.
+5. Optionally raise **Rate limits → emails per hour** (custom SMTP allows more).
+
+Locally, `npx supabase start` already uses these templates (see Inbucket at http://localhost:54324).
+
+### Speed
+
+Dropdown options and plans (read on every page) are cached across visitors and refreshed the moment a super admin edits them; the AI chat and the globe load only after the page; fonts are self-hosted; logos/icons are cached by the browser; motion code is tree-shaken.
 
 ## Roadmap
 

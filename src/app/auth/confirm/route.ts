@@ -1,5 +1,6 @@
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
+import { recordPresence } from "@/lib/geo";
 import { createClient } from "@/lib/supabase/server";
 
 // Target of the links in Supabase auth emails (signup confirmation,
@@ -16,10 +17,16 @@ export async function GET(request: NextRequest) {
 
   if (tokenHash && type) {
     const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
-    if (!error) return NextResponse.redirect(new URL(next, origin));
+    if (!error) {
+      await recordPresence(supabase, type === "signup" ? "signup" : "login");
+      return NextResponse.redirect(new URL(next, origin));
+    }
   } else if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) return NextResponse.redirect(new URL(next, origin));
+    if (!error) {
+      await recordPresence(supabase, "login");
+      return NextResponse.redirect(new URL(next, origin));
+    }
   }
 
   return NextResponse.redirect(new URL("/login?error=link", origin));

@@ -1,11 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Noto_Sans_Bengali } from "next/font/google";
 import { I18nProvider } from "@/components/i18n-provider";
+import { Analytics } from "@/components/analytics";
 import { NavProgress } from "@/components/nav-progress";
 import { PwaRegister } from "@/components/pwa";
 import { ToastProvider } from "@/components/toast";
 import { Suspense } from "react";
 import { getI18n, getOptionRows, messagesFor } from "@/lib/i18n/server";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -34,10 +36,25 @@ export const viewport: Viewport = {
 };
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { t } = await getI18n();
+  const { t, locale } = await getI18n();
   return {
+    metadataBase: new URL(SITE_URL),
     title: { default: t("meta.title"), template: "%s · FarmFlows" },
     description: t("meta.description"),
+    keywords: t("meta.keywords").split(",").map((k) => k.trim()),
+    authors: [{ name: SITE_NAME }],
+    creator: SITE_NAME,
+    openGraph: {
+      type: "website",
+      siteName: SITE_NAME,
+      title: t("meta.title"),
+      description: t("meta.description"),
+      locale: locale === "bn" ? "bn_BD" : "en_US",
+      alternateLocale: locale === "bn" ? ["en_US"] : ["bn_BD"],
+      url: "/",
+    },
+    twitter: { card: "summary_large_image", title: t("meta.title"), description: t("meta.description") },
+    robots: { index: true, follow: true },
     applicationName: "FarmFlows",
     appleWebApp: { capable: true, title: "FarmFlows", statusBarStyle: "default" },
     formatDetection: { telephone: false },
@@ -73,6 +90,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           <Suspense fallback={null}>
             <NavProgress />
           </Suspense>
+          <Analytics />
           <PwaRegister />
         </I18nProvider>
       </body>

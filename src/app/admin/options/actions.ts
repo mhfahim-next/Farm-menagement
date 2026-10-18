@@ -1,6 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { OPTIONS_TAG } from "@/lib/public-data";
 import { requireSuperAdmin } from "@/lib/auth";
 import { int, str } from "@/lib/form";
 import type { MessageKey } from "@/lib/i18n/core";
@@ -74,6 +75,7 @@ export async function saveOption(_: ActionState, formData: FormData): Promise<Ac
   if (error) return { error: DB_RULES[error.message] ? t(DB_RULES[error.message]) : error.message };
   if (!data?.length) return { error: t("common.dbForbidden") };
 
+  revalidateTag(OPTIONS_TAG, { expire: 0 });
   revalidatePath("/", "layout");
   return { success: t("options.saved") };
 }
@@ -104,6 +106,7 @@ export async function addOption(_: ActionState, formData: FormData): Promise<Act
     return { error: DB_RULES[error.message] ? t(DB_RULES[error.message]) : error.message };
   }
 
+  revalidateTag(OPTIONS_TAG, { expire: 0 });
   revalidatePath("/", "layout");
   return { success: t("options.added") };
 }
