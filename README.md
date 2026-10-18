@@ -54,6 +54,9 @@ A multi-tenant farm management web app built with **Next.js 16 (App Router)** an
 - **Dedicated add pages & clickable rows**: add cattle, milk, health, breeding, flocks, daily logs, flock health, staff and transactions on their own pages; every table row opens its record.
 - **Grouped sidebar**: Cow farm / Layer farm / Money / Farm.
 - **Velora UI** (`src/components/velora`, registry `@velora` in `components.json`): aurora hero, rotating words, blur-fade entrances, spotlight feature cards, shimmer buttons, marquee, scroll-progress bar, velora loaders on every page load and in the AI assistant, and a footer with a hover-lit FarmFlows wordmark above an animated farm landscape (barn, windmill, cows, hens, crop rows). All animations respect "reduce motion".
+- **Contact, Terms, Privacy** (`/contact`, `/terms`, `/privacy`): super admins edit the contact email, phone, WhatsApp, address, office hours and both legal pages (Bangla + English, Markdown) in *Admin → Pages & contact*. Contact-form messages arrive in *Admin → Messages* (honeypot + flood guard against spam). The legal text is a starter draft — have it checked by a lawyer.
+- **Customer reviews**: farm users write a 1–5 star review from *Write a review* in the dashboard; it appears on the home page (velora testimonials marquee) only after a super admin approves it in *Admin → Reviews*. Editing a review sends it back for approval.
+- **Home globe**: a velora globe centred on Bangladesh with routes from Dhaka, beside live platform numbers (farms, animals & birds, records) once there are 10+ farms.
 - **Breeding rules** (Admin → Announcement & settings): gestation (calving) days, heat cycle, pregnancy check, dry-off and waiting period are editable and used everywhere.
 - **Overview dashboard**: today's milk and eggs, herd and flock size, this month's P&L, and 7-day charts.
 

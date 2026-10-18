@@ -37,6 +37,13 @@ export default async function DoctorSignupPage() {
           <Input name="phone" type="tel" autoComplete="tel" />
         </Field>
       </ActionForm>
+      <p className="mt-4 text-center text-xs text-stone-500">
+        {t("legal.agreePrefix")}{" "}
+        <Link href="/terms" className="font-medium text-emerald-700 hover:underline">{t("legal.terms")}</Link>{" "}
+        {t("legal.and")}{" "}
+        <Link href="/privacy" className="font-medium text-emerald-700 hover:underline">{t("legal.privacy")}</Link>
+        {t("legal.agreeSuffix")}
+      </p>
       <p className="mt-6 text-center text-sm text-stone-500">
         {t("auth.alreadyRegistered")}{" "}
         <Link href="/login" className="font-medium text-emerald-700 hover:underline">

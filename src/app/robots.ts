@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/blog", "/login", "/signup", "/doctor/signup"],
+        allow: ["/", "/blog", "/contact", "/terms", "/privacy", "/login", "/signup", "/doctor/signup"],
         // Private app areas and endpoints are never indexed.
         disallow: ["/dashboard", "/admin", "/doctor", "/onboarding", "/invites", "/suspended", "/auth", "/api", "/offline"],
       },

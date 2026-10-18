@@ -12,7 +12,10 @@ import { WordRotate } from "@/components/velora/word-rotate";
 import { getI18n } from "@/lib/i18n/server";
 import { planFeatures, planName, priceText } from "@/lib/plan-utils";
 import { getPlans } from "@/lib/plans";
+import { HomeGlobe } from "@/components/home-globe";
 import { JsonLd } from "@/components/json-ld";
+import { ReviewsSection } from "@/components/reviews-section";
+import { getApprovedReviews, getPublicStats, safe } from "@/lib/public-data";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = { alternates: { canonical: "/" } };
@@ -20,7 +23,25 @@ export const metadata: Metadata = { alternates: { canonical: "/" } };
 export default async function Home() {
   const i18n = await getI18n();
   const { t, f, locale } = i18n;
-  const plans = (await getPlans()).filter((p) => p.active);
+  const [allPlans, reviews, live] = await Promise.all([
+    getPlans(),
+    safe(() => getApprovedReviews(), []),
+    safe(() => getPublicStats(), null),
+  ]);
+  const plans = allPlans.filter((p) => p.active);
+  // Real platform numbers once there are enough farms; until then, plain facts.
+  const stats =
+    live && live.farms >= 10
+      ? [
+          { value: live.farms, label: t("globe.farms") },
+          { value: live.animals + live.birds, label: t("globe.animals") },
+          { value: live.records, label: t("globe.records") },
+        ]
+      : [
+          { value: 64, label: t("globe.districts") },
+          { value: 2, label: t("globe.languages") },
+          { value: 24, label: t("globe.hours") },
+        ];
   // The middle paid plan is highlighted as the recommended one.
   const highlightKey = plans.length >= 3 ? plans[1].key : null;
 
@@ -142,6 +163,18 @@ export default async function Home() {
           </div>
         </section>
 
+        <section className="relative isolate overflow-hidden border-t border-stone-200">
+          <div aria-hidden className="absolute inset-y-0 right-0 -z-10 w-full bg-radial-[at_75%_50%] from-emerald-200/40 to-transparent to-60% lg:w-2/3" />
+          <HomeGlobe
+            locale={locale}
+            kicker={t("globe.kicker")}
+            title={t("globe.title")}
+            body={t("globe.body")}
+            stats={stats}
+            globeLabel={t("globe.label")}
+          />
+        </section>
+
         <section id="pricing" className="scroll-mt-20 border-t border-stone-200">
           <div className="mx-auto max-w-6xl px-4 py-20">
             <h2 className="text-center text-3xl font-bold tracking-tight">{t("landing.pricingTitle")}</h2>
@@ -180,6 +213,10 @@ export default async function Home() {
             </div>
           </div>
         </section>
+
+        <div className="border-t border-stone-200">
+          <ReviewsSection reviews={reviews} t={t} />
+        </div>
 
         <section className="px-4 pb-20">
           <BlurFade>
