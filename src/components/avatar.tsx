@@ -26,6 +26,7 @@ export function Avatar({
       <img
         src={url}
         alt=""
+        referrerPolicy="no-referrer"
         width={size}
         height={size}
         style={{ width: size, height: size }}

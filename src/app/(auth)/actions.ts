@@ -108,3 +108,23 @@ export async function signup(_: ActionState, formData: FormData): Promise<Action
 
   return { success: t("auth.checkEmail") };
 }
+
+/**
+ * "Continue with Google": sends the browser to Google through Supabase, which
+ * returns to /auth/confirm with a one-time code (PKCE; the verifier is kept in a cookie).
+ */
+export async function signInWithGoogle(formData: FormData) {
+  const wanted = str(formData, "next");
+  const next = wanted && wanted.startsWith("/") && !wanted.startsWith("//") ? wanted : "";
+  const origin = process.env.NEXT_PUBLIC_SITE_URL ? SITE_URL : ((await headers()).get("origin") ?? "");
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${origin}/auth/confirm${next ? `?next=${encodeURIComponent(next)}` : ""}`,
+      queryParams: { prompt: "select_account" },
+    },
+  });
+  if (error || !data.url) redirect("/login?error=oauth");
+  redirect(data.url);
+}

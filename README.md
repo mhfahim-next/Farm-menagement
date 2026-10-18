@@ -38,6 +38,7 @@ A multi-tenant farm management web app built with **Next.js 16 (App Router)** an
 - **Feedback**: toast pop-ups confirm every add / update / delete (and show errors on row actions), buttons show a spinner while saving, and the sidebar links and pages show a loader while data loads.
 - **Mobile friendly**: the sidebar becomes a slide-in menu, tables keep one row per record and scroll sideways on phones (first column pinned), forms use 16px fields (no iOS zoom) and bigger tap targets, and nothing scrolls sideways from 320px up. Checked on every page in English and Bangla.
 - **Installable app (PWA)**: add FarmFlows to the home screen of an Android or iPhone and it opens full-screen with its own icon and shortcuts (Milk, Cattle, Health). An *Install* banner appears when the browser supports it (on iPhone it explains Share → Add to Home Screen). A service worker caches only build assets and icons; pages and data are never cached, and a bilingual "no connection" page shows when offline. It works over HTTPS (any deployment, e.g. Vercel).
+- **Farmers' community** (`/community`): questions and answers in Bangla or English. Anyone can read; signed-in members (farmers and vets) ask, answer, add up to 4 photos (resized to WebP in the browser), mark posts **Helpful**, and the asker picks the **best answer**. Answers from verified vets carry a badge and are shown first after the best answer. Topics, search, sorting (latest / unanswered / most helpful) and paging. Members can report posts; 3 reports hide a post until a super admin decides in *Admin → Community*, where they can also publish, hide, block members and switch on **pre-moderation** (new posts wait for approval). Rate limits: 5 questions and 20 answers per member per hour. SEO: `QAPage` structured data, answered questions in the sitemap, unanswered ones `noindex`. Posts are plain text (no links), and all writes go through `community_*` database functions.
 - **Blog** (`/blog`): public articles in Bangla and English. Seventeen practical starter articles ship with the app: cattle tag numbers, vaccination schedule, heat signs & AI timing, weighing cattle with a tape, layer egg drop, safe 90-day fattening, milk cost per litre, mastitis prevention, Napier grass, newborn calf care, summer heat stress, maize silage, layer biosecurity, raising pullets, milk fever, buying a dairy cow, and dung to compost/vermicompost/biogas. Super admins write, edit, publish / unpublish and delete articles in *Admin → Blog* (Markdown with headings, lists, tables, links and images; drafts are only visible to admins; every change is in the audit log). Writes go through `admin_*` database functions, so only super admins can change posts.
   - **Image library** (*Admin → Blog → Image library*, storage bucket `blog-images`): photos are resized in the browser to 1600 px WebP, saved under an SEO file name you choose (e.g. `cow-fmd-vaccination.webp`), with alt text and caption in both languages. Renaming an image moves the file and updates every article that embeds it. In the article form, pick a **cover image** (used on cards, at the top of the article, and as the Open Graph / Twitter image) or insert an image into the Bangla or English text (`![alt](url "caption")`; only library images are allowed).
   - **Categories & tags** (*Admin → Blog → Categories & tags*): bilingual names, each with its own page (`/blog/category/<slug>`, `/blog/tag/<slug>`) and breadcrumb data. New tags can also be typed directly in the article form.
@@ -208,6 +209,19 @@ By default Supabase sends sign-up emails from its own address with its own text,
 5. Optionally raise **Rate limits → emails per hour** (custom SMTP allows more).
 
 Locally, `npx supabase start` already uses these templates (see Inbucket at http://localhost:54324).
+
+### Sign in with Google
+
+The login and sign-up pages have a **Continue with Google** button (new accounts get their name and photo from Google; doctors still use the doctor sign-up form). To turn it on:
+
+1. **Google Cloud Console** → APIs & Services → *OAuth consent screen*: app name "FarmFlows", support email, authorised domain `farmflows.app`, then publish the app.
+2. *Credentials* → *Create credentials* → *OAuth client ID* → type **Web application**:
+   - Authorised JavaScript origins: `https://www.farmflows.app`
+   - Authorised redirect URI: `https://<your-project-ref>.supabase.co/auth/v1/callback` (shown in Supabase under Authentication → Providers → Google)
+3. **Supabase** → Authentication → Providers → **Google**: enable, paste the Client ID and Client secret, save.
+4. Supabase → Authentication → URL Configuration: keep `https://www.farmflows.app/auth/confirm` (or `https://www.farmflows.app/**`) in the redirect URLs.
+
+Locally, set `enabled = true` under `[auth.external.google]` in `supabase/config.toml` and export `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` / `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET` (redirect URI `http://127.0.0.1:54321/auth/v1/callback`).
 
 ### Speed
 

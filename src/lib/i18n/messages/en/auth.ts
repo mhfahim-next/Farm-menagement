@@ -49,4 +49,7 @@ export const auth = {
   "auth.panel.milk": "Today's milk",
   "auth.panel.eggs": "Eggs collected",
   "auth.panel.due": "Vaccines due",
+  "auth.google": "Continue with Google",
+  "auth.orEmail": "or with email",
+  "auth.googleFailed": "Google sign-in was cancelled or failed. Please try again.",
 } as const;

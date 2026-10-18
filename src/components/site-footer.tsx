@@ -25,6 +25,7 @@ export async function SiteFooter() {
       title: t("footer.resources"),
       links: [
         { href: "/blog", label: t("blog.nav") },
+        { href: "/community", label: t("community.nav") },
         { href: "/#reviews", label: t("footer.reviews") },
         { href: "/doctor/signup", label: t("footer.forDoctors") },
         { href: "/contact", label: t("contact.title") },

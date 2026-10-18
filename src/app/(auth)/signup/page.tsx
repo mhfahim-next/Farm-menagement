@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ActionForm } from "@/components/action-form";
+import { GoogleButton } from "@/components/google-button";
 import { Field, Input } from "@/components/ui";
 import { getI18n } from "@/lib/i18n/server";
 import { signup } from "../actions";
@@ -18,6 +19,9 @@ export default async function SignupPage({ searchParams }: PageProps<"/signup">)
     <>
       <h1 className="text-xl font-bold">{t("auth.signupTitle")}</h1>
       <p className="mb-6 mt-1 text-sm text-stone-500">{t("auth.signupSubtitle")}</p>
+      <GoogleButton
+        next={typeof plan === "string" && /^[a-z][a-z0-9_]{1,29}$/.test(plan) ? `/onboarding?plan=${plan}` : "/onboarding"}
+      />
       <ActionForm action={signup} submitLabel={t("auth.signupSubmit")} fullWidthSubmit>
         <input type="hidden" name="plan" value={typeof plan === "string" ? plan : ""} />
         <Field label={t("auth.fullName")}>

@@ -5,6 +5,7 @@ import { adminplans } from "./adminplans";
 import { auth } from "./auth";
 import { blog } from "./blog";
 import { common } from "./common";
+import { community } from "./community";
 import { dairy } from "./dairy";
 import { farm } from "./farm";
 import { farmops } from "./farmops";
@@ -22,5 +23,5 @@ export const bn: Record<keyof EnMessages, string> = {
   ...account,
   ...plans,
   ...team,
-  ...adminplans, ...blog, ...ai, ...farmops,
+  ...adminplans, ...blog, ...ai, ...farmops, ...community,
 };

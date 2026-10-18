@@ -13,6 +13,7 @@ export async function PublicHeader() {
     { href: "/#features", label: t("footer.features") },
     { href: "/#pricing", label: t("footer.pricing") },
     { href: "/blog", label: t("blog.nav") },
+    { href: "/community", label: t("community.nav") },
     { href: "/doctor/signup", label: t("doctor.landingLink") },
     { href: "/login", label: t("landing.login") },
     { href: "/signup", label: t("landing.startFree"), primary: true },
@@ -24,7 +25,7 @@ export async function PublicHeader() {
 
         {/* Wide screens: section links in the middle. */}
         <nav aria-label={t("common.menu")} className="flex items-center gap-1 max-lg:hidden">
-          {links.slice(0, 4).map((l) => (
+          {links.slice(0, 5).map((l) => (
             <NavLink key={l.href} href={l.href}>
               {l.label}
             </NavLink>
