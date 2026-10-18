@@ -3,10 +3,12 @@ import { FarmScene } from "@/components/farm-scene";
 import { Logo } from "@/components/logo";
 import { TextHoverEffect } from "@/components/velora/text-hover-effect";
 import { getI18n } from "@/lib/i18n/server";
+import { getSiteInfo, safe } from "@/lib/public-data";
 
 /** Footer for public pages: link columns, a big FarmFlows wordmark, and a farm landscape underneath. */
 export async function SiteFooter() {
   const { t } = await getI18n();
+  const info = await safe(() => getSiteInfo(), null);
   const year = new Date().getFullYear();
 
   const columns: { title: string; links: { href: string; label: string }[] }[] = [
@@ -23,7 +25,11 @@ export async function SiteFooter() {
       title: t("footer.resources"),
       links: [
         { href: "/blog", label: t("blog.nav") },
+        { href: "/#reviews", label: t("footer.reviews") },
         { href: "/doctor/signup", label: t("footer.forDoctors") },
+        { href: "/contact", label: t("contact.title") },
+        { href: "/terms", label: t("legal.terms") },
+        { href: "/privacy", label: t("legal.privacy") },
       ],
     },
     {
@@ -46,6 +52,20 @@ export async function SiteFooter() {
           <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800">
             <span aria-hidden>🌾</span> {t("footer.madeFor")}
           </p>
+          {(info?.contact_email || info?.contact_phone) && (
+            <ul className="mt-4 space-y-1 text-sm">
+              {info.contact_email && (
+                <li>
+                  <a href={`mailto:${info.contact_email}`} className="text-stone-600 hover:text-emerald-700">✉️ {info.contact_email}</a>
+                </li>
+              )}
+              {info.contact_phone && (
+                <li>
+                  <a href={`tel:${info.contact_phone.replace(/[^\d+]/g, "")}`} className="text-stone-600 hover:text-emerald-700">📞 {info.contact_phone}</a>
+                </li>
+              )}
+            </ul>
+          )}
         </div>
         {columns.map((c) => (
           <nav key={c.title} aria-label={c.title}>

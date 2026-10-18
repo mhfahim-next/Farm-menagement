@@ -6,15 +6,15 @@ import { AuroraBackground } from "@/components/velora/aurora-background";
 import { BlurFade } from "@/components/velora/blur-fade";
 import { getI18n } from "@/lib/i18n/server";
 
-/** Login / sign-up: the form on one side, a FarmFlows welcome panel on the other (wide screens). */
+/** Login / sign-up: a FarmFlows welcome panel on the left (wide screens) and the form on the right. */
 export default async function AuthLayout({ children }: LayoutProps<"/">) {
   const { t } = await getI18n();
   const points = [1, 2, 3, 4] as const;
 
   return (
-    <div className="grid flex-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
+    <div className="grid flex-1 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
       {/* Form side */}
-      <div className="relative flex flex-col px-4 py-6 sm:px-8">
+      <div className="relative flex flex-col px-4 py-6 sm:px-8 lg:order-2">
         <div className="flex items-center justify-between gap-3">
           <Logo />
           <div className="flex items-center gap-2">
@@ -29,7 +29,7 @@ export default async function AuthLayout({ children }: LayoutProps<"/">) {
       </div>
 
       {/* Welcome panel */}
-      <aside className="relative hidden overflow-hidden bg-gradient-to-br from-emerald-700 via-emerald-800 to-emerald-950 text-white lg:flex lg:flex-col">
+      <aside className="relative hidden overflow-hidden bg-gradient-to-br lg:order-1 from-emerald-700 via-emerald-800 to-emerald-950 text-white lg:flex lg:flex-col">
         <AuroraBackground intensity="medium" />
         <div className="relative flex-1 px-12 pt-16 xl:px-16">
           <BlurFade>

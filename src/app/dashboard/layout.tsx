@@ -100,6 +100,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
           ...(isManager ? [{ href: "/dashboard/approvals", label: pendingApprovals > 0 ? `${t("nav.approvals")} (${f.number(pendingApprovals)})` : t("nav.approvals") }] : []),
           ...(isManager ? [{ href: "/dashboard/plan", label: t("nav.plan") }] : []),
           { href: "/dashboard/settings", label: t("nav.settings") },
+          { href: "/dashboard/review", label: t("nav.review") },
         ].map((i) => ({ ...i, group: t("nav.group.farm") })),
       ];
 
