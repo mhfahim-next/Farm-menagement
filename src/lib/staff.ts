@@ -32,11 +32,26 @@ export type Payroll = {
  * Days without an attendance mark count as worked, so a farm that only notes
  * exceptions (absent / half day) still gets the right figure. Leave is paid.
  */
+/**
+ * Days of `month` the worker could have worked so far: from the 1st (or their
+ * joining date) up to today (or the month's last day).
+ */
+export function workDaysSoFar(month: string, today: string, joinDate?: string | null) {
+  const first = `${month}-01`;
+  const last = `${month}-${String(daysInMonth(month)).padStart(2, "0")}`;
+  const from = joinDate && joinDate > first ? joinDate : first;
+  const to = today < last ? today : last;
+  if (to < from) return 0;
+  return Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000) + 1;
+}
+
 export function payroll(
   monthlySalary: number,
   month: string,
   attendance: { status: AttendanceStatus }[],
   payments: { pay_type: "salary" | "advance" | "bonus"; amount: number }[],
+  /** Days counted so far (see workDaysSoFar); unmarked days among them are present. */
+  daysSoFar?: number,
 ): Payroll {
   const count = (s: AttendanceStatus) => attendance.filter((a) => a.status === s).length;
   const absent = count("absent");
@@ -47,7 +62,11 @@ export function payroll(
   const paid = payments.filter((p) => p.pay_type !== "bonus").reduce((s, p) => s + Number(p.amount), 0);
   const bonus = payments.filter((p) => p.pay_type === "bonus").reduce((s, p) => s + Number(p.amount), 0);
   return {
-    present: count("present"),
+    // Nobody marks "present": every day so far without a mark counts as present.
+    present:
+      daysSoFar === undefined
+        ? count("present")
+        : Math.max(0, daysSoFar - count("absent") - count("half_day") - count("leave")),
     absent,
     halfDays,
     leave: count("leave"),

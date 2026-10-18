@@ -1,12 +1,16 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import type { NavItem } from "@/components/dashboard-nav";
-import { AiAssistant } from "@/components/ai-assistant";
+import { LazyAiAssistant as AiAssistant } from "@/components/ai-assistant-lazy";
 import { FarmSwitcher } from "@/components/farm-switcher";
 import { getProfile, MANAGERS, requireFarm, STAFF } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
 import { farmQuota, planName } from "@/lib/plan-utils";
 import { getPlanContext, getPlans } from "@/lib/plans";
+
+/** Private app area: keep it out of search results. */
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function DashboardLayout({ children }: LayoutProps<"/dashboard">) {
   const { farm, user, role, farms, supabase } = await requireFarm();

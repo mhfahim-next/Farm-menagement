@@ -1,8 +1,12 @@
+import type { Metadata } from "next";
 import { AppShell } from "@/components/app-shell";
 import type { NavItem } from "@/components/dashboard-nav";
 import { requireDoctor } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
 import Link from "next/link";
+
+/** Private app area: keep it out of search results. */
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function DoctorLayout({ children }: LayoutProps<"/doctor">) {
   const { user, profile, supabase } = await requireDoctor();

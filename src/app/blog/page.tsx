@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
-  return { title: t("blog.title"), description: t("blog.desc") };
+  return { title: t("blog.title"), description: t("blog.desc"), alternates: { canonical: "/blog" } };
 }
 
 export default async function BlogIndexPage() {

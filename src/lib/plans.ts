@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { requireFarm } from "@/lib/auth";
+import { getCachedPlans } from "@/lib/public-data";
 import { createClient } from "@/lib/supabase/server";
 import {
   limitOf,
@@ -14,6 +15,11 @@ import {
 
 /** All plans, cheapest first. Readable by everyone (the home page uses it). */
 export const getPlans = cache(async (): Promise<Plan[]> => {
+  try {
+    return await getCachedPlans();
+  } catch {
+    // fall back to a direct read
+  }
   const supabase = await createClient();
   const { data, error } = await supabase.from("plans").select("*").order("sort_order");
   if (error) {

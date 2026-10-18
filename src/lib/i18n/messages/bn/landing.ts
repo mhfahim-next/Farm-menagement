@@ -2,6 +2,7 @@ import type { landing as en } from "../en/landing";
 
 export const landing: Record<keyof typeof en, string> = {
   "meta.title": "FarmFlows — ডেইরি, গবাদিপশু ও লেয়ার খামার ব্যবস্থাপনা",
+  "meta.keywords": "ডেইরি খামার সফটওয়্যার, গরুর খামার অ্যাপ, লেয়ার মুরগির খামার, দুধের হিসাব, খামারের আয়-ব্যয়, টিকার রিমাইন্ডার, FarmFlows",
   "meta.description": "গবাদিপশু, দুধ উৎপাদন, লেয়ার ফ্লক, ডিম সংগ্রহ, স্বাস্থ্য ও খামারের আয়-ব্যয় এক জায়গায় পরিচালনা করুন।",
   "landing.login": "লগ ইন",
   "landing.startFree": "বিনামূল্যে শুরু করুন",

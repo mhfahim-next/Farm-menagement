@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getI18n } from "@/lib/i18n/server";
 import { str } from "@/lib/form";
 import type { ActionState } from "@/lib/types";
+import { recordPresence } from "@/lib/geo";
 
 function safeNext(next: string | null) {
   return next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
@@ -24,6 +25,7 @@ export async function login(_: ActionState, formData: FormData): Promise<ActionS
     if (error.code === "invalid_credentials") return { error: t("auth.invalidCredentials") };
     return { error: error.message };
   }
+  await recordPresence(supabase, "login");
 
   // Doctors have no farm of their own: send them to their console by default.
   const wanted = str(formData, "next");
@@ -63,7 +65,10 @@ export async function signupDoctor(_: ActionState, formData: FormData): Promise<
   if (error) {
     return { error: error.code === "user_already_exists" ? t("auth.alreadyExists") : error.message };
   }
-  if (data.session) redirect("/doctor");
+  if (data.session) {
+    await recordPresence(supabase, "signup");
+    redirect("/doctor");
+  }
   return { success: t("auth.checkEmail") };
 }
 
@@ -95,7 +100,10 @@ export async function signup(_: ActionState, formData: FormData): Promise<Action
   }
 
   // Email confirmation disabled in Supabase → we already have a session.
-  if (data.session) redirect(next);
+  if (data.session) {
+    await recordPresence(supabase, "signup");
+    redirect(next);
+  }
 
   return { success: t("auth.checkEmail") };
 }

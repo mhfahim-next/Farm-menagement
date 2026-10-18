@@ -4,7 +4,7 @@ import { Badge, ButtonLink, Card, EmptyState, PageHeader, StatCard, Table, Td } 
 import { MANAGERS, requireRole } from "@/lib/auth";
 import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
-import { isMonth, payroll, type AttendanceStatus } from "@/lib/staff";
+import { isMonth, payroll, workDaysSoFar, type AttendanceStatus } from "@/lib/staff";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -32,6 +32,7 @@ export default async function StaffPage() {
       month,
       (attRes.data ?? []).filter((a) => a.staff_id === s.id) as { status: AttendanceStatus }[],
       (payRes.data ?? []).filter((x) => x.staff_id === s.id) as { pay_type: "salary" | "advance" | "bonus"; amount: number }[],
+      workDaysSoFar(month, today(), s.join_date),
     );
     return { s, p };
   });
@@ -81,8 +82,10 @@ export default async function StaffPage() {
                   <Td>{t(`staff.module.${s.module as "dairy" | "layer" | "both"}`)}</Td>
                   <Td className="tabular-nums">{money(Number(s.monthly_salary))}</Td>
                   <Td>
-                    {st ? (
-                      <Badge tone={st === "present" ? "green" : st === "absent" ? "red" : "amber"}>{o("attendance_status", st)}</Badge>
+                    {st && st !== "present" ? (
+                      <Badge tone={st === "absent" ? "red" : "amber"}>{o("attendance_status", st)}</Badge>
+                    ) : s.active && s.join_date <= today() ? (
+                      <Badge tone="green">{o("attendance_status", "present")}</Badge>
                     ) : (
                       <span className="text-xs text-stone-400">—</span>
                     )}
