@@ -7,6 +7,7 @@ import { getI18n } from "@/lib/i18n/server";
 import { str } from "@/lib/form";
 import type { ActionState } from "@/lib/types";
 import { recordPresence } from "@/lib/geo";
+import { SITE_URL } from "@/lib/site";
 
 function safeNext(next: string | null) {
   return next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
@@ -46,7 +47,7 @@ export async function signupDoctor(_: ActionState, formData: FormData): Promise<
   if (!regNo) return { error: t("doctor.regRequired") };
   if (password.length < 8) return { error: t("auth.passwordShort") };
 
-  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? (await headers()).get("origin") ?? "";
+  const origin = process.env.NEXT_PUBLIC_SITE_URL ? SITE_URL : ((await headers()).get("origin") ?? "");
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -81,7 +82,7 @@ export async function signup(_: ActionState, formData: FormData): Promise<Action
   if (password.length < 8) return { error: t("auth.passwordShort") };
 
   const origin =
-    process.env.NEXT_PUBLIC_SITE_URL ?? (await headers()).get("origin") ?? "";
+    process.env.NEXT_PUBLIC_SITE_URL ? SITE_URL : ((await headers()).get("origin") ?? "");
   // A plan picked on the home page is carried through sign-up to onboarding.
   const chosen = str(formData, "plan");
   const next = chosen && /^[a-z][a-z0-9_]{1,29}$/.test(chosen) ? `/onboarding?plan=${chosen}` : "/onboarding";

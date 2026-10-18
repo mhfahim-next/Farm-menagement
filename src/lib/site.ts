@@ -1,5 +1,22 @@
-/** Public site URL (set NEXT_PUBLIC_SITE_URL in production, e.g. https://farmflows.app). */
-export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/+$/, "");
+/**
+ * Normalises a site address from the environment: tolerates a missing
+ * "https://", spaces and trailing slashes ("farmflows.app" → "https://farmflows.app").
+ * Falls back when the value is empty or not a valid URL, so a typo can never
+ * take the whole site down.
+ */
+export function normalizeSiteUrl(raw: string | undefined, fallback = "http://localhost:3000") {
+  const v = (raw ?? "").trim().replace(/\/+$/, "");
+  if (!v) return fallback;
+  const withScheme = /^https?:\/\//i.test(v) ? v : `https://${v}`;
+  try {
+    return new URL(withScheme).origin;
+  } catch {
+    return fallback;
+  }
+}
+
+/** Public site URL (set NEXT_PUBLIC_SITE_URL in production, e.g. https://www.farmflows.app). */
+export const SITE_URL = normalizeSiteUrl(process.env.NEXT_PUBLIC_SITE_URL);
 export const SITE_NAME = "FarmFlows";
 
 /**
