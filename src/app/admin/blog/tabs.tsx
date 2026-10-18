@@ -16,7 +16,7 @@ export async function BlogAdminTabs({ active }: { active: "posts" | "categories"
           key={tab.key}
           href={tab.href}
           aria-current={tab.key === active ? "page" : undefined}
-          className={`whitespace-nowrap rounded-lg px-3 py-1.5 font-medium ${
+          className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-1.5 font-medium ${
             tab.key === active ? "bg-white text-emerald-800 shadow-sm" : "text-stone-600 hover:text-stone-900"
           }`}
         >

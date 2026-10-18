@@ -74,7 +74,7 @@ export function CategoryChips({ categories, active, i18n }: { categories: BlogCa
       key={href}
       href={href}
       aria-current={on ? "page" : undefined}
-      className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-sm font-medium transition ${
+      className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-sm font-medium transition ${
         on ? "border-emerald-700 bg-emerald-700 text-white" : "border-stone-300 text-stone-700 hover:border-emerald-600 hover:text-emerald-800"
       }`}
     >
@@ -82,7 +82,7 @@ export function CategoryChips({ categories, active, i18n }: { categories: BlogCa
     </Link>
   );
   return (
-    <nav aria-label={t("blog.categories")} className="mt-6 flex gap-2 overflow-x-auto pb-1">
+    <nav aria-label={t("blog.categories")} className="-mx-4 mt-6 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {chip("/blog", t("blog.all"), !active)}
       {categories.map((c) => chip(`/blog/category/${c.slug}`, pickLang(c, "name", locale), active === c.slug))}
     </nav>
