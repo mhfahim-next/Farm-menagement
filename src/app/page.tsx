@@ -13,6 +13,8 @@ import { getI18n } from "@/lib/i18n/server";
 import { planFeatures, planName, priceText } from "@/lib/plan-utils";
 import { getPlans } from "@/lib/plans";
 import { HomeGlobe } from "@/components/home-globe";
+import { globeCopy } from "@/lib/country-copy";
+import { readGeo } from "@/lib/geo";
 import { JsonLd } from "@/components/json-ld";
 import { ReviewsSection } from "@/components/reviews-section";
 import { getApprovedReviews, getPublicStats, safe } from "@/lib/public-data";
@@ -20,7 +22,7 @@ import { SITE_NAME, SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 
-export default async function Home() {
+export default async function Home({ searchParams }: PageProps<"/">) {
   const i18n = await getI18n();
   const { t, f, locale } = i18n;
   const [allPlans, reviews, live] = await Promise.all([
@@ -29,6 +31,10 @@ export default async function Home() {
     safe(() => getPublicStats(), null),
   ]);
   const plans = allPlans.filter((p) => p.active);
+  // Globe section worded for the visitor's country (?cc=IN previews another country).
+  const sp = await searchParams;
+  const preview = typeof sp.cc === "string" && /^[A-Za-z]{2}$/.test(sp.cc) ? sp.cc : null;
+  const copy = globeCopy(preview ?? (await readGeo()).country, locale);
   // Real platform numbers once there are enough farms; until then, plain facts.
   const stats =
     live && live.farms >= 10
@@ -167,9 +173,10 @@ export default async function Home() {
           <div aria-hidden className="absolute inset-y-0 right-0 -z-10 w-full bg-radial-[at_75%_50%] from-emerald-200/40 to-transparent to-60% lg:w-2/3" />
           <HomeGlobe
             locale={locale}
-            kicker={t("globe.kicker")}
-            title={t("globe.title")}
-            body={t("globe.body")}
+            kicker={copy.kicker}
+            title={copy.title}
+            body={copy.body}
+            center={copy.center}
             stats={stats}
             globeLabel={t("globe.label")}
           />

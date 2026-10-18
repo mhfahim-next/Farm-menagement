@@ -45,6 +45,7 @@ export function HomeGlobe({
   body,
   stats,
   globeLabel,
+  center = [24, 70],
 }: {
   locale: "en" | "bn";
   kicker: string;
@@ -52,6 +53,8 @@ export function HomeGlobe({
   body: string;
   stats: { value: number; label: string }[];
   globeLabel: string;
+  /** [lat, lng] facing the visitor first (their own country). */
+  center?: [number, number];
 }) {
   const markers: GlobeMarker[] = useMemo(
     () => [
@@ -90,7 +93,7 @@ export function HomeGlobe({
         <Globe
           markers={markers}
           arcs={arcs}
-          center={[24, 70]}
+          center={center}
           speed={4}
           dotColor="var(--color-stone-400)"
           accentColor="var(--brand)"
