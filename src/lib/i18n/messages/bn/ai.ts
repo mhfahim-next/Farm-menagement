@@ -16,6 +16,7 @@ export const ai: Record<keyof typeof en, string> = {
   "ai.p.animal": "পশু যোগ: {tag}",
   "ai.p.flock": "ফ্লকের লগ · {flock} · {date}",
   "ai.p.txn": "{type}: {amount} · {category}",
+  "ai.p.weight": "ওজন {kg} কেজি · {date}",
   "ai.f.eggs": "ডিম",
   "ai.f.broken": "ভাঙা",
   "ai.f.deaths": "মৃত্যু",

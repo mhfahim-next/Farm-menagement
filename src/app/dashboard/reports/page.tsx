@@ -14,6 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
 const reports = [
   { kind: "cattle", dated: false, dairy: true },
   { kind: "milk", dated: true, dairy: true },
+  { kind: "weights", dated: true, dairy: true },
   { kind: "health", dated: true, dairy: true },
   { kind: "breeding", dated: true, dairy: true },
   { kind: "flocks", dated: true, layer: true },

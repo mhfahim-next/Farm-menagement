@@ -35,5 +35,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   } catch {
     // The sitemap still lists the main pages if the database is unreachable.
   }
-  return pages;
+  // Each page also exists in Bangla at ?lang=bn.
+  return pages.map((p) => ({ ...p, alternates: { languages: { en: p.url, bn: `${p.url}${p.url.includes("?") ? "&" : "?"}lang=bn` } } }));
 }

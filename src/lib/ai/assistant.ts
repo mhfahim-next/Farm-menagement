@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { FarmContext } from "@/lib/auth";
 import { animalLabel } from "@/lib/cattle";
 import { today } from "@/lib/format";
+import { tapeWeight } from "@/lib/weights";
 import type { I18n } from "@/lib/i18n/core";
 import type { AiConfig } from "./config";
 import type { ChatTurn, Proposal } from "./types";
@@ -85,6 +86,24 @@ export function tools(i18n: I18n): Anthropic.Tool[] {
           notes: str("Notes, optional"),
         },
         required: ["tag", "event_type"],
+      },
+    },
+    {
+      name: "record_weight",
+      description:
+        "Prepare a body-weight record for one animal: either a weight in kg (from a scale or an estimate), or heart girth and body length in cm from a measuring tape (the app works out the kg).",
+      input_schema: {
+        type: "object",
+        properties: {
+          tag: str("Animal tag number"),
+          weight_kg: num("Weight in kg, if known"),
+          heart_girth_cm: num("Heart girth in cm (measuring tape), if weight is not known"),
+          body_length_cm: num("Body length in cm (measuring tape), with heart_girth_cm"),
+          method: { type: "string", enum: ["scale", "tape", "estimate"], description: "scale (default when kg is given), tape, or estimate" },
+          date: str("YYYY-MM-DD, default today"),
+          notes: str("Notes, optional"),
+        },
+        required: ["tag"],
       },
     },
     {
@@ -265,6 +284,31 @@ async function propose(ctx: Ctx, name: string, input: Input): Promise<Proposal> 
     }
     const notes = s(input.notes); if (notes) fields.push(["notes", notes]);
     return { id: pid(), kind: "breeding", title: t("ai.p.breeding", { event: o("breeding_event", type), date: f.date(date) }), lines, fields };
+  }
+
+  if (name === "record_weight") {
+    const [a] = await animalsByTag(ctx, [String(input.tag ?? "")]);
+    const date = dateOf(input.date);
+    const girth = n(input.heart_girth_cm);
+    const length = n(input.body_length_cm);
+    let kg = n(input.weight_kg);
+    let method = s(input.method) ?? (kg !== null ? "scale" : "tape");
+    if (!["scale", "tape", "estimate"].includes(method)) method = "scale";
+    const fields: [string, string][] = [["cattle_id", a.id], ["weigh_date", date]];
+    const lines: string[] = [animalLabel(a)];
+    if (kg === null && girth !== null && length !== null) {
+      method = "tape";
+      kg = tapeWeight(girth, length);
+    }
+    if (kg === null || kg <= 0 || kg > 2000) throw new ToolError("Give the weight in kg, or heart girth and body length in cm from a measuring tape.");
+    fields.push(["method", method], ["weight_kg", String(kg)]);
+    if (method === "tape" && girth !== null && length !== null) {
+      fields.push(["heart_girth_cm", String(girth)], ["body_length_cm", String(length)]);
+      lines.push(t("weight.tapeDims", { g: f.number(girth, 1), l: f.number(length, 1) }));
+    }
+    lines.push(t(`weight.methods.${method as "scale" | "tape" | "estimate"}`));
+    const notes = s(input.notes); if (notes) fields.push(["notes", notes]);
+    return { id: pid(), kind: "weight", title: t("ai.p.weight", { kg: f.number(kg, 1), date: f.date(date) }), lines, fields };
   }
 
   if (name === "add_animal") {

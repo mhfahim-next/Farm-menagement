@@ -7,7 +7,7 @@ import { PROPOSAL_KINDS, type AskResult, type ChatTurn, type ProposalKind } from
 import { getI18n } from "@/lib/i18n/server";
 import type { ActionState } from "@/lib/types";
 import { logBreedingEvent } from "../breeding/actions";
-import { addCattle } from "../cattle/actions";
+import { addCattle, addWeight } from "../cattle/actions";
 import { addTransaction } from "../finance/actions";
 import { saveDailyLog } from "../flocks/actions";
 import { recordHealth } from "../health/actions";
@@ -80,6 +80,7 @@ const RUNNERS: Record<ProposalKind, (s: ActionState, fd: FormData) => Promise<Ac
   animal: addCattle,
   flock_log: saveDailyLog,
   transaction: addTransaction,
+  weight: addWeight,
 };
 
 /** Saves a proposal the farmer confirmed, through the same server action the normal form uses. */

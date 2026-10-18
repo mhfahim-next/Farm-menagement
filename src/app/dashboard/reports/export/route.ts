@@ -5,7 +5,7 @@ import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import { getPlanContext } from "@/lib/plans";
 
-const KINDS = ["cattle", "milk", "health", "breeding", "flocks", "finance"] as const;
+const KINDS = ["cattle", "milk", "weights", "health", "breeding", "flocks", "finance"] as const;
 type Kind = (typeof KINDS)[number];
 const PAGE = 1000; // the API returns at most 1000 rows per request
 
@@ -63,6 +63,14 @@ export async function GET(request: NextRequest) {
     const data = await fetchAll((a, b) => range("record_date")(base("milk_records")).range(a, b));
     header = (["date", "animal", "session", "litres", "fat", "notes"] as const).map((k) => col(`reports.col.${k}`));
     rows = data.map((r) => [r.record_date as string, tagOf.get(r.cattle_id as string), o("milk_session", r.session as string), r.quantity_liters as number, r.fat_percent as number, r.notes as string]);
+  } else if (kind === "weights") {
+    const data = await fetchAll((a, b) => range("weigh_date")(base("cattle_weights")).range(a, b));
+    header = (["date", "animal", "weightKg", "method", "girth", "length", "notes"] as const).map((k) => col(`reports.col.${k}`));
+    rows = data.map((r) => [
+      r.weigh_date as string, tagOf.get(r.cattle_id as string), r.weight_kg as number,
+      t(`weight.methods.${r.method as "scale" | "tape" | "estimate"}`),
+      r.heart_girth_cm as number, r.body_length_cm as number, r.notes as string,
+    ]);
   } else if (kind === "health") {
     const data = await fetchAll((a, b) => range("record_date")(base("health_records")).range(a, b));
     header = (["date", "animal", "type", "product", "dose", "batch", "givenBy", "cost", "nextDue", "withdrawal", "notes"] as const).map((k) => col(`reports.col.${k}`));

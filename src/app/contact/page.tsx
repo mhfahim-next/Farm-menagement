@@ -8,10 +8,11 @@ import { SpotlightCard } from "@/components/velora/spotlight-card";
 import { getI18n } from "@/lib/i18n/server";
 import { getSiteInfo, safe } from "@/lib/public-data";
 import { sendContactMessage } from "./actions";
+import { langAlternates } from "@/lib/site";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { t } = await getI18n();
-  return { title: t("contact.title"), description: t("contact.desc"), alternates: { canonical: "/contact" } };
+  const { t, locale } = await getI18n();
+  return { title: t("contact.title"), description: t("contact.desc"), alternates: langAlternates("/contact", locale) };
 }
 
 export default async function ContactPage() {

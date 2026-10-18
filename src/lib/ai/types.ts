@@ -1,7 +1,7 @@
 /** What the assistant wants to write, shown to the farmer for confirmation. */
-export type ProposalKind = "milk" | "health" | "breeding" | "animal" | "flock_log" | "transaction";
+export type ProposalKind = "milk" | "health" | "breeding" | "animal" | "flock_log" | "transaction" | "weight";
 
-export const PROPOSAL_KINDS: ProposalKind[] = ["milk", "health", "breeding", "animal", "flock_log", "transaction"];
+export const PROPOSAL_KINDS: ProposalKind[] = ["milk", "health", "breeding", "animal", "flock_log", "transaction", "weight"];
 
 export type Proposal = {
   id: string;

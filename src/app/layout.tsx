@@ -55,6 +55,13 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     twitter: { card: "summary_large_image", title: t("meta.title"), description: t("meta.description") },
     robots: { index: true, follow: true },
+    // Search Console / Bing Webmaster ownership checks (set the codes in the environment).
+    verification: {
+      google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || undefined,
+      other: process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION
+        ? { "msvalidate.01": process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION }
+        : undefined,
+    },
     applicationName: "FarmFlows",
     appleWebApp: { capable: true, title: "FarmFlows", statusBarStyle: "default" },
     formatDetection: { telephone: false },

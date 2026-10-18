@@ -6,8 +6,46 @@ const PROTECTED_PREFIXES = ["/dashboard", "/onboarding", "/admin", "/suspended",
 const PUBLIC_PAGES = ["/doctor/signup"];
 const AUTH_PAGES = ["/login", "/signup", "/doctor/signup"];
 
+/**
+ * `?lang=bn` / `?lang=en` picks the language for this request (and remembers
+ * it), so search engines can index both language versions of public pages.
+ */
+function forcedLocale(request: NextRequest) {
+  const lang = request.nextUrl.searchParams.get("lang");
+  return lang === "en" || lang === "bn" ? lang : null;
+}
+
+/**
+ * On the production deployment, visits to the *.vercel.app address are sent
+ * to the real domain (NEXT_PUBLIC_SITE_URL), so search engines see one site.
+ * Preview deployments keep working on their own addresses.
+ */
+function canonicalHostRedirect(request: NextRequest) {
+  const site = process.env.NEXT_PUBLIC_SITE_URL;
+  if (process.env.VERCEL_ENV !== "production" || !site) return null;
+  const host = request.headers.get("host") ?? "";
+  let target: URL;
+  try {
+    target = new URL(site);
+  } catch {
+    return null;
+  }
+  if (!host.endsWith(".vercel.app") || host === target.host) return null;
+  const url = new URL(request.nextUrl.pathname + request.nextUrl.search, target);
+  return NextResponse.redirect(url, 308);
+}
+
 export async function updateSession(request: NextRequest) {
-  let response = NextResponse.next({ request });
+  const moved = canonicalHostRedirect(request);
+  if (moved) return moved;
+  const lang = forcedLocale(request);
+  const next = () => {
+    if (!lang) return NextResponse.next({ request });
+    const headers = new Headers(request.headers);
+    headers.set("x-ff-locale", lang);
+    return NextResponse.next({ request: { headers } });
+  };
+  let response = next();
 
   const supabase = createServerClient(SUPABASE_URL, SUPABASE_KEY, {
     cookies: {
@@ -18,7 +56,7 @@ export async function updateSession(request: NextRequest) {
         cookiesToSet.forEach(({ name, value }) =>
           request.cookies.set(name, value),
         );
-        response = NextResponse.next({ request });
+        response = next();
         cookiesToSet.forEach(({ name, value, options }) =>
           response.cookies.set(name, value, options),
         );
@@ -55,5 +93,6 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
+  if (lang) response.cookies.set("locale", lang, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
   return response;
 }
