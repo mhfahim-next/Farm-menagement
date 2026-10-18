@@ -5,13 +5,24 @@ import { Fragment, type ReactNode } from "react";
  * (never raw HTML), so article text can't inject scripts or markup.
  *
  * Supports: # / ## / ### headings, paragraphs, - and 1. lists, > quotes,
- * --- rules, | tables |, **bold**, *italic*, `code` and [links](url).
+ * --- rules, | tables |, **bold**, *italic*, `code`, [links](url) and
+ * images on their own line: ![alt text](url "optional caption"). Images must
+ * come from the blog image library (or this site), never other hosts.
  */
+import type { Locale } from "@/lib/i18n/core";
+import { BLOG_IMAGE_PREFIX, pickLang, type BlogImage } from "@/lib/blog";
 
 const INLINE = /(\*\*[^*]+\*\*|\*[^*\s][^*]*\*|`[^`]+`|\[[^\]]+\]\([^)\s]+\))/g;
 
 function safeHref(href: string) {
   return /^(https?:\/\/|mailto:|\/(?!\/))/i.test(href) ? href : null;
+}
+
+const IMAGE_LINE = /^\s*!\[([^\]]*)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)\s*$/;
+
+function safeImageSrc(src: string) {
+  if (src.startsWith(BLOG_IMAGE_PREFIX) && !src.includes("..")) return src;
+  return /^\/(?!\/)[\w\-./]+$/.test(src) ? src : null;
 }
 
 function inline(text: string, keyBase: string): ReactNode[] {
@@ -46,7 +57,16 @@ const isTableRow = (l: string) => l.trim().startsWith("|") && l.trim().endsWith(
 const isTableSep = (l: string) => /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/.test(l) && l.includes("-");
 const cells = (l: string) => l.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((c) => c.trim());
 
-export function Markdown({ source }: { source: string }) {
+export function Markdown({
+  source,
+  images,
+  locale = "en",
+}: {
+  source: string;
+  /** Library images by path, used for sizes (no layout shift) and alt text fallback. */
+  images?: Map<string, BlogImage>;
+  locale?: Locale;
+}) {
   const lines = source.replace(/\r\n?/g, "\n").split("\n");
   const out: ReactNode[] = [];
   let i = 0;
@@ -57,6 +77,35 @@ export function Markdown({ source }: { source: string }) {
     const key = `b${k++}`;
 
     if (!line.trim()) {
+      i++;
+      continue;
+    }
+
+    const img = IMAGE_LINE.exec(line);
+    if (img) {
+      const src = safeImageSrc(img[2]);
+      const fromLibrary = !!src && src.startsWith(BLOG_IMAGE_PREFIX);
+      const lib = fromLibrary ? images?.get(src.slice(BLOG_IMAGE_PREFIX.length)) : undefined;
+      // A library image that was deleted is skipped instead of showing as broken.
+      if (src && !(fromLibrary && images && !lib)) {
+        const alt = img[1] || (lib ? pickLang(lib, "alt", locale) : "");
+        const caption = img[3] || (lib ? pickLang(lib, "caption", locale) : "");
+        out.push(
+          <figure key={key} className="my-6">
+            {/* eslint-disable-next-line @next/next/no-img-element -- already resized and served by the CDN */}
+            <img
+              src={src}
+              alt={alt}
+              width={lib?.width ?? undefined}
+              height={lib?.height ?? undefined}
+              loading="lazy"
+              decoding="async"
+              className="h-auto w-full rounded-xl border border-stone-200 bg-stone-100"
+            />
+            {caption && <figcaption className="mt-2 text-center text-sm text-stone-500">{caption}</figcaption>}
+          </figure>,
+        );
+      }
       i++;
       continue;
     }
@@ -144,6 +193,7 @@ export function Markdown({ source }: { source: string }) {
       i < lines.length &&
       lines[i].trim() &&
       !/^(#{1,3}\s|\s*>|\s*[-*]\s+|\s*\d+[.)]\s+|\s*-{3,}\s*$)/.test(lines[i]) &&
+      !IMAGE_LINE.test(lines[i]) &&
       !(isTableRow(lines[i]) && i + 1 < lines.length && isTableSep(lines[i + 1]))
     ) {
       para.push(lines[i++]);

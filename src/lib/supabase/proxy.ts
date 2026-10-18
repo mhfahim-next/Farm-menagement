@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { normalizeSiteUrl } from "@/lib/site";
 import { SUPABASE_KEY, SUPABASE_URL } from "./env";
 
 const PROTECTED_PREFIXES = ["/dashboard", "/onboarding", "/admin", "/suspended", "/doctor", "/invites"];
@@ -21,15 +22,9 @@ function forcedLocale(request: NextRequest) {
  * Preview deployments keep working on their own addresses.
  */
 function canonicalHostRedirect(request: NextRequest) {
-  const site = process.env.NEXT_PUBLIC_SITE_URL;
-  if (process.env.VERCEL_ENV !== "production" || !site) return null;
+  if (process.env.VERCEL_ENV !== "production" || !process.env.NEXT_PUBLIC_SITE_URL) return null;
   const host = request.headers.get("host") ?? "";
-  let target: URL;
-  try {
-    target = new URL(site);
-  } catch {
-    return null;
-  }
+  const target = new URL(normalizeSiteUrl(process.env.NEXT_PUBLIC_SITE_URL));
   if (!host.endsWith(".vercel.app") || host === target.host) return null;
   const url = new URL(request.nextUrl.pathname + request.nextUrl.search, target);
   return NextResponse.redirect(url, 308);

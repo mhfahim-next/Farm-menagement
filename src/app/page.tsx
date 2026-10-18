@@ -104,7 +104,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
             </h1>
             <p className="mt-4 text-xl font-medium text-stone-700 sm:text-2xl">
               {t("landing.rotatePrefix")}{" "}
-              <WordRotate words={rotating} className="text-emerald-700" />
+              <WordRotate words={rotating} className="text-emerald-800" />
             </p>
             <p className="mx-auto mt-5 max-w-2xl text-lg text-stone-600">{t("landing.heroBody")}</p>
             <BlurFade delay={0.1}>
@@ -123,9 +123,9 @@ export default async function Home({ searchParams }: PageProps<"/">) {
                   </svg>
                 </Link>
               </div>
-              <p className="mt-5 text-sm text-stone-500">
+              <p className="mt-5 text-sm text-stone-700">
                 {t("doctor.areDoctor")}{" "}
-                <Link href="/doctor/signup" className="font-medium text-emerald-700 hover:underline">
+                <Link href="/doctor/signup" className="font-semibold text-emerald-800 underline-offset-2 hover:underline">
                   {t("doctor.landingCta")}
                 </Link>
               </p>
