@@ -51,4 +51,7 @@ export const auth: Record<keyof typeof en, string> = {
   "auth.panel.milk": "আজকের দুধ",
   "auth.panel.eggs": "সংগৃহীত ডিম",
   "auth.panel.due": "বাকি টিকা",
+  "auth.google": "Google দিয়ে চালিয়ে যান",
+  "auth.orEmail": "অথবা ইমেইল দিয়ে",
+  "auth.googleFailed": "Google দিয়ে লগ ইন বাতিল বা ব্যর্থ হয়েছে। আবার চেষ্টা করুন।",
 };

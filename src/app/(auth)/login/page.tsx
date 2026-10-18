@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ActionForm } from "@/components/action-form";
+import { GoogleButton } from "@/components/google-button";
 import { Field, Input } from "@/components/ui";
 import { getI18n } from "@/lib/i18n/server";
 import { login } from "../actions";
@@ -19,8 +20,11 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
       <h1 className="text-xl font-bold">{t("auth.loginTitle")}</h1>
       <p className="mb-6 mt-1 text-sm text-stone-500">{t("auth.loginSubtitle")}</p>
       {error && (
-        <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{t("auth.linkInvalid")}</p>
+        <p role="alert" className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error === "oauth" ? t("auth.googleFailed") : t("auth.linkInvalid")}
+        </p>
       )}
+      <GoogleButton next={typeof next === "string" ? next : undefined} />
       <ActionForm action={login} submitLabel={t("auth.loginSubmit")} fullWidthSubmit>
         <input type="hidden" name="next" value={typeof next === "string" ? next : ""} />
         <Field label={t("common.email")}>

@@ -10,6 +10,8 @@ export async function GET(request: NextRequest) {
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
   const code = searchParams.get("code");
+  // Google (or the user) cancelled / refused the sign-in.
+  if (searchParams.get("error")) return NextResponse.redirect(new URL("/login?error=oauth", origin));
   const nextParam = searchParams.get("next") ?? "/dashboard";
   const next = nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : "/dashboard";
 
@@ -22,9 +24,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL(next, origin));
     }
   } else if (code) {
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      await recordPresence(supabase, "login");
+      // Google sign-in creates the account on first use: count that as a sign-up.
+      const isNew = !!data.user && Date.now() - Date.parse(data.user.created_at) < 2 * 60_000;
+      await recordPresence(supabase, isNew ? "signup" : "login");
       return NextResponse.redirect(new URL(next, origin));
     }
   }

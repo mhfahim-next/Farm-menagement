@@ -209,6 +209,19 @@ By default Supabase sends sign-up emails from its own address with its own text,
 
 Locally, `npx supabase start` already uses these templates (see Inbucket at http://localhost:54324).
 
+### Sign in with Google
+
+The login and sign-up pages have a **Continue with Google** button (new accounts get their name and photo from Google; doctors still use the doctor sign-up form). To turn it on:
+
+1. **Google Cloud Console** → APIs & Services → *OAuth consent screen*: app name "FarmFlows", support email, authorised domain `farmflows.app`, then publish the app.
+2. *Credentials* → *Create credentials* → *OAuth client ID* → type **Web application**:
+   - Authorised JavaScript origins: `https://www.farmflows.app`
+   - Authorised redirect URI: `https://<your-project-ref>.supabase.co/auth/v1/callback` (shown in Supabase under Authentication → Providers → Google)
+3. **Supabase** → Authentication → Providers → **Google**: enable, paste the Client ID and Client secret, save.
+4. Supabase → Authentication → URL Configuration: keep `https://www.farmflows.app/auth/confirm` (or `https://www.farmflows.app/**`) in the redirect URLs.
+
+Locally, set `enabled = true` under `[auth.external.google]` in `supabase/config.toml` and export `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` / `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET` (redirect URI `http://127.0.0.1:54321/auth/v1/callback`).
+
 ### Speed
 
 Dropdown options and plans (read on every page) are cached across visitors and refreshed the moment a super admin edits them; the AI chat and the globe load only after the page; fonts are self-hosted; logos/icons are cached by the browser; motion code is tree-shaken.
