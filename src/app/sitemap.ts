@@ -13,6 +13,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/signup`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
     { url: `${SITE_URL}/login`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
     { url: `${SITE_URL}/doctor/signup`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
+    { url: `${SITE_URL}/community`, lastModified: now, changeFrequency: "daily", priority: 0.8 },
     { url: `${SITE_URL}/contact`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
     { url: `${SITE_URL}/terms`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
     { url: `${SITE_URL}/privacy`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
@@ -48,6 +49,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
     for (const [slug, n] of tagCounts) {
       if (n >= 2) pages.push({ url: `${SITE_URL}/blog/tag/${slug}`, lastModified: now, changeFrequency: "weekly", priority: 0.4 });
+    }
+    // Community questions that have at least one answer (unanswered ones are noindex).
+    const { data: qs } = await createPublicClient()
+      .from("community_questions")
+      .select("id, last_activity_at")
+      .eq("status", "published")
+      .gt("answer_count", 0)
+      .order("last_activity_at", { ascending: false })
+      .limit(5000);
+    for (const q of qs ?? []) {
+      pages.push({ url: `${SITE_URL}/community/q/${q.id}`, lastModified: new Date(q.last_activity_at), changeFrequency: "weekly", priority: 0.6 });
     }
   } catch {
     // The sitemap still lists the main pages if the database is unreachable.

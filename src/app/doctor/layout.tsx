@@ -17,6 +17,7 @@ export default async function DoctorLayout({ children }: LayoutProps<"/doctor">)
   const nav: NavItem[] = [
     { href: "/doctor", label: t("doctor.consoleNav") },
     { href: "/doctor/profile", label: t("menu.profile") },
+    { href: "/community", label: t("community.nav") },
   ];
 
   return (

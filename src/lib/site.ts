@@ -24,7 +24,7 @@ export const SITE_NAME = "FarmFlows";
  * Bangla at `?lang=bn` (see the proxy), so search engines index both.
  */
 export function langAlternates(path: string, locale: "en" | "bn") {
-  const bn = `${path}?lang=bn`;
+  const bn = `${path}${path.includes("?") ? "&" : "?"}lang=bn`;
   return {
     canonical: locale === "bn" ? bn : path,
     languages: { en: path, bn, "x-default": path },
