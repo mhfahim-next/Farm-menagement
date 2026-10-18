@@ -32,6 +32,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.7,
       });
     }
+    const [{ data: cats }, { data: links }] = await Promise.all([
+      createPublicClient().from("blog_categories").select("slug, blog_posts(published)"),
+      createPublicClient().from("blog_post_tags").select("tag:blog_tags(slug)"),
+    ]);
+    for (const c of cats ?? []) {
+      const live = ((c.blog_posts ?? []) as { published: boolean }[]).some((p) => p.published);
+      if (live) pages.push({ url: `${SITE_URL}/blog/category/${c.slug}`, lastModified: now, changeFrequency: "weekly", priority: 0.6 });
+    }
+    // Only tags with 2+ published articles (smaller tag pages are noindex).
+    const tagCounts = new Map<string, number>();
+    for (const l of links ?? []) {
+      const slug = (l.tag as { slug?: string } | null)?.slug;
+      if (slug) tagCounts.set(slug, (tagCounts.get(slug) ?? 0) + 1);
+    }
+    for (const [slug, n] of tagCounts) {
+      if (n >= 2) pages.push({ url: `${SITE_URL}/blog/tag/${slug}`, lastModified: now, changeFrequency: "weekly", priority: 0.4 });
+    }
   } catch {
     // The sitemap still lists the main pages if the database is unreachable.
   }

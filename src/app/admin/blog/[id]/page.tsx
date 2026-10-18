@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { BlogForm } from "@/components/blog-form";
 import { Card, PageHeader } from "@/components/ui";
 import { requireSuperAdmin } from "@/lib/auth";
-import type { BlogPost } from "@/lib/blog";
+import type { BlogCategory, BlogImage, BlogPost, BlogTag } from "@/lib/blog";
 import { getI18n } from "@/lib/i18n/server";
 import { updateBlogPost } from "../actions";
 
@@ -18,7 +18,13 @@ export default async function EditBlogPostPage({ params }: PageProps<"/admin/blo
   const { supabase } = await requireSuperAdmin();
   const { t } = await getI18n();
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
-  const { data } = await supabase.from("blog_posts").select("*").eq("id", id).maybeSingle();
+  const [{ data }, { data: links }, { data: categories }, { data: tags }, { data: images }] = await Promise.all([
+    supabase.from("blog_posts").select("*").eq("id", id).maybeSingle(),
+    supabase.from("blog_post_tags").select("tag_id").eq("post_id", id),
+    supabase.from("blog_categories").select("*").order("sort_order"),
+    supabase.from("blog_tags").select("*").order("name_en"),
+    supabase.from("blog_images").select("*").order("created_at", { ascending: false }),
+  ]);
   const post = data as BlogPost | null;
   if (!post) notFound();
 
@@ -34,7 +40,14 @@ export default async function EditBlogPostPage({ params }: PageProps<"/admin/blo
         }
       />
       <Card className="max-w-3xl">
-        <BlogForm action={updateBlogPost} post={post} />
+        <BlogForm
+          action={updateBlogPost}
+          post={post}
+          postTagIds={(links ?? []).map((l) => l.tag_id as string)}
+          categories={(categories ?? []) as BlogCategory[]}
+          tags={(tags ?? []) as BlogTag[]}
+          images={(images ?? []) as BlogImage[]}
+        />
       </Card>
     </>
   );
