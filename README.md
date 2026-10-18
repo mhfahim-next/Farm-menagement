@@ -14,7 +14,7 @@ A multi-tenant farm management web app built with **Next.js 16 (App Router)** an
 
 - **Accounts & farms**: email sign-up/login, farm onboarding, one owner per farm, and a team roles model (owner / manager / worker / vet).
 - **Cattle register**: tag, name, breed, category, age, status, purchase info, search and filter. Record each animal's **mother** (dropdown of the farm's females, shown with their type, or "Unknown") and **father** (free text); the animal page shows a *Family* card with parents and calves.
-- **Weight history** (each animal's page): add weights from a scale, a measuring tape (heart girth × body length → kg by Schaeffer's formula, worked out as you type and again on the server) or an estimate. Shows current weight, change since last, daily gain (kg/day), total gain and a line chart; the cattle list shows each animal's current weight.
+- **Weight history** (each animal's page): add weights from a scale, a measuring tape (heart girth × body length → kg by Schaeffer's formula, worked out as you type and again on the server) or an estimate. Shows current weight, change since last, daily gain (kg/day), total gain and a line chart; the cattle list shows each animal's current weight. Weights are in the CSV reports (*Weight records*) and the AI assistant can record them ("007 weighs 350 kg", or girth and length from a tape).
 - **Breed dropdowns**: cattle and flock breed are admin-managed dropdowns (Local, Holstein Friesian, Jersey, Sahiwal, … / ISA Brown, Lohmann, Hy-Line, …). Older free-text breeds keep showing.
 - **Plans & limits** (Free / Pro / Business, shown live on the home page from the `plans` table). Limits are enforced by database triggers, so stale pages and the future mobile app cannot bypass them: Free allows 25 cattle. Users get a warning at 80 %, and at the limit the add form is replaced with an upgrade prompt.
   - *Upgrade requests*: `/dashboard/plan` creates a request; a super admin approves it in *Admin → Requests* after the manual bKash/Nagad payment (instructions text is editable in *Admin → Plans*). No payment gateway is integrated yet.
@@ -187,7 +187,7 @@ Sign up, create your farm, then add cattle and flocks.
 
 ### SEO
 
-`/sitemap.xml` (home, blog, every published article, sign-up pages — refreshed hourly), `/robots.txt` (private areas `/dashboard`, `/admin`, `/doctor`, `/api` … are disallowed and also marked `noindex`), a share image (`/opengraph-image`), Open Graph / Twitter tags, canonical URLs, and schema.org JSON-LD (Organization + SoftwareApplication on the home page, BlogPosting on articles). After deploying, add the site in Google Search Console and submit `https://<your-domain>/sitemap.xml`.
+`/sitemap.xml` (home, blog, every published article, sign-up pages — refreshed hourly), `/robots.txt` (private areas `/dashboard`, `/admin`, `/doctor`, `/api` … are disallowed and also marked `noindex`), a share image (`/opengraph-image`), Open Graph / Twitter tags, canonical URLs, and schema.org JSON-LD (Organization + SoftwareApplication on the home page, BlogPosting on articles). Every public page also has a Bangla address (`?lang=bn`) with `hreflang` links and Bangla canonical URLs, and the home page has an FAQ with FAQPage data. Set `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` / `NEXT_PUBLIC_BING_SITE_VERIFICATION` to verify the site in Google Search Console / Bing Webmaster Tools, then submit `https://<your-domain>/sitemap.xml`.
 
 ### Analytics, IP and location
 

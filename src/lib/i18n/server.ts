@@ -16,6 +16,9 @@ export function messagesFor(locale: Locale): Messages {
 
 /** Locale from the cookie; on a first visit, from the browser's Accept-Language. */
 export const getLocale = cache(async (): Promise<Locale> => {
+  // ?lang=bn|en in the URL (set by the proxy) wins, so each language has its own address.
+  const forced = (await headers()).get("x-ff-locale");
+  if (isLocale(forced)) return forced;
   const saved = (await cookies()).get(LOCALE_COOKIE)?.value;
   if (isLocale(saved)) return saved;
 

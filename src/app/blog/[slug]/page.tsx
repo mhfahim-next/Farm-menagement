@@ -9,7 +9,7 @@ import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import { ScrollProgress } from "@/components/velora/scroll-progress";
 import { JsonLd } from "@/components/json-ld";
-import { SITE_NAME, SITE_URL } from "@/lib/site";
+import { langAlternates, SITE_NAME, SITE_URL } from "@/lib/site";
 
 async function load(slug: string) {
   const supabase = await createClient();
@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: PageProps<"/blog/[slug]">): P
   return {
     title: v.title,
     description: v.summary ?? undefined,
-    alternates: { canonical: `/blog/${post.slug}` },
+    alternates: langAlternates(`/blog/${post.slug}`, locale),
     robots: post.published ? undefined : { index: false },
     openGraph: {
       title: v.title,

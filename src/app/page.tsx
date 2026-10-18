@@ -12,15 +12,19 @@ import { WordRotate } from "@/components/velora/word-rotate";
 import { getI18n } from "@/lib/i18n/server";
 import { planFeatures, planName, priceText } from "@/lib/plan-utils";
 import { getPlans } from "@/lib/plans";
+import { FaqSection } from "@/components/faq-section";
 import { HomeGlobe } from "@/components/home-globe";
 import { globeCopy } from "@/lib/country-copy";
 import { readGeo } from "@/lib/geo";
 import { JsonLd } from "@/components/json-ld";
 import { ReviewsSection } from "@/components/reviews-section";
 import { getApprovedReviews, getPublicStats, safe } from "@/lib/public-data";
-import { SITE_NAME, SITE_URL } from "@/lib/site";
+import { langAlternates, SITE_NAME, SITE_URL } from "@/lib/site";
 
-export const metadata: Metadata = { alternates: { canonical: "/" } };
+export async function generateMetadata(): Promise<Metadata> {
+  const { locale } = await getI18n();
+  return { alternates: langAlternates("/", locale) };
+}
 
 export default async function Home({ searchParams }: PageProps<"/">) {
   const i18n = await getI18n();
@@ -108,9 +112,16 @@ export default async function Home({ searchParams }: PageProps<"/">) {
                 <ShimmerLink href="/signup" className="text-base">
                   {t("landing.ctaPrimary")}
                 </ShimmerLink>
-                <ButtonLink href="/login" variant="secondary" className="h-12 rounded-full px-6 text-base">
+                {/* Same pill shape and height as the main button, but quiet: outline + arrow. */}
+                <Link
+                  href="/login"
+                  className="group inline-flex h-12 items-center justify-center gap-2 rounded-full border border-emerald-700/25 bg-white px-7 text-base font-medium text-emerald-800 shadow-sm transition-[border-color,background-color,transform] duration-300 hover:-translate-y-0.5 hover:border-emerald-600 hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 active:translate-y-0"
+                >
                   {t("landing.ctaSecondary")}
-                </ButtonLink>
+                  <svg viewBox="0 0 20 20" aria-hidden className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 10h12M11 5l5 5-5 5" />
+                  </svg>
+                </Link>
               </div>
               <p className="mt-5 text-sm text-stone-500">
                 {t("doctor.areDoctor")}{" "}
@@ -225,6 +236,12 @@ export default async function Home({ searchParams }: PageProps<"/">) {
         <div className="border-t border-stone-200">
           <ReviewsSection reviews={reviews} t={t} />
         </div>
+
+        <FaqSection
+          kicker={t("faq.kicker")}
+          title={t("faq.title")}
+          items={([1, 2, 3, 4, 5, 6] as const).map((n) => ({ q: t(`faq.q${n}`), a: t(`faq.a${n}`) }))}
+        />
 
         <section className="px-4 pb-20">
           <BlurFade>

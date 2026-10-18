@@ -6,10 +6,11 @@ import { ScrollProgress } from "@/components/velora/scroll-progress";
 import { localized, type BlogPost } from "@/lib/blog";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
+import { langAlternates } from "@/lib/site";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const { t } = await getI18n();
-  return { title: t("blog.title"), description: t("blog.desc"), alternates: { canonical: "/blog" } };
+  const { t, locale } = await getI18n();
+  return { title: t("blog.title"), description: t("blog.desc"), alternates: langAlternates("/blog", locale) };
 }
 
 export default async function BlogIndexPage() {

@@ -6,8 +6,24 @@ const PROTECTED_PREFIXES = ["/dashboard", "/onboarding", "/admin", "/suspended",
 const PUBLIC_PAGES = ["/doctor/signup"];
 const AUTH_PAGES = ["/login", "/signup", "/doctor/signup"];
 
+/**
+ * `?lang=bn` / `?lang=en` picks the language for this request (and remembers
+ * it), so search engines can index both language versions of public pages.
+ */
+function forcedLocale(request: NextRequest) {
+  const lang = request.nextUrl.searchParams.get("lang");
+  return lang === "en" || lang === "bn" ? lang : null;
+}
+
 export async function updateSession(request: NextRequest) {
-  let response = NextResponse.next({ request });
+  const lang = forcedLocale(request);
+  const next = () => {
+    if (!lang) return NextResponse.next({ request });
+    const headers = new Headers(request.headers);
+    headers.set("x-ff-locale", lang);
+    return NextResponse.next({ request: { headers } });
+  };
+  let response = next();
 
   const supabase = createServerClient(SUPABASE_URL, SUPABASE_KEY, {
     cookies: {
@@ -18,7 +34,7 @@ export async function updateSession(request: NextRequest) {
         cookiesToSet.forEach(({ name, value }) =>
           request.cookies.set(name, value),
         );
-        response = NextResponse.next({ request });
+        response = next();
         cookiesToSet.forEach(({ name, value, options }) =>
           response.cookies.set(name, value, options),
         );
@@ -55,5 +71,6 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
+  if (lang) response.cookies.set("locale", lang, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
   return response;
 }

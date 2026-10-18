@@ -14,6 +14,7 @@ export const ai = {
   "ai.p.animal": "Add animal {tag}",
   "ai.p.flock": "Flock log · {flock} · {date}",
   "ai.p.txn": "{type}: {amount} · {category}",
+  "ai.p.weight": "Weight {kg} kg · {date}",
   "ai.f.eggs": "Eggs",
   "ai.f.broken": "Broken",
   "ai.f.deaths": "Deaths",
