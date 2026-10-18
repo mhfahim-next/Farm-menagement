@@ -63,6 +63,8 @@ export async function saveDailyLog(_: ActionState, formData: FormData): Promise<
       culled: int(formData, "culled") ?? 0,
       feed_kg: num(formData, "feed_kg"),
       water_liters: num(formData, "water_liters"),
+      // Only sent when the form offers stock feed; otherwise the saved choice is kept.
+      ...(formData.has("feed_item_id") ? { feed_item_id: str(formData, "feed_item_id") } : {}),
       notes: str(formData, "notes"),
     },
     { onConflict: "flock_id,log_date" },

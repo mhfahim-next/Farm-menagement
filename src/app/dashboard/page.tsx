@@ -22,6 +22,17 @@ export default async function OverviewPage() {
   const day = today();
   const weekAgo = today(-6);
 
+  // Money to collect and stock running low.
+  const [{ data: owingRows }, { data: stockRows }] = await Promise.all([
+    supabase.from("buyer_balances").select("id, name, due").eq("farm_id", farm.id).gt("due", 0).order("due", { ascending: false }),
+    supabase.from("inventory_stock").select("id, name, unit, on_hand, low_stock").eq("farm_id", farm.id).eq("archived", false).not("low_stock", "is", null),
+  ]);
+  const owing = (owingRows ?? []) as { id: string; name: string; due: number }[];
+  const dueTotal = owing.reduce((s, b) => s + Number(b.due), 0);
+  const lowStock = ((stockRows ?? []) as { id: string; name: string; unit: string; on_hand: number; low_stock: number }[]).filter(
+    (i) => Number(i.on_hand) <= Number(i.low_stock),
+  );
+
   const [cattleRes, milkRes, flocksRes, statsRes, eggsRes, txnRes, scheduleRes, board] = await Promise.all([
     farm.has_dairy
       ? supabase
@@ -167,6 +178,45 @@ export default async function OverviewPage() {
           tone={income - expense >= 0 ? "good" : "bad"}
         />
       </div>
+
+      {(owing.length > 0 || lowStock.length > 0) && (
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          {owing.length > 0 && (
+            <Card
+              title={t("overview.duesTitle", { amount: f.money(dueTotal, farm.currency) })}
+              description={t("overview.duesDesc")}
+              action={<ButtonLink href="/dashboard/sales" variant="secondary">{t("nav.sales")}</ButtonLink>}
+            >
+              <ul className="divide-y divide-stone-100 text-sm">
+                {owing.slice(0, 5).map((b) => (
+                  <li key={b.id} className="flex items-center justify-between gap-3 py-2">
+                    <Link href={`/dashboard/sales/buyers/${b.id}`} className="font-medium text-emerald-700 hover:underline">{b.name}</Link>
+                    <span className="tabular-nums text-amber-800">{f.money(Number(b.due), farm.currency)}</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+          {lowStock.length > 0 && (
+            <Card
+              title={t("overview.lowStockTitle")}
+              description={t("overview.lowStockDesc")}
+              action={<ButtonLink href="/dashboard/inventory" variant="secondary">{t("nav.inventory")}</ButtonLink>}
+            >
+              <ul className="divide-y divide-stone-100 text-sm">
+                {lowStock.slice(0, 5).map((i) => (
+                  <li key={i.id} className="flex items-center justify-between gap-3 py-2">
+                    <Link href={`/dashboard/inventory/${i.id}`} className="font-medium text-emerald-700 hover:underline">{i.name}</Link>
+                    <span className="tabular-nums text-red-700">
+                      {f.number(Number(i.on_hand), 2)} {t(`stock.unit.${i.unit as "kg"}`)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+        </div>
+      )}
 
       {farm.has_dairy && (
         <Card

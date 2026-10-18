@@ -23,6 +23,9 @@ export function int(fd: FormData, key: string) {
 
 // Messages raised by our own database rules, mapped to translated text.
 const RULE_MESSAGES: Record<string, Parameters<I18n["t"]>[0]> = {
+  "Set the weight of one unit (kg) for this stock item first.": "stock.errUnitKg",
+  "Unknown stock item.": "stock.errPickItem",
+  "Unknown buyer.": "sales.errBuyer",
   "Unknown animal type.": "cattle.typeUnknown",
   "This animal type is no longer available.": "cattle.typeHidden",
   "This animal is recorded as a mother, so it must stay female.": "cattle.motherMustStayFemale",

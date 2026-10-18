@@ -3,9 +3,10 @@ import { requireFarm, STAFF } from "@/lib/auth";
 import { toCsv, type Cell } from "@/lib/csv";
 import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
+import type { LedgerSource } from "@/lib/finance";
 import { getPlanContext } from "@/lib/plans";
 
-const KINDS = ["cattle", "milk", "weights", "health", "breeding", "flocks", "finance"] as const;
+const KINDS = ["cattle", "milk", "weights", "health", "breeding", "flocks", "sales", "stock", "finance"] as const;
 type Kind = (typeof KINDS)[number];
 const PAGE = 1000; // the API returns at most 1000 rows per request
 
@@ -85,10 +86,47 @@ export async function GET(request: NextRequest) {
     const data = await fetchAll((a, b) => range("log_date")(base("flock_daily_logs")).range(a, b));
     header = (["date", "flock", "eggs", "broken", "deaths", "culled", "feedKg", "waterL", "notes"] as const).map((k) => col(`reports.col.${k}`));
     rows = data.map((r) => [r.log_date as string, flockName.get(r.flock_id as string), r.eggs_collected as number, r.eggs_broken as number, r.mortality as number, r.culled as number, r.feed_kg as number, r.water_liters as number, r.notes as string]);
+  } else if (kind === "sales") {
+    const { data: bs } = await supabase.from("buyers").select("id, name").eq("farm_id", farm.id);
+    const buyerName = new Map((bs ?? []).map((x) => [x.id, x.name]));
+    const data = await fetchAll((a, b) => range("sale_date")(base("sales")).range(a, b));
+    header = (["date", "buyer", "product", "quantity", "unit", "rate", "amount", "paid", "fat", "snf", "notes"] as const).map((k) => col(`reports.col.${k}`));
+    rows = data.map((r) => [
+      r.sale_date as string,
+      r.buyer_id ? buyerName.get(r.buyer_id as string) : t("sales.cash"),
+      t(`sales.productName.${r.product as "milk"}`),
+      r.quantity as number,
+      t(`sales.unitName.${r.unit as "litre"}`),
+      r.unit_price as number,
+      r.amount as number,
+      r.paid_amount as number,
+      r.fat_percent as number,
+      r.snf_percent as number,
+      r.notes as string,
+    ]);
+  } else if (kind === "stock") {
+    const { data: items } = await supabase.from("inventory_items").select("id, name, unit").eq("farm_id", farm.id);
+    const itemOf = new Map((items ?? []).map((x) => [x.id, x]));
+    const data = await fetchAll((a, b) => range("move_date")(base("inventory_moves")).range(a, b));
+    header = (["date", "item", "moveType", "quantity", "unit", "cost", "supplier", "notes"] as const).map((k) => col(`reports.col.${k}`));
+    rows = data.map((r) => {
+      const item = itemOf.get(r.item_id as string);
+      const signed = r.move_type === "use" ? -Number(r.quantity) : Number(r.quantity);
+      return [
+        r.move_date as string,
+        item?.name,
+        t(`stock.moveTab.${r.move_type as "purchase"}`),
+        signed,
+        item ? t(`stock.unit.${item.unit as "kg"}`) : "",
+        r.total_cost as number,
+        r.supplier as string,
+        r.notes as string,
+      ];
+    });
   } else {
     const data = await fetchAll((a, b) => range("txn_date")(base("finance_ledger")).range(a, b));
     header = (["date", "type", "module", "category", "amount", "description", "source"] as const).map((k) => col(`reports.col.${k}`));
-    rows = data.map((r) => [r.txn_date as string, o("txn_type", r.txn_type as string), o("txn_module", r.module as string), o("finance_category", r.category as string), r.amount as number, r.description as string, t(`finance.source.${r.source as "manual" | "health" | "breeding" | "flock_health" | "salary"}`)]);
+    rows = data.map((r) => [r.txn_date as string, o("txn_type", r.txn_type as string), o("txn_module", r.module as string), o("finance_category", r.category as string), r.amount as number, r.description as string, t(`finance.source.${r.source as LedgerSource}`)]);
   }
 
   const safeFarm = farm.name.replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "farm";

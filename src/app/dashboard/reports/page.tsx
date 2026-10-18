@@ -18,6 +18,8 @@ const reports = [
   { kind: "health", dated: true, dairy: true },
   { kind: "breeding", dated: true, dairy: true },
   { kind: "flocks", dated: true, layer: true },
+  { kind: "sales", dated: true },
+  { kind: "stock", dated: true },
   { kind: "finance", dated: true },
 ] as const;
 

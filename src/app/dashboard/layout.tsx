@@ -92,6 +92,9 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
         ...(isStaff
           ? [
               { href: "/dashboard/finance", label: t("nav.finance") },
+              { href: "/dashboard/sales", label: t("nav.sales") },
+              { href: "/dashboard/inventory", label: t("nav.inventory") },
+              { href: "/dashboard/profit", label: t("nav.profit") },
               ...(isManager ? [{ href: "/dashboard/staff", label: t("nav.staff") }] : []),
               { href: "/dashboard/reports", label: t("nav.reports") },
             ].map((i) => ({ ...i, group: t("nav.group.finance") }))
