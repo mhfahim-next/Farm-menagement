@@ -61,7 +61,7 @@ export function PublicMenu({ links, closeLabel, menuLabel }: { links: PublicLink
             )}
             <aside
               data-testid="public-menu"
-              aria-hidden={!open}
+              inert={!open}
               className={`fixed inset-y-0 right-0 z-50 flex w-72 max-w-[85vw] flex-col border-l border-stone-200 bg-white shadow-xl transition-transform ${
                 open ? "translate-x-0" : "translate-x-full"
               }`}
