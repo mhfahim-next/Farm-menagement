@@ -7,7 +7,7 @@ import { PwaRegister } from "@/components/pwa";
 import { ToastProvider } from "@/components/toast";
 import { Suspense } from "react";
 import { getI18n, getOptionRows, messagesFor } from "@/lib/i18n/server";
-import { SITE_NAME, SITE_URL } from "@/lib/site";
+import { SITE_NAME, SITE_URL, verificationToken } from "@/lib/site";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -57,9 +57,9 @@ export async function generateMetadata(): Promise<Metadata> {
     robots: { index: true, follow: true },
     // Search Console / Bing Webmaster ownership checks (set the codes in the environment).
     verification: {
-      google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || undefined,
-      other: process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION
-        ? { "msvalidate.01": process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION }
+      google: verificationToken(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION),
+      other: verificationToken(process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION)
+        ? { "msvalidate.01": verificationToken(process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION)! }
         : undefined,
     },
     applicationName: "FarmFlows",
