@@ -30,3 +30,14 @@ export function langAlternates(path: string, locale: "en" | "bn") {
     languages: { en: path, bn, "x-default": path },
   };
 }
+
+/**
+ * Search Console / Bing give a whole `<meta name="…" content="TOKEN" />` tag, but only the
+ * token belongs in the env var. Accept either, so a pasted tag still produces a valid one.
+ */
+export function verificationToken(raw: string | undefined) {
+  if (!raw) return undefined;
+  const fromTag = /content\s*=\s*["']?([^"'\s>]+)/i.exec(raw)?.[1];
+  const token = (fromTag ?? raw).trim().replace(/^["']+|["']+$/g, "").replace(/^[\w.-]*verification=/i, "");
+  return /^[\w-]{10,200}$/.test(token) ? token : undefined;
+}
