@@ -202,7 +202,7 @@ Sign up, create your farm, then add cattle and flocks.
 
 ### Analytics, IP and location
 
-**Vercel Web Analytics** (`@vercel/analytics`, cookieless page views) is included in the root layout and only rendered on Vercel (`VERCEL` env var). Turn it on in the Vercel project: *Analytics → Enable*.
+**Vercel Web Analytics** (`@vercel/analytics`, cookieless page views) is included in the root layout and only rendered on Vercel (`VERCEL` env var). Turn it on in the Vercel project: *Analytics → Enable*. **Vercel Speed Insights** (`@vercel/speed-insights`, real-user Core Web Vitals) is loaded the same way: *Speed Insights → Enable*.
 
 Super admin → **Analytics**: page views, visitors, sign-ups, active users, logins, new farms, daily charts, top pages, referrers, countries, devices, a globe of where users are, and the last 20 sign-ins with IP and approximate location. The users list shows each user's last IP and city. Everything is first-party (tables `page_views`, `login_events`, `user_presence`; readable only by super admins). Location comes from the hosting edge's headers, so it works automatically on **Vercel** (`x-vercel-ip-*`) or **Cloudflare** (turn on *Add visitor location headers*); when running locally there is no location. Anonymous visits are counted without IP addresses; mention IP collection in your privacy policy.
 
