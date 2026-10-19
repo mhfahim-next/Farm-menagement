@@ -22,4 +22,9 @@ export const changelog: Record<keyof typeof en, string> = {
   "seo.guideCrumb": "ফার্ম ম্যানেজমেন্ট সফটওয়্যার",
   "seo.readMore": "আরও:",
   "footer.guide": "ফার্ম ম্যানেজমেন্ট সফটওয়্যার",
+  "notFound.title": "পেজটি খুঁজে পাওয়া যায়নি",
+  "notFound.body": "পেজটি হারিয়ে যাওয়া বাছুরের মতো কোথাও চলে গেছে। লিংকটি ভুল হতে পারে, অথবা পেজটি সরানো হয়েছে।",
+  "notFound.home": "হোমে ফিরুন",
+  "notFound.blog": "ব্লগ পড়ুন",
+  "notFound.community": "কমিউনিটিতে প্রশ্ন করুন",
 };
