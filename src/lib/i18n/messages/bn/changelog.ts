@@ -19,4 +19,7 @@ export const changelog: Record<keyof typeof en, string> = {
   "changelog.type.new": "নতুন",
   "changelog.type.improved": "উন্নত",
   "changelog.type.fixed": "ঠিক করা",
+  "seo.guideCrumb": "ফার্ম ম্যানেজমেন্ট সফটওয়্যার",
+  "seo.readMore": "আরও:",
+  "footer.guide": "ফার্ম ম্যানেজমেন্ট সফটওয়্যার",
 };
