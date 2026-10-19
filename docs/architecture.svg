@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 860" font-family="Inter,Segoe UI,Arial,sans-serif">
+<defs><marker id="a" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#475569"/></marker></defs>
+<rect width="1200" height="860" fill="#f8fafc"/>
+<text x="600" y="40" text-anchor="middle" font-size="26" font-weight="700" fill="#0f172a">FarmFlows — System Architecture</text>
+<text x="600" y="64" text-anchor="middle" font-size="14" fill="#64748b">Next.js 16 (App Router) + Supabase · multi-tenant · EN/বাংলা · mobile-first PWA</text>
+
+<g><rect x="60" y="90" width="1080" height="80" rx="12" fill="#e0f2fe" stroke="#0284c7"/>
+<text x="600" y="120" text-anchor="middle" font-size="18" font-weight="700" fill="#075985">Clients</text>
+<text x="600" y="146" text-anchor="middle" font-size="14" fill="#0c4a6e">Browser · Installed PWA (service worker) · Search engines (sitemap, robots, JSON-LD) — www.farmflows.app</text></g>
+
+<line x1="600" y1="170" x2="600" y2="205" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+
+<rect x="60" y="205" width="1080" height="320" rx="14" fill="#ecfdf5" stroke="#059669" stroke-width="2"/>
+<text x="84" y="235" font-size="18" font-weight="700" fill="#065f46">Next.js 16 app server (single deployable)</text>
+<g font-size="13">
+<rect x="84" y="255" width="1032" height="46" rx="8" fill="#fff" stroke="#34d399"/>
+<text x="100" y="274" font-weight="700" fill="#065f46">proxy.ts</text><text x="100" y="291" fill="#334155">refresh Supabase session cookie · protect /dashboard /admin /doctor · suspended-account redirect</text>
+<rect x="84" y="315" width="250" height="190" rx="8" fill="#fff" stroke="#34d399"/>
+<text x="100" y="338" font-weight="700" fill="#065f46">Routes (src/app)</text>
+<text x="100" y="360" fill="#334155">Public: /, blog, community,</text><text x="100" y="378" fill="#334155">changelog, guide, legal</text>
+<text x="100" y="402" fill="#334155">Auth: login, signup, onboarding</text>
+<text x="100" y="426" fill="#334155">Farmer: /dashboard/*</text>
+<text x="100" y="450" fill="#334155">Doctor: /doctor/*</text>
+<text x="100" y="474" fill="#334155">Super admin: /admin/*</text>
+<rect x="348" y="315" width="250" height="190" rx="8" fill="#fff" stroke="#34d399"/>
+<text x="364" y="338" font-weight="700" fill="#065f46">Server Components + Actions</text>
+<text x="364" y="360" fill="#334155">Components read data as the user</text>
+<text x="364" y="380" fill="#334155">Server Actions do every write:</text>
+<text x="364" y="400" fill="#334155">validate → Supabase → revalidate</text>
+<text x="364" y="424" fill="#334155">getViewer() · requireRole()</text>
+<text x="364" y="448" fill="#334155">Cached: dropdowns, plans</text>
+<text x="364" y="472" fill="#334155">Route handlers: /auth/confirm,</text><text x="364" y="490" fill="#334155">/api/*, OG images</text>
+<rect x="612" y="315" width="250" height="190" rx="8" fill="#fff" stroke="#34d399"/>
+<text x="628" y="338" font-weight="700" fill="#065f46">Domain logic (src/lib)</text>
+<text x="628" y="360" fill="#334155">finance · profit · trade</text>
+<text x="628" y="380" fill="#334155">breeding · health · flock-health</text>
+<text x="628" y="400" fill="#334155">staff · plans · approvals</text>
+<text x="628" y="420" fill="#334155">blog · community · changelog</text>
+<text x="628" y="444" fill="#334155">i18n (en / bn, typed parity)</text>
+<text x="628" y="468" fill="#334155">format · csv export · geo</text>
+<rect x="876" y="315" width="240" height="190" rx="8" fill="#fff" stroke="#34d399"/>
+<text x="892" y="338" font-weight="700" fill="#065f46">SEO + PWA layer</text>
+<text x="892" y="360" fill="#334155">Metadata API · hreflang</text>
+<text x="892" y="380" fill="#334155">sitemap.ts (from DB) · robots.ts</text>
+<text x="892" y="400" fill="#334155">JSON-LD graph, FAQ, breadcrumbs</text>
+<text x="892" y="424" fill="#334155">manifest.ts · sw.js · icons</text>
+<text x="892" y="448" fill="#334155">Security headers (next.config)</text>
+</g>
+
+<line x1="330" y1="525" x2="330" y2="575" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+<text x="340" y="555" font-size="12" fill="#475569">user JWT (@supabase/ssr)</text>
+<line x1="900" y1="525" x2="900" y2="575" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+<text x="910" y="555" font-size="12" fill="#475569">server-side only</text>
+
+<rect x="60" y="575" width="700" height="250" rx="14" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+<text x="84" y="605" font-size="18" font-weight="700" fill="#92400e">Supabase</text>
+<g font-size="13">
+<rect x="84" y="620" width="200" height="190" rx="8" fill="#fff" stroke="#f59e0b"/>
+<text x="100" y="643" font-weight="700" fill="#92400e">Auth</text>
+<text x="100" y="665" fill="#334155">Email + password</text><text x="100" y="685" fill="#334155">Google OAuth (PKCE)</text>
+<text x="100" y="705" fill="#334155">Branded emails via SMTP</text><text x="100" y="725" fill="#334155">handle_new_user trigger</text>
+<text x="100" y="745" fill="#334155">→ creates profile</text>
+<rect x="298" y="620" width="300" height="190" rx="8" fill="#fff" stroke="#f59e0b"/>
+<text x="314" y="643" font-weight="700" fill="#92400e">Postgres (29 migrations)</text>
+<text x="314" y="665" fill="#334155">Tenant = farm (farm_id everywhere)</text>
+<text x="314" y="685" fill="#334155">RLS on every table</text>
+<text x="314" y="705" fill="#334155">Triggers: plan limits, same-farm,</text><text x="314" y="722" fill="#334155">sale→animal sold, feed→stock</text>
+<text x="314" y="746" fill="#334155">security-definer RPCs, audit log</text>
+<text x="314" y="766" fill="#334155">Views: finance_ledger, stock,</text><text x="314" y="783" fill="#334155">buyer_balances (security_invoker)</text>
+<rect x="612" y="620" width="132" height="190" rx="8" fill="#fff" stroke="#f59e0b"/>
+<text x="624" y="643" font-weight="700" fill="#92400e">Storage</text>
+<text x="624" y="665" fill="#334155">avatars</text><text x="624" y="685" fill="#334155">blog-images</text><text x="624" y="705" fill="#334155">community-</text><text x="624" y="722" fill="#334155">images</text>
+</g>
+
+<rect x="800" y="575" width="340" height="110" rx="14" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+<text x="824" y="605" font-size="16" font-weight="700" fill="#5b21b6">Claude API</text>
+<text x="824" y="630" font-size="13" fill="#334155">AI assistant (src/lib/ai),</text><text x="824" y="650" font-size="13" fill="#334155">@anthropic-ai/sdk, called from server only</text>
+<rect x="800" y="705" width="340" height="120" rx="14" fill="#fce7f3" stroke="#db2777" stroke-width="2"/>
+<text x="824" y="735" font-size="16" font-weight="700" fill="#9d174d">Roles (enforced by RLS)</text>
+<text x="824" y="758" font-size="13" fill="#334155">Owner / Manager: full + delete</text>
+<text x="824" y="778" font-size="13" fill="#334155">Staff: read + write operations</text>
+<text x="824" y="798" font-size="13" fill="#334155">Vet: health/breeding only · Super admin: /admin</text>
+</svg>
