@@ -86,6 +86,25 @@ export const RELEASES: Release[] = [
     ],
   },
   {
+    id: "2026-10-19-site",
+    date: "2026-10-19",
+    title: { en: "What's new page, farm guide and a tidier website", bn: "নতুন কী পাতা, খামার গাইড আর গোছানো ওয়েবসাইট" },
+    summary: {
+      en: "See what changed and what is coming, a full guide to farm management software, and many small fixes across the site.",
+      bn: "কী বদলাল আর কী আসছে দেখুন, ফার্ম ম্যানেজমেন্ট সফটওয়্যারের পূর্ণ গাইড, আর সাইট জুড়ে অনেক ছোট ঠিকঠাক।",
+    },
+    changes: [
+      { type: "new", en: "This “What's new” page, with the plan for what comes next.", bn: "এই “নতুন কী” পাতা, সাথে সামনে কী আসছে তার পরিকল্পনা।" },
+      { type: "new", en: "A guide page: what farm management software does, how FarmFlows compares with a notebook or Excel, and common questions.", bn: "গাইড পাতা: ফার্ম ম্যানেজমেন্ট সফটওয়্যার কী করে, খাতা বা Excel-এর সাথে FarmFlows-এর তুলনা, আর সাধারণ প্রশ্ন।" },
+      { type: "new", en: "Twenty starter questions with answers in the community, taken from our guides.", bn: "কমিউনিটিতে আমাদের গাইড থেকে নেওয়া ২০টি প্রশ্ন ও উত্তর দিয়ে শুরু।" },
+      { type: "new", en: "A friendly “page not found” page with links back to home, the blog and the community.", bn: "“পাতা পাওয়া যায়নি” এর জন্য সুন্দর পাতা, হোম, ব্লগ আর কমিউনিটিতে ফেরার লিংকসহ।" },
+      { type: "improved", en: "The home page lists every feature, and FarmFlows is easier to find on Google (site name, icon sizes, structured data).", bn: "হোম পাতায় সব ফিচার দেখা যায়, আর Google-এ FarmFlows খুঁজে পাওয়া সহজ হয়েছে (সাইটের নাম, আইকন, স্ট্রাকচার্ড ডেটা)।" },
+      { type: "improved", en: "Signing in with Google fills in your name and photo if your profile had none.", bn: "Google দিয়ে লগইন করলে প্রোফাইলে নাম বা ছবি না থাকলে তা নিজে বসে যায়।" },
+      { type: "improved", en: "On phones, the footer shows Product and Resources side by side.", bn: "ফোনে ফুটারের Product আর Resources পাশাপাশি দেখায়।" },
+      { type: "fixed", en: "Topic and category chips no longer overlap on small screens.", bn: "ছোট স্ক্রিনে টপিক আর ক্যাটাগরির বোতাম আর একটার ওপর আরেকটা পড়ে না।" },
+    ],
+  },
+  {
     id: "2026-10-18-money",
     date: "2026-10-18",
     title: { en: "Stock, sales & what a litre really costs", bn: "স্টক, বিক্রি আর এক লিটারের আসল খরচ" },
