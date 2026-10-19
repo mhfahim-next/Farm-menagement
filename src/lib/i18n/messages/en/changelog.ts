@@ -20,4 +20,9 @@ export const changelog = {
   "seo.guideCrumb": "Farm management software",
   "seo.readMore": "More:",
   "footer.guide": "Farm management software",
+  "notFound.title": "Page not found",
+  "notFound.body": "This page has wandered off like a stray calf. The link may be wrong, or the page may have moved.",
+  "notFound.home": "Back to home",
+  "notFound.blog": "Read the blog",
+  "notFound.community": "Ask the community",
 } as const;
