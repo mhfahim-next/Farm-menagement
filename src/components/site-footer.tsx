@@ -54,8 +54,8 @@ export async function SiteFooter() {
 
   return (
     <footer className="relative mt-auto border-t border-stone-200 bg-white" data-testid="site-footer">
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 pb-6 pt-14 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
-        <div className="max-w-xs">
+      <div className="mx-auto grid max-w-6xl grid-cols-2 gap-x-6 gap-y-10 px-4 pb-6 pt-14 sm:gap-10 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
+        <div className="col-span-2 max-w-xs sm:col-span-1">
           <Logo />
           <p className="mt-4 text-sm leading-relaxed text-stone-600">{t("footer.tagline")}</p>
           <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800">
@@ -76,8 +76,13 @@ export async function SiteFooter() {
             </ul>
           )}
         </div>
-        {columns.map((c) => (
-          <nav key={c.title} aria-label={c.title}>
+        {columns.map((c, i) => (
+          // On phones Product and Resources sit side by side; the last column spans the row, centred.
+          <nav
+            key={c.title}
+            aria-label={c.title}
+            className={i === columns.length - 1 ? "col-span-2 text-center sm:col-span-1 sm:text-left" : undefined}
+          >
             <h2 className="text-sm font-semibold text-stone-900">{c.title}</h2>
             <ul className="mt-4 space-y-2.5 text-sm">
               {c.links.map((l) => (
