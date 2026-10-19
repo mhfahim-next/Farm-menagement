@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PublicFooter, PublicHeader } from "@/components/public-header";
+import Image from "next/image";
 import { ButtonLink } from "@/components/ui";
 import { AuroraBackground } from "@/components/velora/aurora-background";
 import { BlurFade } from "@/components/velora/blur-fade";
@@ -202,6 +203,47 @@ export default async function Home({ searchParams }: PageProps<"/">) {
                 </li>
               ))}
             </ol>
+          </div>
+        </section>
+
+        <section id="mobile-app" aria-labelledby="mobile-app-title" className="scroll-mt-20 border-t border-stone-200 bg-gradient-to-b from-emerald-50 to-white">
+          <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-20 md:grid-cols-[1fr_auto]">
+            <BlurFade>
+              <span className="inline-flex items-center gap-2 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900">
+                <span aria-hidden>⏳</span> {t("landing.mobile.badge")}
+              </span>
+              <h2 id="mobile-app-title" className="mt-4 text-3xl font-bold tracking-tight">{t("landing.mobile.title")}</h2>
+              <p className="mt-3 max-w-xl text-stone-600">{t("landing.mobile.body")}</p>
+              <ul className="mt-5 grid gap-2 text-sm text-stone-700 sm:grid-cols-2">
+                {([1, 2, 3, 4] as const).map((n) => (
+                  <li key={n} className="flex gap-2">
+                    <span aria-hidden className="text-emerald-700">✓</span>
+                    {t(`landing.mobile.point${n}`)}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-6 rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm text-stone-700">
+                <span aria-hidden>📲 </span>
+                {t("landing.mobile.now")}
+              </p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <ButtonLink href={viewer ? viewer.home : "/signup"}>{viewer ? t("landing.goDashboard") : t("landing.mobile.cta")}</ButtonLink>
+                <ButtonLink href="/changelog#coming" variant="secondary">
+                  {t("landing.mobile.roadmap")}
+                </ButtonLink>
+              </div>
+            </BlurFade>
+            {/* A simple phone outline with the app icon; decorative. */}
+            <BlurFade delay={0.1} className="mx-auto max-md:hidden">
+              <div aria-hidden className="relative h-[22rem] w-44 rounded-[2.2rem] border-[6px] border-stone-800 bg-white shadow-xl">
+                <div className="absolute left-1/2 top-2 h-1.5 w-14 -translate-x-1/2 rounded-full bg-stone-800" />
+                <div className="flex h-full flex-col items-center justify-center gap-3 px-4 text-center">
+                  <Image src="/icons/icon-192.png" alt="" width={64} height={64} className="rounded-2xl" />
+                  <span className="text-sm font-bold text-stone-900">FarmFlows</span>
+                  <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-900">{t("landing.mobile.badge")}</span>
+                </div>
+              </div>
+            </BlurFade>
           </div>
         </section>
 

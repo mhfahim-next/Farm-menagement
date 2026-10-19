@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Noto_Sans_Bengali } from "next/font/google";
 import { I18nProvider } from "@/components/i18n-provider";
 import { Analytics } from "@/components/analytics";
+import { Analytics as VercelAnalytics } from "@vercel/analytics/next";
 import { NavProgress } from "@/components/nav-progress";
 import { PwaRegister } from "@/components/pwa";
 import { ToastProvider } from "@/components/toast";
@@ -102,6 +103,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             <NavProgress />
           </Suspense>
           <Analytics />
+          {/* Vercel Web Analytics (page views, no cookies). Its script only exists on Vercel, so skip it elsewhere. */}
+          {process.env.VERCEL && <VercelAnalytics />}
           <PwaRegister />
         </I18nProvider>
       </body>
