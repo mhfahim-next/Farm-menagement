@@ -21,26 +21,10 @@ export type Upcoming = { status: UpcomingStatus; title: Bilingual; body: Bilingu
 export const UPCOMING: Upcoming[] = [
   {
     status: "next",
-    title: { en: "Works without internet", bn: "ইন্টারনেট ছাড়াও চলবে" },
-    body: {
-      en: "Record milk, eggs and feed in the shed even with no signal. Entries are saved on the phone and sent when you are back online.",
-      bn: "গোয়ালে নেটওয়ার্ক না থাকলেও দুধ, ডিম আর খাবারের হিসাব লিখুন। এন্ট্রি ফোনে জমা থাকবে, ইন্টারনেট এলে নিজে থেকে চলে যাবে।",
-    },
-  },
-  {
-    status: "next",
     title: { en: "Reminders on your phone", bn: "ফোনে রিমাইন্ডার" },
     body: {
       en: "Vaccine due, cow in heat, pregnancy check and calving dates sent to your phone, so you don't have to open the app to find out.",
       bn: "টিকার তারিখ, গরম, গর্ভ পরীক্ষা আর বাচ্চা হওয়ার দিন ফোনে জানানো হবে, অ্যাপ খুলে খুঁজতে হবে না।",
-    },
-  },
-  {
-    status: "planned",
-    title: { en: "Import animals from Excel", bn: "Excel থেকে পশুর তালিকা ঢোকানো" },
-    body: {
-      en: "Already have your herd in a notebook or spreadsheet? Upload it once instead of typing every animal.",
-      bn: "খাতায় বা Excel-এ পালের তালিকা আছে? প্রতিটা পশু হাতে না লিখে একবারে আপলোড করুন।",
     },
   },
   {
@@ -86,6 +70,21 @@ export const UPCOMING: Upcoming[] = [
 ];
 
 export const RELEASES: Release[] = [
+  {
+    id: "2026-10-19-offline",
+    date: "2026-10-19",
+    title: { en: "Works without internet, and Excel import", bn: "ইন্টারনেট ছাড়াও চলে, আর Excel থেকে তথ্য আনা" },
+    summary: {
+      en: "Record the day's work in the shed with no signal, and bring your old notebook or Excel records in at once.",
+      bn: "নেটওয়ার্ক না থাকলেও গোয়ালে বসে দিনের হিসাব লিখুন, আর পুরোনো খাতা বা Excel-এর হিসাব একবারে তুলে আনুন।",
+    },
+    changes: [
+      { type: "new", en: "Quick entry: milk, eggs, feed/medicine use and attendance on one page that opens and saves even without internet.", bn: "দ্রুত এন্ট্রি: দুধ, ডিম, খাবার/ওষুধ ব্যবহার আর হাজিরা এক পাতায়, যা ইন্টারনেট ছাড়াও খোলে ও সংরক্ষণ করে।" },
+      { type: "new", en: "Entries made offline wait on the phone and are sent by themselves when the connection is back. A bar shows what is still waiting.", bn: "অফলাইনে করা এন্ট্রি ফোনে অপেক্ষা করে, নেট ফিরলে নিজে চলে যায়। কী বাকি আছে তা উপরের বারে দেখা যায়।" },
+      { type: "new", en: "Import from Excel or CSV: animals, milk records, daily egg logs and income/expenses, with a template, Bangla headings and a check of every row before saving.", bn: "Excel বা CSV থেকে আনুন: পশু, দুধের হিসাব, ডিমের দৈনিক হিসাব আর আয়-ব্যয়; নমুনা ফাইল, বাংলা কলামের নাম, আর সংরক্ষণের আগে প্রতিটি সারি যাচাই।" },
+      { type: "improved", en: "A weak network can no longer save the same stock use twice.", bn: "দুর্বল নেটওয়ার্কে একই স্টক ব্যবহার আর দুইবার জমা হয় না।" },
+    ],
+  },
   {
     id: "2026-10-18-money",
     date: "2026-10-18",
