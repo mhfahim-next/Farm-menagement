@@ -21,6 +21,14 @@ export type Upcoming = { status: UpcomingStatus; title: Bilingual; body: Bilingu
 export const UPCOMING: Upcoming[] = [
   {
     status: "next",
+    title: { en: "Mobile app for Android and iPhone", bn: "Android ও iPhone-এর মোবাইল অ্যাপ" },
+    body: {
+      en: "FarmFlows from the Play Store (then the App Store), with the same account and records, offline entry and reminders.",
+      bn: "Play Store (পরে App Store) থেকে FarmFlows, একই অ্যাকাউন্ট আর হিসাবসহ, অফলাইন এন্ট্রি আর রিমাইন্ডার।",
+    },
+  },
+  {
+    status: "next",
     title: { en: "Reminders on your phone", bn: "ফোনে রিমাইন্ডার" },
     body: {
       en: "Vaccine due, cow in heat, pregnancy check and calving dates sent to your phone, so you don't have to open the app to find out.",
