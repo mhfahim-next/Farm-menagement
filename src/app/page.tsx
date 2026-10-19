@@ -69,10 +69,20 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           "@context": "https://schema.org",
           "@graph": [
             {
+              // Tells Google the site's name (shown above the result instead of the bare domain).
+              "@type": "WebSite",
+              "@id": `${SITE_URL}/#website`,
+              name: SITE_NAME,
+              alternateName: ["FarmFlow", "FarmFlows App", "ফার্মফ্লোজ"],
+              url: SITE_URL,
+              inLanguage: ["bn", "en"],
+            },
+            {
               "@type": "Organization",
+              "@id": `${SITE_URL}/#organization`,
               name: SITE_NAME,
               url: SITE_URL,
-              logo: `${SITE_URL}/icons/icon-512.png`,
+              logo: { "@type": "ImageObject", url: `${SITE_URL}/icons/icon-512.png`, width: 512, height: 512 },
             },
             {
               "@type": "SoftwareApplication",
@@ -82,6 +92,11 @@ export default async function Home({ searchParams }: PageProps<"/">) {
               description: t("meta.description"),
               url: SITE_URL,
               inLanguage: ["bn", "en"],
+              featureList: [
+                "Cattle and herd records", "Milk records", "Vaccine and treatment reminders", "Breeding and calving calendar",
+                "Layer flock and egg records", "Feed and medicine stock", "Sales and buyer dues", "Staff attendance and salary",
+                "Income, expenses and profit per litre and per egg", "Bangla and English",
+              ],
               offers: plans
                 .filter((p) => p.price_monthly !== null)
                 .map((p) => ({ "@type": "Offer", name: planName(p, locale, p.key), price: p.price_monthly, priceCurrency: "BDT" })),

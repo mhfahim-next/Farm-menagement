@@ -66,8 +66,12 @@ export async function generateMetadata(): Promise<Metadata> {
     appleWebApp: { capable: true, title: "FarmFlows", statusBarStyle: "default" },
     formatDetection: { telephone: false },
     icons: {
+      // Google wants a square icon in multiples of 48 px (plus favicon.ico from src/app).
       icon: [
         { url: "/favicon.svg", type: "image/svg+xml" },
+        { url: "/icons/icon-48.png", sizes: "48x48", type: "image/png" },
+        { url: "/icons/icon-96.png", sizes: "96x96", type: "image/png" },
+        { url: "/icons/icon-144.png", sizes: "144x144", type: "image/png" },
         { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
         { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
       ],

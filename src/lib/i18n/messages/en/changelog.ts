@@ -17,4 +17,7 @@ export const changelog = {
   "changelog.type.new": "New",
   "changelog.type.improved": "Better",
   "changelog.type.fixed": "Fixed",
+  "seo.guideCrumb": "Farm management software",
+  "seo.readMore": "More:",
+  "footer.guide": "Farm management software",
 } as const;
