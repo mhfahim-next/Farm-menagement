@@ -21,6 +21,16 @@ export function int(fd: FormData, key: string) {
   return n === null ? null : Math.trunc(n);
 }
 
+/**
+ * Entries saved offline remember the farm they were made for (`_farm`). The
+ * current farm can change before they are sent (farm switcher), so such an
+ * entry is refused instead of landing on the wrong farm.
+ */
+export function wrongFarm(fd: FormData, farmId: string) {
+  const wanted = str(fd, "_farm");
+  return wanted !== null && wanted !== farmId;
+}
+
 // Messages raised by our own database rules, mapped to translated text.
 const RULE_MESSAGES: Record<string, Parameters<I18n["t"]>[0]> = {
   "Set the weight of one unit (kg) for this stock item first.": "stock.errUnitKg",

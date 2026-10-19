@@ -19,6 +19,7 @@ export default function manifest(): MetadataRoute.Manifest {
       { src: "/icons/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
     shortcuts: [
+      { name: "Quick entry / দ্রুত এন্ট্রি", url: "/dashboard/quick", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
       { name: "Milk / দুধ", url: "/dashboard/milk", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
       { name: "Cattle / গবাদিপশু", url: "/dashboard/cattle", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },
       { name: "Health / স্বাস্থ্য", url: "/dashboard/health", icons: [{ src: "/icons/icon-192.png", sizes: "192x192" }] },

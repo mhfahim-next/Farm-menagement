@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireRole, STAFF } from "@/lib/auth";
-import { dbError, str } from "@/lib/form";
+import { dbError, wrongFarm, str } from "@/lib/form";
 import { getI18n } from "@/lib/i18n/server";
 import type { ActionState } from "@/lib/types";
 
@@ -10,6 +10,7 @@ import type { ActionState } from "@/lib/types";
 export async function saveMilkSession(_: ActionState, formData: FormData): Promise<ActionState> {
   const { supabase, farm } = await requireRole(STAFF);
   const { t, f } = await getI18n();
+  if (wrongFarm(formData, farm.id)) return { error: t("offline.wrongFarm") };
   const recordDate = str(formData, "record_date");
   const session = str(formData, "session");
   if (!recordDate || !session) return { error: t("milk.chooseDateSession") };
