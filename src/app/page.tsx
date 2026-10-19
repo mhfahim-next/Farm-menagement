@@ -58,8 +58,10 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   // The middle paid plan is highlighted as the recommended one.
   const highlightKey = plans.length >= 3 ? plans[1].key : null;
 
-  const features = [1, 2, 3, 4, 5, 6] as const;
-  const featureIcons = { 1: "🐄", 2: "🥛", 3: "💉", 4: "🐔", 5: "💰", 6: "🌐" } as const;
+  const features = [1, 2, 3, 4, 7, 8, 5, 9, 10, 11, 12, 6] as const;
+  const featureIcons = {
+    1: "🐄", 2: "🥛", 3: "💉", 4: "🐔", 5: "💰", 6: "🌐", 7: "📦", 8: "🧾", 9: "📶", 10: "📥", 11: "🤖", 12: "👥",
+  } as const;
   const rotating = ([1, 2, 3, 4, 5, 6] as const).map((n) => t(`landing.rotate.${n}`));
 
   return (
@@ -95,7 +97,8 @@ export default async function Home({ searchParams }: PageProps<"/">) {
               featureList: [
                 "Cattle and herd records", "Milk records", "Vaccine and treatment reminders", "Breeding and calving calendar",
                 "Layer flock and egg records", "Feed and medicine stock", "Sales and buyer dues", "Staff attendance and salary",
-                "Income, expenses and profit per litre and per egg", "Bangla and English",
+                "Income, expenses and profit per litre and per egg", "Works offline", "Import from Excel or CSV",
+                "AI assistant in Bangla and English", "Vet approvals", "Bangla and English",
               ],
               offers: plans
                 .filter((p) => p.price_monthly !== null)
