@@ -13,6 +13,7 @@ import { farmops } from "./farmops";
 import { landing } from "./landing";
 import { plans } from "./plans";
 import { team } from "./team";
+import { offline } from "./offline";
 import { trade } from "./trade";
 
 // Typed against the English keys: a missing Bangla string is a compile error.
@@ -25,5 +26,5 @@ export const bn: Record<keyof EnMessages, string> = {
   ...account,
   ...plans,
   ...team,
-  ...adminplans, ...blog, ...ai, ...farmops, ...community, ...trade, ...changelog,
+  ...adminplans, ...blog, ...ai, ...farmops, ...community, ...trade, ...changelog, ...offline,
 };

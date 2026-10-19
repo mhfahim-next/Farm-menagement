@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireRole, STAFF } from "@/lib/auth";
-import { dbError, int, num, str } from "@/lib/form";
+import { dbError, wrongFarm, int, num, str } from "@/lib/form";
 import { getI18n } from "@/lib/i18n/server";
 import type { ActionState } from "@/lib/types";
 
@@ -48,6 +48,7 @@ export async function updateFlockStatus(_: ActionState, formData: FormData): Pro
 export async function saveDailyLog(_: ActionState, formData: FormData): Promise<ActionState> {
   const { supabase, farm } = await requireRole(STAFF);
   const { t } = await getI18n();
+  if (wrongFarm(formData, farm.id)) return { error: t("offline.wrongFarm") };
   const flockId = str(formData, "flock_id");
   const logDate = str(formData, "log_date");
   if (!flockId || !logDate) return { error: t("flocks.chooseDate") };

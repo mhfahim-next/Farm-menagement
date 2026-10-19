@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { MANAGERS, requireRole, STAFF } from "@/lib/auth";
-import { dbError, num, str } from "@/lib/form";
+import { dbError, wrongFarm, num, str } from "@/lib/form";
 import { getI18n } from "@/lib/i18n/server";
 import { ITEM_KINDS, ITEM_UNITS, MOVE_TYPES, type ItemKind, type ItemUnit, type MoveType } from "@/lib/trade";
 import type { ActionState } from "@/lib/types";
@@ -60,6 +60,7 @@ export async function updateItem(_: ActionState, formData: FormData): Promise<Ac
 export async function addMove(_: ActionState, formData: FormData): Promise<ActionState> {
   const { supabase, farm } = await requireRole(STAFF);
   const { t } = await getI18n();
+  if (wrongFarm(formData, farm.id)) return { error: t("offline.wrongFarm") };
   const itemId = str(formData, "item_id");
   const type = str(formData, "move_type") as MoveType | null;
   if (!itemId || !UUID.test(itemId) || !type || !(MOVE_TYPES as readonly string[]).includes(type)) {
@@ -86,6 +87,8 @@ export async function addMove(_: ActionState, formData: FormData): Promise<Actio
   }
   const flockId = str(formData, "flock_id");
   const usedBy = str(formData, "module");
+  // Set by entries saved offline; a second copy of the same entry is ignored.
+  const clientId = str(formData, "client_id");
 
   const { error } = await supabase.from("inventory_moves").insert({
     farm_id: farm.id,
@@ -99,8 +102,9 @@ export async function addMove(_: ActionState, formData: FormData): Promise<Actio
     flock_id: type === "use" && flockId && UUID.test(flockId) ? flockId : null,
     supplier: type === "purchase" ? str(formData, "supplier") : null,
     notes: str(formData, "notes"),
+    client_id: clientId && UUID.test(clientId) ? clientId : null,
   });
-  if (error) return { error: dbError(t, error) };
+  if (error && !(error.code === "23505" && clientId)) return { error: dbError(t, error) };
   refresh();
   return { success: t(`stock.saved.${type}`) };
 }

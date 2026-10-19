@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { MANAGERS, requireRole } from "@/lib/auth";
-import { dbError, num, str } from "@/lib/form";
+import { dbError, wrongFarm, num, str } from "@/lib/form";
 import { getI18n } from "@/lib/i18n/server";
 import type { ActionState } from "@/lib/types";
 
@@ -75,6 +75,7 @@ export async function updateStaff(_: ActionState, formData: FormData): Promise<A
 export async function saveAttendance(_: ActionState, formData: FormData): Promise<ActionState> {
   const { supabase, farm } = await requireRole(MANAGERS);
   const { t } = await getI18n();
+  if (wrongFarm(formData, farm.id)) return { error: t("offline.wrongFarm") };
   const date = str(formData, "att_date");
   if (!date) return { error: t("staff.chooseDate") };
 

@@ -4,6 +4,7 @@ import { AppShell } from "@/components/app-shell";
 import type { NavItem } from "@/components/dashboard-nav";
 import { LazyAiAssistant as AiAssistant } from "@/components/ai-assistant-lazy";
 import { FarmSwitcher } from "@/components/farm-switcher";
+import { OfflineSync } from "@/components/offline/offline-sync";
 import { getProfile, MANAGERS, requireFarm, STAFF } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
 import { farmQuota, planName } from "@/lib/plan-utils";
@@ -75,6 +76,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
       ]
     : [
         { href: "/dashboard", label: t("nav.overview") },
+        ...(isStaff ? [{ href: "/dashboard/quick", label: `⚡ ${t("nav.quick")}` }] : []),
         ...(farm.has_dairy
           ? [
               { href: "/dashboard/cattle", label: t("nav.cattle") },
@@ -148,6 +150,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
       }}
       banner={
         <>
+          {isStaff && <OfflineSync userId={user.id} farmId={farm.id} />}
           {announcement && (
             <div role="status" className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-sm text-amber-900">
               📢 {announcement}
