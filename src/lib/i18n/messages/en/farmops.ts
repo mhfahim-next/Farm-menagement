@@ -282,7 +282,7 @@ export const farmops = {
   "weight.tapeHint": "Measure round the chest just behind the front legs, and from the shoulder point to the pin bone.",
   "weight.tapeResult": "Estimated weight: {kg} kg",
   "weight.tapeDims": "girth {g} cm · length {l} cm",
-  "weight.add": "+ Add weight",
+  "weight.add": "Add weight",
   "weight.save": "Save weight",
   "weight.saved": "Weight {kg} kg saved.",
   "weight.deleted": "Weight deleted.",
