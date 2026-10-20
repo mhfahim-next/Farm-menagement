@@ -89,6 +89,7 @@ export const RELEASES: Release[] = [
     changes: [
       { type: "new", en: "Print or save as PDF the tag number, name and QR code of all your animals (Cattle → Print tags with QR). Scanning a code opens that animal's page.", bn: "সব পশুর ট্যাগ নম্বর, নাম আর QR কোড প্রিন্ট করুন বা PDF হিসেবে রাখুন (গবাদিপশু → QR সহ ট্যাগ প্রিন্ট)। কোড স্ক্যান করলে ওই পশুর পাতা খোলে।" },
       { type: "new", en: "Download a PDF report for one animal: details, weight, milk, health, breeding and every cost and sale recorded for it, with the net result.", bn: "একটি পশুর PDF রিপোর্ট নামান: তথ্য, ওজন, দুধ, স্বাস্থ্য, প্রজনন, আর তার নামে লেখা সব খরচ ও বিক্রি, সাথে লাভ-ক্ষতি।" },
+      { type: "improved", en: "The home page now lists weight and growth tracking, QR tags and the PDF report, and shows the mobile app as coming soon.", bn: "হোম পেজে এখন ওজন ও বৃদ্ধি, QR ট্যাগ আর PDF রিপোর্ট দেখা যায়, আর মোবাইল অ্যাপ “শীঘ্রই আসছে” হিসেবে দেখানো আছে।" },
       { type: "improved", en: "“Record vaccine / treatment”, “Record heat / AI / pregnancy / calving” and “Add weight” are now clear buttons at the top of their sections; the form opens right under the button.", bn: "“টিকা / চিকিৎসা লিখুন”, “গরম / এআই / গর্ভ পরীক্ষা / প্রসব লিখুন” আর “ওজন যোগ করুন” এখন নিজ নিজ অংশের উপরে স্পষ্ট বোতাম; ফর্ম বোতামের ঠিক নিচে খোলে।" },
       { type: "improved", en: "Bulls and steers no longer show milk records, breeding (heat, AI, pregnancy, calving) or expected calving.", bn: "ষাঁড় আর বলদের পাতায় এখন দুধের হিসাব, প্রজনন (গরম, এআই, গর্ভ, প্রসব) বা প্রসবের সম্ভাব্য তারিখ দেখায় না।" },
     ],
