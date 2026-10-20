@@ -79,6 +79,19 @@ export const UPCOMING: Upcoming[] = [
 
 export const RELEASES: Release[] = [
   {
+    id: "2026-10-20-animal-page",
+    date: "2026-10-20",
+    title: { en: "Clearer animal page", bn: "পশুর পাতা আরও পরিষ্কার" },
+    summary: {
+      en: "The actions on an animal's page are now big buttons, and bulls no longer show milk or breeding.",
+      bn: "পশুর পাতার কাজগুলো এখন বড় বোতাম, আর ষাঁড়ের পাতায় দুধ বা প্রজনন দেখায় না।",
+    },
+    changes: [
+      { type: "improved", en: "“Record vaccine / treatment”, “Record heat / AI / pregnancy / calving” and “Add weight” are now clear buttons at the top of their sections; the form opens right under the button.", bn: "“টিকা / চিকিৎসা লিখুন”, “গরম / এআই / গর্ভ পরীক্ষা / প্রসব লিখুন” আর “ওজন যোগ করুন” এখন নিজ নিজ অংশের উপরে স্পষ্ট বোতাম; ফর্ম বোতামের ঠিক নিচে খোলে।" },
+      { type: "improved", en: "Bulls and steers no longer show milk records, breeding (heat, AI, pregnancy, calving) or expected calving.", bn: "ষাঁড় আর বলদের পাতায় এখন দুধের হিসাব, প্রজনন (গরম, এআই, গর্ভ, প্রসব) বা প্রসবের সম্ভাব্য তারিখ দেখায় না।" },
+    ],
+  },
+  {
     id: "2026-10-19-offline",
     date: "2026-10-19",
     title: { en: "Works without internet, and Excel import", bn: "ইন্টারনেট ছাড়াও চলে, আর Excel থেকে তথ্য আনা" },

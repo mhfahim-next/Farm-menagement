@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ActionDisclosure } from "@/components/action-disclosure";
 import { ActionForm } from "@/components/action-form";
 import { ConfirmForm } from "@/components/confirm-form";
 import { DeleteButton } from "@/components/delete-animal";
@@ -95,6 +96,8 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
           : t("age.yearsMonths", { y: Math.floor(months / 12), m: months % 12 });
 
   const stateKey = `breeding.state.${repro.state}` as "breeding.state.open";
+  // Bulls and steers: no milk and no breeding (heat, AI, pregnancy, calving) sections.
+  const isFemale = cow.sex === "female";
 
   return (
     <>
@@ -164,17 +167,24 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
           }
           tone={ws.change !== null ? (ws.change >= 0 ? "good" : "bad") : "default"}
         />
-        <StatCard label={t("cattle.milk30")} value={t("common.litersShort", { n: f.number(milkTotal, 1) })} />
-        <StatCard
-          label={t("cattle.avgPerDay")}
-          value={t("common.litersShort", { n: f.number(milkDays ? milkTotal / milkDays : 0, 1) })}
-          hint={t("cattle.daysRecorded", { n: milkDays })}
-        />
-        <StatCard label={t("cattle.expectedCalving")} value={f.date(repro.expectedCalving)} />
+        {isFemale && (
+          <>
+            <StatCard label={t("cattle.milk30")} value={t("common.litersShort", { n: f.number(milkTotal, 1) })} />
+            <StatCard
+              label={t("cattle.avgPerDay")}
+              value={t("common.litersShort", { n: f.number(milkDays ? milkTotal / milkDays : 0, 1) })}
+              hint={t("cattle.daysRecorded", { n: milkDays })}
+            />
+            <StatCard label={t("cattle.expectedCalving")} value={f.date(repro.expectedCalving)} />
+          </>
+        )}
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <Card title={t("cattle.healthRecords")}>
+          <ActionDisclosure label={t("cattle.recordHealth")} testId="record-health">
+            <HealthForm action={recordHealth} today={today()} currency={farm.currency} cattleId={cow.id} />
+          </ActionDisclosure>
           {dues.length > 0 && (
             <ul className="mb-4 grid gap-1.5">
               {dues.map((d) => (
@@ -209,17 +219,14 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
               ))}
             </Table>
           )}
-          <details className="mt-4 border-t border-stone-100 pt-4">
-            <summary className="cursor-pointer text-sm font-medium text-emerald-700">{t("cattle.recordHealth")}</summary>
-            <div className="mt-4">
-              <HealthForm action={recordHealth} today={today()} currency={farm.currency} cattleId={cow.id} />
-            </div>
-          </details>
         </Card>
 
+        {isFemale && (
         <Card title={t("cattle.breeding")}>
-          {cow.sex === "female" && (
-            <p className="mb-4 text-sm text-stone-600">
+          <ActionDisclosure label={t("cattle.recordBreeding")} testId="record-breeding">
+            <BreedingForm action={logBreedingEvent} today={today()} currency={farm.currency} cattleId={cow.id} checkDays={checkDays} gestationDays={rules.gestationDays} />
+          </ActionDisclosure>
+          <p className="mb-4 text-sm text-stone-600">
               <Badge tone={repro.state === "pregnant" ? "green" : repro.state === "inseminated" ? "blue" : "default"}>
                 {t(stateKey)}
               </Badge>{" "}
@@ -230,8 +237,7 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
               {repro.state === "pregnant" && (
                 <>{t("cattle.calvingDry", { date: f.date(repro.expectedCalving), date2: f.date(repro.dryOffDue) })}</>
               )}
-            </p>
-          )}
+          </p>
           {breeding.length === 0 ? (
             <EmptyState title={t("cattle.noBreeding")} />
           ) : (
@@ -263,17 +269,15 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
               ))}
             </Table>
           )}
-          {cow.sex === "female" && (
-            <details className="mt-4 border-t border-stone-100 pt-4">
-              <summary className="cursor-pointer text-sm font-medium text-emerald-700">{t("cattle.recordBreeding")}</summary>
-              <div className="mt-4">
-                <BreedingForm action={logBreedingEvent} today={today()} currency={farm.currency} cattleId={cow.id} checkDays={checkDays} gestationDays={rules.gestationDays} />
-              </div>
-            </details>
-          )}
         </Card>
 
+        )}
         <Card title={t("weight.title")} description={t("weight.desc")}>
+          {canWrite && (
+            <ActionDisclosure label={t("weight.add")} open={weights.length === 0} testId="record-weight">
+              <WeightForm action={addWeight} cattleId={cow.id} today={today()} />
+            </ActionDisclosure>
+          )}
           {weights.length === 0 ? (
             <EmptyState title={t("weight.none")}>{t("weight.noneBody")}</EmptyState>
           ) : (
@@ -331,16 +335,9 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
               </div>
             </>
           )}
-          {canWrite && (
-            <details className="mt-4 border-t border-stone-100 pt-4" open={weights.length === 0}>
-              <summary className="cursor-pointer text-sm font-medium text-emerald-700">{t("weight.add")}</summary>
-              <div className="mt-4">
-                <WeightForm action={addWeight} cattleId={cow.id} today={today()} />
-              </div>
-            </details>
-          )}
         </Card>
 
+        {isFemale && (
         <Card title={t("cattle.milkTitle")}>
           {milk.length === 0 ? (
             <EmptyState title={t("cattle.noMilk")}>
@@ -359,6 +356,7 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
             </Table>
           )}
         </Card>
+        )}
 
         <Card title={t("cattle.familyTitle")}>
           <dl className="grid gap-3 text-sm">

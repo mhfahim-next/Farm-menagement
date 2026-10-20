@@ -281,7 +281,7 @@ export const farmops: Record<keyof typeof en, string> = {
   "weight.tapeHint": "সামনের পায়ের ঠিক পেছনে বুকের চারপাশ মাপুন, আর কাঁধের হাড় থেকে পাছার হাড় পর্যন্ত দৈর্ঘ্য মাপুন।",
   "weight.tapeResult": "আনুমানিক ওজন: {kg} কেজি",
   "weight.tapeDims": "বেড় {g} সেমি · দৈর্ঘ্য {l} সেমি",
-  "weight.add": "+ ওজন যোগ করুন",
+  "weight.add": "ওজন যোগ করুন",
   "weight.save": "ওজন সংরক্ষণ করুন",
   "weight.saved": "{kg} কেজি ওজন সংরক্ষিত হয়েছে।",
   "weight.deleted": "ওজন মুছে ফেলা হয়েছে।",
