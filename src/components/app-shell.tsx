@@ -35,7 +35,7 @@ export function AppShell({
 }) {
   return (
     <Sidebar header={<Logo href={logoHref} />} sidebar={<DashboardNav items={nav} />}>
-      <header className="sticky top-0 z-30 border-b border-stone-200 bg-white">
+      <header className="print:hidden sticky top-0 z-30 border-b border-stone-200 bg-white">
         <div className="flex h-14 items-center justify-between gap-3 px-4">
           <div className="flex min-w-0 items-center gap-3">
             <SidebarToggle />
@@ -56,10 +56,12 @@ export function AppShell({
         </div>
       </header>
 
-      <InstallBanner />
-      {banner}
+      <div className="print:hidden">
+        <InstallBanner />
+        {banner}
+      </div>
 
-      <main className="min-w-0 flex-1 px-4 py-6 sm:px-8 sm:py-8">
+      <main className="min-w-0 flex-1 px-4 py-6 sm:px-8 sm:py-8 print:p-0">
         <div className="mx-auto max-w-6xl">{children}</div>
       </main>
     </Sidebar>
