@@ -58,7 +58,16 @@ export default async function CattlePage({ searchParams }: PageProps<"/dashboard
       <PageHeader
         title={t("cattle.title")}
         description={t("cattle.desc")}
-        action={canWrite ? <ButtonLink href="/dashboard/cattle/new">+ {t("cattle.addTitle")}</ButtonLink> : undefined}
+        action={
+          <div className="flex flex-wrap items-center gap-2">
+            {canWrite && cattle.length > 0 && (
+              <ButtonLink href="/dashboard/cattle/tags" variant="secondary" data-testid="tags-link">
+                🖨 {t("print.tagsButton")}
+              </ButtonLink>
+            )}
+            {canWrite && <ButtonLink href="/dashboard/cattle/new">+ {t("cattle.addTitle")}</ButtonLink>}
+          </div>
+        }
       />
 
       <div>

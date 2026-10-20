@@ -11,10 +11,11 @@ import { farm } from "./farm";
 import { farmops } from "./farmops";
 import { landing } from "./landing";
 import { plans } from "./plans";
+import { printing } from "./printing";
 import { team } from "./team";
 import { importing } from "./importing";
 import { offline } from "./offline";
 import { trade } from "./trade";
 
-export const en = { ...common, ...auth, ...landing, ...farm, ...dairy, ...account, ...plans, ...team, ...adminplans, ...blog, ...ai, ...farmops, ...community, ...trade, ...changelog, ...offline, ...importing } as const;
+export const en = { ...common, ...auth, ...landing, ...farm, ...dairy, ...account, ...plans, ...team, ...adminplans, ...blog, ...ai, ...farmops, ...community, ...trade, ...changelog, ...offline, ...importing, ...printing } as const;
 export type EnMessages = typeof en;

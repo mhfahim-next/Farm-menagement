@@ -10,7 +10,7 @@ import { ParentsFields } from "@/components/parents-fields";
 import { HealthForm } from "@/components/health-form";
 import { LineChart } from "@/components/charts/line-chart";
 import { WeightForm } from "@/components/weight-form";
-import { Badge, Card, EmptyState, Field, Input, PageHeader, Select, StatCard, Table, Td, Textarea } from "@/components/ui";
+import { Badge, ButtonLink, Card, EmptyState, Field, Input, PageHeader, Select, StatCard, Table, Td, Textarea } from "@/components/ui";
 import { MANAGERS, requireFarm } from "@/lib/auth";
 import { animalLabel, breedOptions, typeSexHint, type MotherCandidate } from "@/lib/cattle";
 import { heatSignsText, reproStatus } from "@/lib/breeding";
@@ -106,6 +106,9 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
         description={[o("cattle_category", cow.category), cow.breed ? o("cattle_breed", cow.breed) : null, ageText].filter(Boolean).join(" · ")}
         action={
           <div className="flex flex-wrap items-center gap-2">
+            <ButtonLink href={`/dashboard/cattle/${cow.id}/report`} variant="secondary" data-testid="report-link">
+              📄 {t("print.reportButton")}
+            </ButtonLink>
             {canWrite &&
               (cow.status === "archived" ? (
                 <ConfirmForm

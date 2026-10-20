@@ -49,7 +49,7 @@ export function Sidebar({
         )}
         <aside
           data-testid="sidebar"
-          className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-stone-200 bg-white transition-transform md:sticky md:top-0 md:h-screen md:translate-x-0 md:shrink-0 ${
+          className={`print:hidden fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-stone-200 bg-white transition-transform md:sticky md:top-0 md:h-screen md:translate-x-0 md:shrink-0 ${
             open ? "translate-x-0" : "-translate-x-full"
           }`}
         >

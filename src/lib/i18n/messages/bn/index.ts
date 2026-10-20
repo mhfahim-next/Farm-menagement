@@ -12,6 +12,7 @@ import { farm } from "./farm";
 import { farmops } from "./farmops";
 import { landing } from "./landing";
 import { plans } from "./plans";
+import { printing } from "./printing";
 import { team } from "./team";
 import { importing } from "./importing";
 import { offline } from "./offline";
@@ -27,5 +28,5 @@ export const bn: Record<keyof EnMessages, string> = {
   ...account,
   ...plans,
   ...team,
-  ...adminplans, ...blog, ...ai, ...farmops, ...community, ...trade, ...changelog, ...offline, ...importing,
+  ...adminplans, ...blog, ...ai, ...farmops, ...community, ...trade, ...changelog, ...offline, ...importing, ...printing,
 };
