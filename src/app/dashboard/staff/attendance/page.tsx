@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ActionForm } from "@/components/action-form";
+import { AutoLoad } from "@/components/auto-load";
 import { ButtonLink, Card, EmptyState, Field, Input, PageHeader, Select, Table, Td } from "@/components/ui";
 import { MANAGERS, requireRole } from "@/lib/auth";
 import { today } from "@/lib/format";
@@ -32,17 +33,13 @@ export default async function AttendancePage({ searchParams }: PageProps<"/dashb
         action={<ButtonLink href="/dashboard/staff" variant="secondary">{t("common.back")}</ButtonLink>}
       />
       <Card className="max-w-3xl">
-        <form className="mb-4 flex items-end gap-2">
-          <Field label={t("common.date")}>
-            <Input name="date" type="date" defaultValue={date} max={today()} />
-          </Field>
-          <button className="rounded-lg border border-stone-300 px-3 py-2 text-sm hover:bg-stone-50">{t("common.load")}</button>
-        </form>
         {staff.length === 0 ? (
           <EmptyState title={t("staff.emptyTitle")}>{t("staff.emptyBody")}</EmptyState>
         ) : (
           <ActionForm action={saveAttendance} submitLabel={t("staff.saveAttendance")} key={date} successHref="/dashboard/staff">
-            <input type="hidden" name="att_date" value={date} />
+            <Field label={t("common.date")} className="mb-3">
+              <AutoLoad name="att_date" param="date" defaultValue={date} max={today()} />
+            </Field>
             <Table head={[t("staff.colName"), t("staff.colStatus"), t("common.notes")]}>
               {staff.map((s) => (
                 <tr key={s.id}>

@@ -303,4 +303,8 @@ export const farmops = {
   "faq.a5": "Each farm's records are private to the people you add. Data is stored on secure cloud servers, and you can export it on paid plans.",
   "faq.q6": "Can my vet use it too?",
   "faq.a6": "Yes. Invite your veterinary doctor: they can add health and breeding records, which wait for your approval, and they never see your finances.",
+  "health.deleted": "Health record deleted.",
+  "health.confirmDelete": "Delete this health record? This cannot be undone.",
+  "breeding.deleted": "Breeding record deleted.",
+  "breeding.confirmDelete": "Delete this breeding record? A calf already added to the herd stays. This cannot be undone.",
 } as const;

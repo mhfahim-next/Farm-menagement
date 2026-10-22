@@ -79,6 +79,19 @@ export const UPCOMING: Upcoming[] = [
 
 export const RELEASES: Release[] = [
   {
+    id: "2026-10-22-fixes",
+    date: "2026-10-22",
+    title: { en: "Pick any date for daily entries, and delete health and breeding records", bn: "দৈনিক এন্ট্রিতে যেকোনো তারিখ বাছুন, আর স্বাস্থ্য ও প্রজননের রেকর্ড মুছুন" },
+    summary: {
+      en: "Entries now save on the date you pick, and mistakes in health and breeding records can be removed.",
+      bn: "এন্ট্রি এখন আপনার বাছা তারিখেই সংরক্ষণ হয়, আর স্বাস্থ্য ও প্রজননের ভুল রেকর্ড মুছে ফেলা যায়।",
+    },
+    changes: [
+      { type: "fixed", en: "Layer daily log, milk sheet and attendance: picking an earlier date used to save the entry on today. The date and session you choose are now what gets saved, and that day's numbers load as soon as you pick it (no Load button).", bn: "লেয়ারের দৈনিক হিসাব, দুধের শিট আর হাজিরায় আগের তারিখ বাছলেও এন্ট্রি আজকের তারিখে সেভ হতো। এখন আপনি যে তারিখ ও বেলা বাছেন সেটাই সেভ হয়, আর তারিখ বাছলেই ওই দিনের হিসাব লোড হয় (“লোড” বোতাম লাগে না)।" },
+      { type: "new", en: "Delete a vaccine/treatment record or a breeding record from the animal's page or its edit page (owners and managers, with a confirmation).", bn: "পশুর পাতা বা এডিট পাতা থেকে টিকা/চিকিৎসা আর প্রজননের রেকর্ড মুছুন (মালিক ও ম্যানেজার, নিশ্চিত করে)।" },
+    ],
+  },
+  {
     id: "2026-10-20-animal-page",
     date: "2026-10-20",
     title: { en: "Animal tags with QR, PDF reports and a clearer animal page", bn: "QR ট্যাগ, PDF রিপোর্ট আর আরও পরিষ্কার পশুর পাতা" },
