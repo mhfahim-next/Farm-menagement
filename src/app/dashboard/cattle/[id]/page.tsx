@@ -20,8 +20,8 @@ import { dueItems, dueLabel } from "@/lib/health";
 import { getI18n } from "@/lib/i18n/server";
 import { weightSummary, type WeightRecord } from "@/lib/weights";
 import type { BreedingEvent, Cattle, HealthRecord, MilkRecord } from "@/lib/types";
-import { logBreedingEvent } from "../../breeding/actions";
-import { recordHealth } from "../../health/actions";
+import { deleteBreedingEvent, logBreedingEvent } from "../../breeding/actions";
+import { deleteHealth, recordHealth } from "../../health/actions";
 import { addWeight, archiveCattle, deleteCattle, deleteWeight, restoreCattle, updateCattle } from "../actions";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -217,6 +217,11 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
                     <Link href={`/dashboard/health/${h.id}/edit`} className="text-sm text-emerald-700 hover:underline" data-testid="edit-health">
                       {t("common.edit")}
                     </Link>
+                    {canDelete && (
+                      <div className="mt-1">
+                        <ConfirmForm action={deleteHealth} fields={{ id: h.id }} label={t("common.delete")} confirm={t("health.confirmDelete")} />
+                      </div>
+                    )}
                   </Td>
                 </tr>
               ))}
@@ -267,6 +272,11 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
                     <Link href={`/dashboard/breeding/${b.id}/edit`} className="text-sm text-emerald-700 hover:underline" data-testid="edit-breeding">
                       {t("common.edit")}
                     </Link>
+                    {canDelete && (
+                      <div className="mt-1">
+                        <ConfirmForm action={deleteBreedingEvent} fields={{ id: b.id }} label={t("common.delete")} confirm={t("breeding.confirmDelete")} />
+                      </div>
+                    )}
                   </Td>
                 </tr>
               ))}

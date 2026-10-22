@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ActionForm } from "@/components/action-form";
-import { ButtonLink, Card, EmptyState, Field, Input, PageHeader, Select, Table, Td } from "@/components/ui";
+import { AutoLoad } from "@/components/auto-load";
+import { ButtonLink, Card, EmptyState, Field, Input, PageHeader, Table, Td } from "@/components/ui";
 import { requireRole, STAFF } from "@/lib/auth";
 import { milkingCategories } from "@/lib/cattle";
 import { today } from "@/lib/format";
@@ -50,26 +51,19 @@ export default async function NewMilkPage({ searchParams }: PageProps<"/dashboar
         action={<ButtonLink href="/dashboard/milk" variant="secondary">{t("common.back")}</ButtonLink>}
       />
       <Card className="max-w-3xl">
-          <form className="mb-4 flex flex-wrap items-end gap-2">
-            <Field label={t("common.date")}>
-              <Input name="date" type="date" defaultValue={date} max={today()} />
-            </Field>
-            <Field label={t("milk.session")}>
-              <Select
-                name="session"
-                defaultValue={session}
-                options={sessions}
-              />
-            </Field>
-            <button className="rounded-lg border border-stone-300 px-3 py-2 text-sm hover:bg-stone-50">{t("common.load")}</button>
-          </form>
 
           {cows.length === 0 ? (
             <EmptyState title={t("milk.noCowsTitle")}>{t("milk.noCowsBody")}</EmptyState>
           ) : (
             <ActionForm action={saveMilkSession} submitLabel={t("milk.saveMilking")} successHref="/dashboard/milk" key={`${date}-${session}`}>
-              <input type="hidden" name="record_date" value={date} />
-              <input type="hidden" name="session" value={session} />
+              <div className="grid grid-cols-2 gap-3">
+                <Field label={t("common.date")}>
+                  <AutoLoad name="record_date" param="date" defaultValue={date} max={today()} />
+                </Field>
+                <Field label={t("milk.session")}>
+                  <AutoLoad name="session" param="session" defaultValue={session} options={sessions} />
+                </Field>
+              </div>
               <Table head={[t("milk.colCow"), t("milk.colLitres"), t("milk.colFat")]}>
                 {cows.map((c) => {
                   const r = existing.get(c.id);

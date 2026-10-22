@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { queueIfVet } from "@/lib/approvals";
-import { requireFarm } from "@/lib/auth";
+import { MANAGERS, requireFarm, requireRole } from "@/lib/auth";
 import { dbError, num, str } from "@/lib/form";
 import { addDays } from "@/lib/breeding";
 import { getBreedingRules } from "@/lib/breeding-data";
@@ -175,4 +175,19 @@ export async function updateBreedingEvent(_: ActionState, formData: FormData): P
 
   revalidatePath("/dashboard", "layout");
   return { success: t("breeding.updated") };
+}
+
+/**
+ * Removes one breeding event (owners and managers). A calf registered from a calving
+ * stays in the herd; only the event goes.
+ */
+export async function deleteBreedingEvent(_: ActionState, formData: FormData): Promise<ActionState> {
+  const { supabase, farm } = await requireRole(MANAGERS);
+  const { t } = await getI18n();
+  const id = str(formData, "id");
+  if (!id) return { error: t("common.errorGeneric") };
+  const { error } = await supabase.from("breeding_events").delete().eq("id", id).eq("farm_id", farm.id);
+  if (error) return { error: dbError(t, error) };
+  revalidatePath("/dashboard", "layout");
+  return { success: t("breeding.deleted") };
 }

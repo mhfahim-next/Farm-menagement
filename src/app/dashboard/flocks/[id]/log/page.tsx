@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ActionForm } from "@/components/action-form";
+import { AutoLoad } from "@/components/auto-load";
 import { ButtonLink, Card, Field, Input, PageHeader, Select } from "@/components/ui";
 import { requireRole, STAFF } from "@/lib/auth";
 import { today } from "@/lib/format";
@@ -53,15 +54,11 @@ export default async function FlockLogPage({ params, searchParams }: PageProps<"
         action={<ButtonLink href={`/dashboard/flocks/${flock.id}`} variant="secondary">{t("common.back")}</ButtonLink>}
       />
       <Card className="max-w-2xl" description={t("flocks.logDesc")}>
-            <form className="mb-3 flex items-end gap-2">
-              <Field label={t("common.date")} className="flex-1">
-                <Input name="date" type="date" defaultValue={logDate} max={today()} />
-              </Field>
-              <button className="rounded-lg border border-stone-300 px-3 py-2 text-sm hover:bg-stone-50">{t("common.load")}</button>
-            </form>
             <ActionForm action={saveDailyLog} submitLabel={t("flocks.saveLog")} key={logDate} successHref={`/dashboard/flocks/${flock.id}`}>
               <input type="hidden" name="flock_id" value={flock.id} />
-              <input type="hidden" name="log_date" value={logDate} />
+              <Field label={t("common.date")} className="mb-3">
+                <AutoLoad name="log_date" param="date" defaultValue={logDate} max={today()} />
+              </Field>
               <div className="grid grid-cols-2 gap-3">
                 <Field label={t("flocks.eggsCollected")}>
                   <Input name="eggs_collected" type="number" min="0" inputMode="numeric" defaultValue={existing?.eggs_collected ?? ""} required />
