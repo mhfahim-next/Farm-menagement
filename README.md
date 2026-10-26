@@ -38,7 +38,8 @@ A multi-tenant farm management web app built with **Next.js 16 (App Router)** an
   - AI records bull/semen, technician and cost; expected calving is set at **283 days**; a **pregnancy check is due ~45 days** after AI, and **return-to-heat** is watched at day 21.
   - Each cow shows as **Open / Inseminated / Pregnant**, with dry-off date (60 days before calving) and cows **not yet served 60+ days after calving** flagged.
   - Recording a calving can **register the calf** in the herd (linked to its mother) and promotes a heifer to cow.
-- **Reminders**: the Overview page shows everything overdue or coming up in one *Needs attention* list.
+- **Reminders** (`/dashboard/notifications`, the 🔔 bell in the top bar shows how many): vaccines and deworming (animals and flocks, 3 days ahead and overdue), heat / return to heat, pregnancy check, dry-off, births, not bred since calving, low stock, buyer dues, today's milk / eggs not entered (after 6 pm, only on farms that entered them this week), broiler / Sonali sample weighing (every 7 days) and sale age (broiler 32+, Sonali 60+ days), the Qurbani / sale-day countdown (60, 45, 30, 21 days, then daily from 14) and fattening animals not weighed for 30 days, and the paid plan ending (owners). Nothing is stored: reminders are worked out from the records each time (`src/lib/reminders.ts`, pure and unit-tested; data in `src/lib/reminders-data.ts`), so recording the vaccine clears it. *Done* hides one for that person (`reminder_dismissals`). Roles: owners and managers get everything (plan only owners), workers daily entries, vaccines and weighing, vets health and breeding. Each person can turn kinds off, choose the 7 am phone summary and the 8 pm missing-entry notice, and an email summary (off / every morning / Saturdays) (`notification_prefs`). The Overview page still shows the *Needs attention* list.
+- **Phone notifications (Web Push) and email**: *Turn on for this phone* on the Reminders page subscribes the browser (Android Chrome, desktop browsers, iPhone after *Add to Home Screen*, iOS 16.4+). A scheduled job (`/api/cron/reminders`, see *Deploy → Reminders*) sends one notification per person at 7:00 and 20:00 Bangladesh time and the email summary in the morning, at most once per person / slot / channel per day (`reminder_sends`). Tapping a notification opens the page it is about. Super admin → *Reminders* shows subscribers, what was sent per day and which keys are set.
 - **Bangla & English**: every page, form, message, date and number (Bangla digits and month names) is translated. Switch language from the top bar; the choice is remembered, and first-time visitors get Bangla if their browser prefers it.
 - **Feedback**: toast pop-ups confirm every add / update / delete (and show errors on row actions), buttons show a spinner while saving, and the sidebar links and pages show a loader while data loads.
 - **Mobile friendly**: the sidebar becomes a slide-in menu, tables keep one row per record and scroll sideways on phones (first column pinned), forms use 16px fields (no iOS zoom) and bigger tap targets, and nothing scrolls sideways from 320px up. Checked on every page in English and Bangla.
@@ -227,6 +228,21 @@ bKash / Nagad / Rocket / Upay / bank need no keys: turn them on in *Admin → Pa
 | `STRIPE_WEBHOOK_SECRET` | Stripe → Developers → Webhooks → add `https://<your-domain>/api/payments/stripe/webhook` with `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`, `checkout.session.expired` → *Signing secret* (`whsec_…`) |
 
 SSLCommerz sends its IPN to `https://<your-domain>/api/payments/sslcommerz/ipn` (set it in the merchant panel too). Stripe needs a business in a country Stripe supports; check stripe.com/global. Everything a payment does is in migration `20261112000000_payments.sql` (tables `payment_methods`, `billing_periods`, `payments`; only a super admin or the server with the service-role key can mark a payment paid).
+
+### Reminders (phone notifications and email)
+
+The bell and the Reminders page work with nothing to set up. Phone notifications and email need a scheduled job and keys (Vercel → *Settings → Environment Variables*), then a redeploy:
+
+| Variable | What |
+| --- | --- |
+| `CRON_SECRET` | Any long random string. Vercel Cron sends it to `/api/cron/reminders`; other callers get 401 |
+| `SUPABASE_SERVICE_ROLE_KEY` | Already set for payments; the job reads every subscriber's farms with it |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | Phone notifications. Make a pair once with `npx web-push generate-vapid-keys` (never change them, or every phone has to turn notifications on again) |
+| `VAPID_SUBJECT` | `mailto:you@farmflows.app` (or the site address), so push services can contact you |
+| `RESEND_API_KEY` | Email summary. Free at resend.com: add and verify the `farmflows.app` domain (DNS records), then create a key |
+| `REMINDER_EMAIL_FROM` | Optional, default `FarmFlows <reminders@farmflows.app>` (must be on the verified domain) |
+
+`vercel.json` runs the job at 01:00 and 14:00 UTC (7 am and 8 pm in Bangladesh; Vercel may start it a little late on the free plan). On another host, call `GET /api/cron/reminders?slot=morning` (and `?slot=evening`) with the header `Authorization: Bearer <CRON_SECRET>`, e.g. from cron-job.org. Migration: `20261114000000_reminders.sql`.
 
 ### Error monitoring (Sentry)
 

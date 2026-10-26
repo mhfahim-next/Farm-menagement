@@ -26,6 +26,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
     { href: "/admin/community", label: t("nav.adminCommunity") },
     { href: "/admin/reviews", label: t("nav.adminReviews") },
     { href: "/admin/messages", label: t("nav.adminMessages"), badge: counts.messages ?? 0 },
+    { href: "/admin/reminders", label: t("nav.adminReminders") },
     { href: "/admin/site", label: t("nav.adminSite") },
     { href: "/admin/ai", label: t("nav.adminAi") },
     { href: "/admin/options", label: t("nav.adminOptions") },

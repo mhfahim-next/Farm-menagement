@@ -19,7 +19,7 @@ declare f text;
 begin
   -- only the server (service role) may confirm online payments; nobody may call payment_apply
   for f in select p.oid::regprocedure::text from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-           where n.nspname = 'public' and p.proname in ('payment_apply', 'payment_online_confirm', 'payment_online_set_ref', 'payment_online_failed') loop
+           where n.nspname = 'public' and p.proname in ('payment_apply', 'payment_online_confirm', 'payment_online_set_ref', 'payment_online_failed', 'push_mark_sent') loop
     if has_function_privilege('anon', f, 'execute') or has_function_privilege('authenticated', f, 'execute') then
       raise exception '% must not be callable by app users', f;
     end if;
@@ -97,6 +97,38 @@ begin
   exception when others then v_ok := true;
   end;
   if not v_ok then raise exception 'a farmer could approve a payment'; end if;
+
+  -- reminders: own choices only, no "done" marks on other farms, no send log, no admin stats
+  insert into public.notification_prefs (user_id, email, muted) values (auth.uid(), 'daily', '{stock}');
+  v_ok := false;
+  begin
+    insert into public.notification_prefs (user_id) values ('00000000-0000-4000-8000-0000000000c2');
+  exception when others then v_ok := true;
+  end;
+  if not v_ok then raise exception 'a farmer could write someone else''s reminder settings'; end if;
+  insert into public.reminder_dismissals (user_id, farm_id, key) values (auth.uid(), v_farm, 'vaccine:x:2026-10-26');
+  v_ok := false;
+  begin
+    insert into public.reminder_dismissals (user_id, farm_id, key) values (auth.uid(), gen_random_uuid(), 'vaccine:x:2026-10-26');
+  exception when others then v_ok := true;
+  end;
+  if not v_ok then raise exception 'a farmer could mark reminders on a farm they are not in'; end if;
+  perform public.push_subscribe('https://push.example.com/abc', repeat('p', 87), repeat('a', 22), 'CI');
+  if (select count(*) from public.push_subscriptions where user_id = auth.uid()) <> 1 then
+    raise exception 'push subscription was not saved';
+  end if;
+  v_ok := false;
+  begin
+    perform 1 from public.reminder_sends;
+  exception when others then v_ok := true;
+  end;
+  if not v_ok then raise exception 'a farmer could read the reminder send log'; end if;
+  v_ok := false;
+  begin
+    perform public.admin_reminder_stats();
+  exception when others then v_ok := true;
+  end;
+  if not v_ok then raise exception 'a farmer could read reminder stats'; end if;
 end $$;
 
 reset role;
