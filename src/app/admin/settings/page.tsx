@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ActionForm } from "@/components/action-form";
 import { Card, Field, Input, PageHeader, Textarea } from "@/components/ui";
+import { SentryTest } from "@/components/sentry-test";
 import { requireSuperAdmin } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
 import { saveAnnouncement, saveBreedingRules, saveLivestockRules } from "../actions";
@@ -13,6 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function AdminSettingsPage() {
   const { supabase } = await requireSuperAdmin();
   const { t } = await getI18n();
+  const sentryOn = Boolean(process.env.NEXT_PUBLIC_SENTRY_DSN);
 
   const { data } = await supabase
     .from("system_settings")
@@ -88,6 +90,12 @@ export default async function AdminSettingsPage() {
             </Field>
           </div>
         </ActionForm>
+      </Card>
+      <Card title={t("adminsentry.title")} className="mt-6 max-w-2xl">
+        <p className={`mb-3 text-sm ${sentryOn ? "text-emerald-700" : "text-amber-700"}`} data-testid="sentry-status">
+          {sentryOn ? `✓ ${t("adminsentry.on")}` : t("adminsentry.off")}
+        </p>
+        <SentryTest enabled={sentryOn} />
       </Card>
     </>
   );

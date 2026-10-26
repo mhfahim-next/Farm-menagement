@@ -21,6 +21,7 @@ import { trade } from "./trade";
 import { payments } from "./payments";
 import { livestock } from "./livestock";
 import { reminders } from "./reminders";
+import { animalprofit } from "./animalprofit";
 
 // Typed against the English keys: a missing Bangla string is a compile error.
 export const bn: Record<keyof EnMessages, string> = {
@@ -32,5 +33,5 @@ export const bn: Record<keyof EnMessages, string> = {
   ...account,
   ...plans,
   ...team,
-  ...adminplans, ...blog, ...ai, ...farmops, ...community, ...trade, ...changelog, ...offline, ...importing, ...printing, ...analyticsplus, ...payments, ...livestock, ...reminders,
+  ...adminplans, ...blog, ...ai, ...farmops, ...community, ...trade, ...changelog, ...offline, ...importing, ...printing, ...analyticsplus, ...payments, ...livestock, ...reminders, ...animalprofit,
 };

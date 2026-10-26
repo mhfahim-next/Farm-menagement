@@ -13,6 +13,7 @@ import { WeightForm } from "@/components/weight-form";
 import { Badge, ButtonLink, Card, EmptyState, Field, Input, PageHeader, Select, StatCard, Table, Td, Textarea } from "@/components/ui";
 import { MANAGERS, requireFarm } from "@/lib/auth";
 import { animalLabel, breedOptions, categoryOptions, groupOf, listHref, typeSexHint, type MotherCandidate } from "@/lib/cattle";
+import { loadAnimalProfits } from "@/lib/animal-profit-data";
 import { loadFattening } from "@/lib/fattening-data";
 import { fattens } from "@/lib/modules";
 import { heatSignsText, reproStatus } from "@/lib/breeding";
@@ -91,6 +92,16 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
   const backHref = listHref(cow.species);
   const fat = fattens(farm) && cow.is_fattening ? (await loadFattening(supabase, farm.id, cow.id)).rows[0] : null;
   const money = (n: number) => f.money(n, farm.currency);
+  // Profit over the last 12 months (owners, managers, workers; the farm can turn it off).
+  const profit =
+    role !== "vet" && farm.show_animal_profit !== false
+      ? await loadAnimalProfits({ supabase, farm }, "12m")
+          .then((r) => {
+            const i = r.rows.findIndex((x) => x.id === cow.id);
+            return i < 0 ? null : { row: r.rows[i], rank: i + 1, of: r.rows.length, milkPriceMissing: r.milkPriceMissing };
+          })
+          .catch(() => null)
+      : null;
   const checkDays = rules.pregnancyCheckDays;
   const repro = reproStatus(breeding, today(), rules);
   const dues = dueItems(health, today(), 60);
@@ -430,6 +441,37 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
             ) : (
               <p className="text-sm text-stone-500">{t("fatten.notOn")}</p>
             )}
+          </Card>
+        )}
+
+        {profit && (
+          <Card title={t("aprofit.cardTitle")} description={t("aprofit.cardDesc")}>
+            <dl className="grid grid-cols-2 gap-3 text-sm" data-testid="animal-profit">
+              <div>
+                <dt className="text-stone-500">{t("aprofit.colIncome")}</dt>
+                <dd className="font-semibold tabular-nums">{money(profit.row.income)}</dd>
+                {profit.row.milkLitres > 0 && <dd className="text-xs text-stone-500">{t("aprofit.milkOf", { n: f.number(profit.row.milkLitres, 0) })}</dd>}
+              </div>
+              <div>
+                <dt className="text-stone-500">{t("aprofit.colCost")}</dt>
+                <dd className="font-semibold tabular-nums">{money(profit.row.cost)}</dd>
+                <dd className="text-xs text-stone-500">{t("aprofit.sharedOf", { amount: money(profit.row.sharedCost) })}</dd>
+              </div>
+              <div>
+                <dt className="text-stone-500">{t("aprofit.colProfit")}</dt>
+                <dd className={`text-lg font-bold tabular-nums ${profit.row.profit >= 0 ? "text-emerald-700" : "text-red-600"}`}>{money(profit.row.profit)}</dd>
+              </div>
+              <div>
+                <dt className="text-stone-500">{t("aprofit.rank")}</dt>
+                <dd className="font-semibold tabular-nums">{t("aprofit.rankOf", { n: f.number(profit.rank), of: f.number(profit.of) })}</dd>
+              </div>
+              {profit.milkPriceMissing && <p className="col-span-2 text-xs text-amber-700">{t("aprofit.noMilkPrice")}</p>}
+              <p className="col-span-2 text-xs">
+                <Link href="/dashboard/profit/animals" className="text-emerald-700 hover:underline">
+                  {t("aprofit.openPage")}
+                </Link>
+              </p>
+            </dl>
           </Card>
         )}
 

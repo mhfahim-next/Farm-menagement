@@ -129,6 +129,22 @@ begin
   exception when others then v_ok := true;
   end;
   if not v_ok then raise exception 'a farmer could read reminder stats'; end if;
+
+  -- farm settings: the owner can change every kind and the profit-per-animal switch
+  update public.farms set has_goat = false, has_broiler = false, show_animal_profit = false where id = v_farm;
+  if (select has_goat or has_broiler or show_animal_profit from public.farms where id = v_farm) then
+    raise exception 'farm settings were not saved';
+  end if;
+  -- profit per animal: works on your farm, refused on someone else's
+  if jsonb_typeof(public.animal_profit_data(v_farm, current_date - 30, current_date)->'animals') <> 'array' then
+    raise exception 'animal_profit_data returned no animals list';
+  end if;
+  v_ok := false;
+  begin
+    perform public.animal_profit_data(gen_random_uuid(), current_date - 30, current_date);
+  exception when others then v_ok := true;
+  end;
+  if not v_ok then raise exception 'animal profit of another farm was readable'; end if;
 end $$;
 
 reset role;

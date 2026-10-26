@@ -37,14 +37,6 @@ export const UPCOMING: Upcoming[] = [
   },
   {
     status: "planned",
-    title: { en: "Profit per animal", bn: "প্রতিটি গাভীর লাভ-লোকসান" },
-    body: {
-      en: "See which cows earn their keep and which cost more than they give: milk, feed, medicine and breeding for each animal.",
-      bn: "কোন গাভী লাভ দিচ্ছে আর কোনটা খরচ বেশি করাচ্ছে দেখুন: প্রতিটি পশুর দুধ, খাবার, ওষুধ আর প্রজননের হিসাবে।",
-    },
-  },
-  {
-    status: "planned",
     title: { en: "Daily task list for workers", bn: "কর্মীদের দৈনিক কাজের তালিকা" },
     body: {
       en: "Give each worker today's jobs: vaccinate, weigh, clean, refill feed. Tick them off in the app.",
@@ -78,6 +70,21 @@ export const UPCOMING: Upcoming[] = [
 ];
 
 export const RELEASES: Release[] = [
+  {
+    id: "2026-10-26-animal-profit",
+    date: "2026-10-26",
+    title: { en: "Profit per animal", bn: "প্রতিটি পশুর লাভ-লোকসান" },
+    summary: {
+      en: "See which cows, goats and fattening animals earn their keep and which cost more than they give.",
+      bn: "কোন গাভী, ছাগল আর মোটাতাজাকরণের পশু লাভ দিচ্ছে আর কোনটা খরচ বেশি করাচ্ছে দেখুন।",
+    },
+    changes: [
+      { type: "new", en: "Cost & profit → Profit per animal: each animal's milk and sale against its purchase, medicine, breeding and share of feed and other costs, for the last 12 months, this year or all time.", bn: "খরচ ও লাভ → প্রতিটি পশুর লাভ-লোকসান: প্রতিটি পশুর দুধ ও বিক্রির আয় বনাম কেনা, ওষুধ, প্রজনন আর খাবার ও অন্যান্য খরচের ভাগ — গত ১২ মাস, এই বছর বা শুরু থেকে।" },
+      { type: "new", en: "Each animal's page shows its profit and its rank on the farm.", bn: "প্রতিটি পশুর পাতায় তার লাভ আর খামারে তার অবস্থান দেখা যায়।" },
+      { type: "improved", en: "Owners and managers can turn profit per animal off in Settings.", bn: "মালিক ও ম্যানেজার সেটিং থেকে প্রতিটি পশুর লাভ-লোকসান বন্ধ করতে পারেন।" },
+      { type: "fixed", en: "Turning goats & sheep, fattening or broilers on or off in Settings now saves.", bn: "সেটিং থেকে ছাগল ও ভেড়া, মোটাতাজাকরণ বা ব্রয়লার চালু-বন্ধ করলে এখন সংরক্ষণ হয়।" },
+    ],
+  },
   {
     id: "2026-10-26-reminders",
     date: "2026-10-26",

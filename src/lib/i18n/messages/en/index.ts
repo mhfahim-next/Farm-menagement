@@ -20,6 +20,7 @@ import { trade } from "./trade";
 import { payments } from "./payments";
 import { livestock } from "./livestock";
 import { reminders } from "./reminders";
+import { animalprofit } from "./animalprofit";
 
-export const en = { ...common, ...auth, ...landing, ...farm, ...dairy, ...account, ...plans, ...team, ...adminplans, ...blog, ...ai, ...farmops, ...community, ...trade, ...changelog, ...offline, ...importing, ...printing, ...analyticsplus, ...payments, ...livestock, ...reminders } as const;
+export const en = { ...common, ...auth, ...landing, ...farm, ...dairy, ...account, ...plans, ...team, ...adminplans, ...blog, ...ai, ...farmops, ...community, ...trade, ...changelog, ...offline, ...importing, ...printing, ...analyticsplus, ...payments, ...livestock, ...reminders, ...animalprofit } as const;
 export type EnMessages = typeof en;
