@@ -12,7 +12,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   const { t } = await getI18n();
   // Things waiting for an admin: open requests and unread messages (shown as menu badges).
   const { data: inbox } = await supabase.rpc("admin_inbox_counts");
-  const counts = (inbox ?? {}) as { requests?: number; messages?: number };
+  const counts = (inbox ?? {}) as { requests?: number; messages?: number; payments?: number };
 
   const nav: NavItem[] = [
     { href: "/admin", label: t("nav.adminOverview") },
@@ -20,6 +20,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
     { href: "/admin/users", label: t("nav.adminUsers") },
     { href: "/admin/farms", label: t("nav.adminFarms") },
     { href: "/admin/plans", label: t("nav.adminPlans") },
+    { href: "/admin/payments", label: t("nav.adminPayments"), badge: counts.payments ?? 0 },
     { href: "/admin/requests", label: t("nav.adminRequests"), badge: counts.requests ?? 0 },
     { href: "/admin/blog", label: t("nav.adminBlog") },
     { href: "/admin/community", label: t("nav.adminCommunity") },

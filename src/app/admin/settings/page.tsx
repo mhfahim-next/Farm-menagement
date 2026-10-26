@@ -3,7 +3,7 @@ import { ActionForm } from "@/components/action-form";
 import { Card, Field, Input, PageHeader, Textarea } from "@/components/ui";
 import { requireSuperAdmin } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
-import { saveAnnouncement, savePaymentInstructions, saveBreedingRules } from "../actions";
+import { saveAnnouncement, saveBreedingRules } from "../actions";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -74,16 +74,6 @@ export default async function AdminSettingsPage() {
         </ActionForm>
       </Card>
 
-      <Card title={t("admin.payment.title")} description={t("admin.payment.desc")} className="mt-6 max-w-2xl">
-        <ActionForm action={savePaymentInstructions} submitLabel={t("admin.payment.save")}>
-          <Field label={t("admin.payment.en")}>
-            <Textarea name="payment_en" rows={4} defaultValue={data?.payment_instructions_en ?? ""} />
-          </Field>
-          <Field label={t("admin.payment.bn")}>
-            <Textarea name="payment_bn" rows={4} defaultValue={data?.payment_instructions_bn ?? ""} />
-          </Field>
-        </ActionForm>
-      </Card>
     </>
   );
 }

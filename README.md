@@ -17,7 +17,7 @@ A multi-tenant farm management web app built with **Next.js 16 (App Router)** an
 - **Weight history** (each animal's page): add weights from a scale, a measuring tape (heart girth × body length → kg by Schaeffer's formula, worked out as you type and again on the server) or an estimate. Shows current weight, change since last, daily gain (kg/day), total gain and a line chart; the cattle list shows each animal's current weight. Weights are in the CSV reports (*Weight records*) and the AI assistant can record them ("007 weighs 350 kg", or girth and length from a tape).
 - **Breed dropdowns**: cattle and flock breed are admin-managed dropdowns (Local, Holstein Friesian, Jersey, Sahiwal, … / ISA Brown, Lohmann, Hy-Line, …). Older free-text breeds keep showing.
 - **Plans & limits** (Free / Pro / Business, shown live on the home page from the `plans` table). Limits are enforced by database triggers, so stale pages and the future mobile app cannot bypass them: Free allows 25 cattle. Users get a warning at 80 %, and at the limit the add form is replaced with an upgrade prompt.
-  - *Upgrade requests*: `/dashboard/plan` creates a request; a super admin approves it in *Admin → Requests* after the manual bKash/Nagad payment (instructions text is editable in *Admin → Plans*). No payment gateway is integrated yet.
+  - *Payments* (`/dashboard/plan` → *Upgrade* / *Renew* → `/dashboard/plan/pay`): pick 1 / 3 / 12 months (admin-set discounts) and a method. **bKash, Nagad, Rocket, Upay, bank transfer**: the farmer sends money to the number shown (each wallet in its own colours) and enters the **TrxID**; a super admin accepts or declines it in *Admin → Payments*. **SSLCommerz** and **Stripe**: online checkout, confirmed automatically (return page + IPN / webhook, always re-checked with the provider). Prices are in **taka for Bangladesh and US dollars elsewhere** (from the visitor's country; `?cur=usd` switches by hand). A paid plan has an end date; renewing early adds to it. When it passes nothing changes on its own: the farm shows in *Admin → Payments → Plans ending* and the admin moves it to Free, extends it or keeps it. Receipts (`FF-000123`) can be printed or saved as PDF. Plans without a price (Business, "contact us") still use an upgrade request in *Admin → Requests*.
   - *Pro / Business*: more cattle, flocks and team seats, **CSV reports** (`/dashboard/reports`, blocked with 403 on Free). *Business*: **multiple farms** with a farm switcher, and a priority support inbox.
 - **Doctors (veterinarians)**: sign up at `/doctor/signup`, fill in a profile (specialty, licence, area), and a super admin verifies them. Farm owners invite doctors by email; a doctor accepts at `/invites` and sees all their farms in `/doctor`. Vets can read everything except finances and write only health and breeding records. Vets do not use team seats.
 - **Archive / delete an animal**: *Archive* hides an animal from lists and pickers but keeps every record; it stops counting toward the plan limit and can be restored (restoring is blocked while the farm is at its limit). *Delete* permanently removes the animal with its milk, health and breeding records (owners and managers only, with a confirmation; calves just lose their mother link).
@@ -84,12 +84,13 @@ A super admin controls the whole system from `/admin` (only they can open it; ev
 | Overview | Users, farms, active cattle/flocks, 30-day milk and eggs, farms per plan |
 | Users | Search; **suspend / restore** (signs them out immediately), **make / remove super admin**, delete |
 | Farms | Search; change **plan**, **suspend / restore** a farm (its members are locked out), delete a farm and all its data; open a farm's summary |
-| Plans | Edit plan prices, limits and payment instructions |
+| Plans | Edit plan prices (taka and US$) and limits |
+| Payments | Accept / decline TrxIDs (menu badge), decide on plans that ended, list all payments; settings: **turn every method on/off** (and a master switch), account numbers, steps in English + Bangla, currencies, months & discounts, key status for Stripe / SSLCommerz |
 | Requests | Approve / reject upgrade and support requests |
 | Blog | Write, edit, publish and delete public blog articles (Bangla + English) |
 | Dropdowns | Every dropdown in the app (see below) |
 | Audit log | Every admin action: who, what, when |
-| Announcement | A banner shown at the top of every user's dashboard (English + Bangla), the payment instructions, and the **breeding rules** (pregnancy check due N days after AI, default 45) |
+| Announcement | A banner shown at the top of every user's dashboard (English + Bangla) and the **breeding rules** (pregnancy check due N days after AI, default 45) |
 
 ### Dropdowns
 
@@ -198,6 +199,20 @@ Sign up, create your farm, then add cattle and flocks.
 
 - **Web:** Vercel (set the three `NEXT_PUBLIC_*` env vars). `NEXT_PUBLIC_SITE_URL` must be the real address (e.g. `https://farmflows.app`): the sitemap, robots.txt, share image links and email links use it.
 - **Database:** Supabase cloud (`npx supabase db push`).
+
+### Payments (Stripe, SSLCommerz)
+
+bKash / Nagad / Rocket / Upay / bank need no keys: turn them on in *Admin → Payments → Settings* and add your number. The online gateways need server-side keys (Vercel → *Settings → Environment Variables*; never in the database or the browser), and the method stays hidden from farmers until they are set:
+
+| Variable | Where to get it |
+| --- | --- |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API → `service_role` (lets the server mark a verified online payment paid) |
+| `SSLCOMMERZ_STORE_ID`, `SSLCOMMERZ_STORE_PASSWORD` | SSLCommerz merchant panel (sandbox: register at developer.sslcommerz.com) |
+| `SSLCOMMERZ_LIVE` | `true` for real payments; anything else uses the sandbox |
+| `STRIPE_SECRET_KEY` | Stripe Dashboard → Developers → API keys (`sk_test_…` first, then `sk_live_…`) |
+| `STRIPE_WEBHOOK_SECRET` | Stripe → Developers → Webhooks → add `https://<your-domain>/api/payments/stripe/webhook` with `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`, `checkout.session.expired` → *Signing secret* (`whsec_…`) |
+
+SSLCommerz sends its IPN to `https://<your-domain>/api/payments/sslcommerz/ipn` (set it in the merchant panel too). Stripe needs a business in a country Stripe supports; check stripe.com/global. Everything a payment does is in migration `20261112000000_payments.sql` (tables `payment_methods`, `billing_periods`, `payments`; only a super admin or the server with the service-role key can mark a payment paid).
 
 ### SEO
 

@@ -23,6 +23,7 @@ function limit(fd: FormData, key: string): number | null | undefined {
 
 function fields(fd: FormData) {
   const price = str(fd, "price_monthly") === null ? null : num(fd, "price_monthly");
+  const priceUsd = str(fd, "price_monthly_usd") === null ? null : num(fd, "price_monthly_usd");
   const caps = {
     max_cattle: limit(fd, "max_cattle"),
     max_flocks: limit(fd, "max_flocks"),
@@ -33,6 +34,8 @@ function fields(fd: FormData) {
   const bad =
     price === undefined ||
     (price !== null && price < 0) ||
+    priceUsd === undefined ||
+    (priceUsd !== null && priceUsd < 0) ||
     Object.values(caps).some((v) => v === undefined || (v !== null && v < 0)) ||
     (caps.max_members !== null && caps.max_members! < 1) ||
     (caps.max_farms !== null && caps.max_farms! < 1);
@@ -41,6 +44,7 @@ function fields(fd: FormData) {
     name_en: str(fd, "name_en") ?? "",
     name_bn: str(fd, "name_bn"),
     price_monthly: price,
+    price_monthly_usd: priceUsd,
     ...(caps as Record<string, number | null>),
     can_export: fd.get("can_export") === "on",
     priority_support: fd.get("priority_support") === "on",

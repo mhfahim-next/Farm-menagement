@@ -18,9 +18,14 @@ export function PlanFields({ t, plan }: { t: I18n["t"]; plan?: Plan }) {
           <Input name="sort_order" type="number" defaultValue={plan?.sort_order ?? ""} />
         </Field>
       </div>
-      <Field label={t("admin.plans.price")} hint={t("admin.plans.priceHint")}>
-        <Input name="price_monthly" type="number" min="0" step="1" defaultValue={num(plan?.price_monthly)} className="max-w-48" />
-      </Field>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label={t("admin.plans.price")} hint={t("admin.plans.priceHint")}>
+          <Input name="price_monthly" type="number" min="0" step="1" defaultValue={num(plan?.price_monthly)} className="max-w-48" />
+        </Field>
+        <Field label={t("adminpay.priceUsd")} hint={t("adminpay.priceUsdHint")}>
+          <Input name="price_monthly_usd" type="number" min="0" step="0.01" defaultValue={num(plan?.price_monthly_usd)} className="max-w-48" />
+        </Field>
+      </div>
       <div className="grid gap-3 sm:grid-cols-4">
         <Field label={t("admin.plans.maxCattle")}>
           <Input name="max_cattle" type="number" min="0" defaultValue={num(plan?.max_cattle)} />

@@ -79,6 +79,21 @@ export const UPCOMING: Upcoming[] = [
 
 export const RELEASES: Release[] = [
   {
+    id: "2026-10-26-payments",
+    date: "2026-10-26",
+    title: { en: "Pay for your plan with bKash, Nagad, card and more", bn: "বিকাশ, নগদ, কার্ড ও আরও মাধ্যমে প্ল্যানের পেমেন্ট" },
+    summary: {
+      en: "Upgrade or renew right from the Plan page: send money by bKash, Nagad, Rocket, Upay or bank and enter the TrxID, or pay online with SSLCommerz or Stripe.",
+      bn: "প্ল্যান পাতা থেকেই আপগ্রেড বা নবায়ন করুন: বিকাশ, নগদ, রকেট, উপায় বা ব্যাংকে টাকা পাঠিয়ে TrxID দিন, অথবা SSLCommerz বা Stripe দিয়ে অনলাইনে পেমেন্ট করুন।",
+    },
+    changes: [
+      { type: "new", en: "Choose 1, 3 or 12 months (longer is cheaper) and how to pay. bKash, Nagad and the others show the number, the exact amount and the steps in their own colours; enter the TrxID and your plan starts once it is checked.", bn: "১, ৩ বা ১২ মাস বাছুন (বেশি মাসে কম দাম) আর পেমেন্টের মাধ্যম বাছুন। বিকাশ, নগদ ও অন্যগুলো নিজের রঙে নম্বর, ঠিক টাকার পরিমাণ আর ধাপ দেখায়; TrxID দিলে যাচাইয়ের পর প্ল্যান চালু হয়।" },
+      { type: "new", en: "Pay online by card, mobile banking or net banking through SSLCommerz, or by card through Stripe; the plan starts as soon as the payment is confirmed.", bn: "SSLCommerz দিয়ে কার্ড, মোবাইল ব্যাংকিং বা নেট ব্যাংকিংয়ে, অথবা Stripe দিয়ে কার্ডে অনলাইন পেমেন্ট; পেমেন্ট নিশ্চিত হলেই প্ল্যান চালু।" },
+      { type: "new", en: "Prices in taka in Bangladesh and in US dollars elsewhere, chosen by your country (you can switch).", bn: "বাংলাদেশে দাম টাকায়, অন্য দেশে মার্কিন ডলারে, আপনার দেশ দেখে ঠিক হয় (চাইলে বদলানো যায়)।" },
+      { type: "new", en: "Payment history with a printable receipt, the date your plan is paid until, and a reminder to renew when it is close.", bn: "পেমেন্টের ইতিহাস ও প্রিন্টযোগ্য রসিদ, প্ল্যান কোন তারিখ পর্যন্ত পরিশোধিত, আর মেয়াদ শেষের আগে নবায়নের কথা মনে করানো।" },
+    ],
+  },
+  {
     id: "2026-10-22-fixes",
     date: "2026-10-22",
     title: { en: "Pick any date for daily entries, and delete health and breeding records", bn: "দৈনিক এন্ট্রিতে যেকোনো তারিখ বাছুন, আর স্বাস্থ্য ও প্রজননের রেকর্ড মুছুন" },

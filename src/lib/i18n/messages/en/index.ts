@@ -17,6 +17,7 @@ import { team } from "./team";
 import { importing } from "./importing";
 import { offline } from "./offline";
 import { trade } from "./trade";
+import { payments } from "./payments";
 
-export const en = { ...common, ...auth, ...landing, ...farm, ...dairy, ...account, ...plans, ...team, ...adminplans, ...blog, ...ai, ...farmops, ...community, ...trade, ...changelog, ...offline, ...importing, ...printing, ...analyticsplus } as const;
+export const en = { ...common, ...auth, ...landing, ...farm, ...dairy, ...account, ...plans, ...team, ...adminplans, ...blog, ...ai, ...farmops, ...community, ...trade, ...changelog, ...offline, ...importing, ...printing, ...analyticsplus, ...payments } as const;
 export type EnMessages = typeof en;
