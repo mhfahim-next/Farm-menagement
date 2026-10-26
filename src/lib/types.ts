@@ -12,6 +12,8 @@ export type Farm = {
   has_dairy: boolean;
   has_layer: boolean;
   plan: "free" | "pro" | "business";
+  /** When the paid period ends (null = no end date). */
+  plan_expires_at?: string | null;
   suspended: boolean;
   created_at: string;
 };

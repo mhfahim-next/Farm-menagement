@@ -6,6 +6,8 @@ export type Plan = {
   name_en: string;
   name_bn: string | null;
   price_monthly: number | null;
+  /** Price for visitors outside Bangladesh; null = shown in taka only. */
+  price_monthly_usd?: number | null;
   max_cattle: number | null;
   max_flocks: number | null;
   max_members: number | null;
@@ -60,9 +62,14 @@ export function planFeatures(t: I18n["t"], plan: Plan): string[] {
   return out;
 }
 
-/** "৳999" / "৳1,999" (Bangla digits in Bangla) or "Custom". */
-export function priceText({ t, f }: Pick<I18n, "t" | "f">, plan: Plan) {
-  return plan.price_monthly === null ? t("plans.priceCustom") : t("plans.price", { n: f.number(plan.price_monthly) });
+/** "৳999" / "৳1,999" (Bangla digits in Bangla), "$9" for USD visitors, or "Custom". */
+export function priceText({ t, f }: Pick<I18n, "t" | "f">, plan: Plan, currency: "BDT" | "USD" = "BDT") {
+  if (plan.price_monthly === null) return t("plans.priceCustom");
+  const usd = plan.price_monthly_usd;
+  if (currency === "USD" && usd !== null && usd !== undefined) {
+    return Number.isInteger(usd) ? f.money(usd, "USD") : f.moneyExact(usd, "USD");
+  }
+  return t("plans.price", { n: f.number(plan.price_monthly) });
 }
 
 /**

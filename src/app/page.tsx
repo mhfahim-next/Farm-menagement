@@ -18,6 +18,7 @@ import { FaqSection } from "@/components/faq-section";
 import { HomeGlobe } from "@/components/home-globe";
 import { globeCopy } from "@/lib/country-copy";
 import { readGeo } from "@/lib/geo";
+import { currencyFor } from "@/lib/payments";
 import { JsonLd } from "@/components/json-ld";
 import { ReviewsSection } from "@/components/reviews-section";
 import { getApprovedReviews, getPublicStats, safe } from "@/lib/public-data";
@@ -41,7 +42,10 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   // Globe section worded for the visitor's country (?cc=IN previews another country).
   const sp = await searchParams;
   const preview = typeof sp.cc === "string" && /^[A-Za-z]{2}$/.test(sp.cc) ? sp.cc : null;
-  const copy = globeCopy(preview ?? (await readGeo()).country, locale);
+  const country = (await readGeo()).country;
+  const copy = globeCopy(preview ?? country, locale);
+  // Prices in taka for Bangladesh, dollars elsewhere.
+  const currency = currencyFor(preview ? preview.toUpperCase() : country);
   // Real platform numbers once there are enough farms; until then, plain facts.
   // "64 districts" is about Bangladesh, so other countries don't get it.
   const stats =
@@ -274,7 +278,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
                     className={`flex h-full flex-col rounded-2xl border bg-white p-6 ${highlight ? "border-emerald-600 shadow-lg shadow-emerald-700/10 ring-2 ring-emerald-600/20" : "border-stone-200"}`}
                   >
                     <h3 className="font-semibold">{planName(p, locale, p.key)}</h3>
-                    <p className="mt-2 text-3xl font-bold">{priceText(i18n, p)}</p>
+                    <p className="mt-2 text-3xl font-bold">{priceText(i18n, p, currency)}</p>
                     <p className="mt-1 text-sm text-stone-500">
                       {p.price_monthly === null ? t("plans.perMonthCustom") : t("plans.perMonth")}
                     </p>

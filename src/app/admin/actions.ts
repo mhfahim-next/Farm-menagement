@@ -85,18 +85,6 @@ export async function setDoctorVerified(_: ActionState, formData: FormData): Pro
   return run((s) => s.rpc("admin_set_doctor_verified", { p_user: id, p_value: formData.get("value") === "true" }), t("admin.actionDone"));
 }
 
-export async function savePaymentInstructions(_: ActionState, formData: FormData): Promise<ActionState> {
-  const { t } = await getI18n();
-  return run(
-    (s) =>
-      s.rpc("admin_set_payment_instructions", {
-        p_en: str(formData, "payment_en") ?? "",
-        p_bn: str(formData, "payment_bn") ?? "",
-      }),
-    t("admin.payment.saved"),
-  );
-}
-
 /** Approve/decline an upgrade request, or mark a support message answered. */
 export async function resolveRequest(id: string, approve: boolean, reply: string): Promise<ActionState> {
   const { t } = await getI18n();
