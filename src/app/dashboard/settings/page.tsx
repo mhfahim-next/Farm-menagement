@@ -55,6 +55,16 @@ export default async function SettingsPage() {
                   <Select name="currency" defaultValue={farm.currency} options={options("currency", farm.currency)} />
                 </Field>
                 <FarmKindFields t={t} farm={farm} />
+                <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-stone-200 p-3 has-[:checked]:border-emerald-600 has-[:checked]:bg-emerald-50">
+                  <input type="checkbox" name="show_animal_profit" defaultChecked={farm.show_animal_profit ?? true} className="mt-1 accent-emerald-700" data-testid="show-animal-profit" />
+                  <span aria-hidden className="text-xl leading-none">
+                    💰
+                  </span>
+                  <span>
+                    <span className="block text-sm font-medium">{t("aprofit.settingTitle")}</span>
+                    <span className="block text-xs text-stone-500">{t("aprofit.settingBody")}</span>
+                  </span>
+                </label>
               </fieldset>
             </ActionForm>
           </Card>

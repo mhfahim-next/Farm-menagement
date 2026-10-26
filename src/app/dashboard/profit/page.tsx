@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Card, EmptyState, Input, PageHeader, StatCard, Table, Td } from "@/components/ui";
+import { ButtonLink, Card, EmptyState, Input, PageHeader, StatCard, Table, Td } from "@/components/ui";
 import { requireRole, STAFF } from "@/lib/auth";
 import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
+import { keepsAnimals } from "@/lib/modules";
 import { monthResults, type MonthSummary, type SectionResult } from "@/lib/profit";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -97,7 +98,17 @@ export default async function ProfitPage({ searchParams }: PageProps<"/dashboard
 
   return (
     <>
-      <PageHeader title={t("profit.title")} description={t("profit.desc")} />
+      <PageHeader
+        title={t("profit.title")}
+        description={t("profit.desc")}
+        action={
+          keepsAnimals(farm) && farm.show_animal_profit !== false ? (
+            <ButtonLink href="/dashboard/profit/animals" variant="secondary" data-testid="animal-profit-link">
+              🐄 {t("aprofit.title")}
+            </ButtonLink>
+          ) : undefined
+        }
+      />
       <form className="mb-4 flex items-end justify-end gap-2">
         <Input name="month" type="month" defaultValue={month} className="w-auto" aria-label={t("sales.month")} />
         <button className="rounded-lg border border-stone-300 px-3 py-2 text-sm hover:bg-stone-50">{t("common.show")}</button>

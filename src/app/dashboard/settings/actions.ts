@@ -24,6 +24,7 @@ export async function updateFarm(_: ActionState, formData: FormData): Promise<Ac
       location: str(formData, "location"),
       currency: str(formData, "currency") ?? farm.currency,
       ...kinds,
+      show_animal_profit: formData.get("show_animal_profit") === "on",
     })
     .eq("id", farm.id);
   if (error) return { error: dbError(t, error) };

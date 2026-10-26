@@ -17,6 +17,8 @@ export type Farm = {
   plan: "free" | "pro" | "business";
   /** When the paid period ends (null = no end date). */
   plan_expires_at?: string | null;
+  /** Show profit per animal (the farm can turn it off in settings). */
+  show_animal_profit?: boolean;
   suspended: boolean;
   created_at: string;
 };

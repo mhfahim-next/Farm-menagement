@@ -125,3 +125,13 @@ export async function saveLivestockRules(_: ActionState, formData: FormData): Pr
     t("adminlive.saved"),
   );
 }
+
+/** Super admin: sends a test error to Sentry from the server, to check the setup. */
+export async function sendSentryTest(): Promise<ActionState> {
+  await requireSuperAdmin();
+  const { t } = await getI18n();
+  if (!process.env.NEXT_PUBLIC_SENTRY_DSN && !process.env.SENTRY_DSN) return { error: t("adminsentry.off") };
+  const Sentry = await import("@sentry/nextjs");
+  Sentry.captureException(new Error("FarmFlows Sentry test (server)"));
+  return (await Sentry.flush(5000)) ? { success: t("adminsentry.sent") } : { error: t("adminsentry.failed") };
+}
