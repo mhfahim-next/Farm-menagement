@@ -4,9 +4,9 @@ import "server-only";
 //   STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
 //   SSLCOMMERZ_STORE_ID, SSLCOMMERZ_STORE_PASSWORD, SSLCOMMERZ_LIVE=true (else sandbox)
 //   SUPABASE_SERVICE_ROLE_KEY (to mark a checked payment paid)
-import { createHmac, timingSafeEqual } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { SITE_URL } from "@/lib/site";
+export { stripeSignatureOk } from "@/lib/stripe-signature";
 import { SUPABASE_URL } from "@/lib/supabase/env";
 
 const env = (k: string) => process.env[k]?.trim() || null;
@@ -119,24 +119,6 @@ export async function stripeCheckout(p: {
 
 export function stripeSession(id: string) {
   return stripeApi<StripeSession>(`checkout/sessions/${encodeURIComponent(id)}`);
-}
-
-/**
- * Checks a webhook's Stripe-Signature header ("t=…,v1=…") against the raw body.
- * Rejects events older than five minutes so a captured one can't be replayed.
- */
-export function stripeSignatureOk(raw: string, header: string | null, secret: string, now = Date.now()) {
-  if (!header) return false;
-  const parts = header.split(",").map((x) => x.trim().split("="));
-  const t = parts.find(([k]) => k === "t")?.[1];
-  const sigs = parts.filter(([k]) => k === "v1").map(([, v]) => v);
-  if (!t || sigs.length === 0 || !/^\d+$/.test(t)) return false;
-  if (Math.abs(now / 1000 - Number(t)) > 300) return false;
-  const want = Buffer.from(createHmac("sha256", secret).update(`${t}.${raw}`).digest("hex"));
-  return sigs.some((s) => {
-    const got = Buffer.from(s ?? "");
-    return got.length === want.length && timingSafeEqual(got, want);
-  });
 }
 
 export type ConfirmResult = "paid" | "already" | "mismatch" | "missing" | "unpaid" | "error";
