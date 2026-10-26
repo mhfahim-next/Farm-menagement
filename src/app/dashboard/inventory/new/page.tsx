@@ -5,6 +5,7 @@ import { ButtonLink, Card, PageHeader } from "@/components/ui";
 import { requireRole, STAFF } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
 import { createItem } from "../actions";
+import { moduleAllowed } from "@/lib/modules";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -16,7 +17,7 @@ export default async function NewStockItemPage() {
   const i18n = await getI18n();
   const { t, options } = i18n;
   const modules = options("txn_module").filter(
-    (m) => (m.value !== "dairy" || farm.has_dairy) && (m.value !== "layer" || farm.has_layer),
+    (m) => moduleAllowed(farm, m.value),
   );
   return (
     <>

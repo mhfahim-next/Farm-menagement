@@ -3,7 +3,7 @@ import { ActionForm } from "@/components/action-form";
 import { Card, Field, Input, PageHeader, Textarea } from "@/components/ui";
 import { requireSuperAdmin } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
-import { saveAnnouncement, saveBreedingRules } from "../actions";
+import { saveAnnouncement, saveBreedingRules, saveLivestockRules } from "../actions";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -16,7 +16,7 @@ export default async function AdminSettingsPage() {
 
   const { data } = await supabase
     .from("system_settings")
-    .select("announcement_en, announcement_bn, announcement_active, payment_instructions_en, payment_instructions_bn, pregnancy_check_days")
+    .select("announcement_en, announcement_bn, announcement_active, payment_instructions_en, payment_instructions_bn, pregnancy_check_days, goat_gestation_days, sheep_gestation_days, qurbani_date")
     .eq("id", 1)
     .maybeSingle();
 
@@ -74,6 +74,21 @@ export default async function AdminSettingsPage() {
         </ActionForm>
       </Card>
 
+      <Card title={t("adminlive.title")} description={t("adminlive.desc")} className="mt-6 max-w-2xl">
+        <ActionForm action={saveLivestockRules} submitLabel={t("adminlive.save")}>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Field label={t("adminlive.goat")}>
+              <Input name="goat_gestation_days" type="number" min="130" max="170" required defaultValue={(data as Record<string, number> | null)?.goat_gestation_days ?? 150} />
+            </Field>
+            <Field label={t("adminlive.sheep")}>
+              <Input name="sheep_gestation_days" type="number" min="130" max="170" required defaultValue={(data as Record<string, number> | null)?.sheep_gestation_days ?? 147} />
+            </Field>
+            <Field label={t("adminlive.qurbani")}>
+              <Input name="qurbani_date" type="date" defaultValue={(data as Record<string, string> | null)?.qurbani_date ?? ""} />
+            </Field>
+          </div>
+        </ActionForm>
+      </Card>
     </>
   );
 }

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { MANAGERS, requireRole, STAFF } from "@/lib/auth";
 import { dbError, num, str } from "@/lib/form";
 import { getI18n } from "@/lib/i18n/server";
+import { isModule, moduleAllowed, type Module } from "@/lib/modules";
 import { PAY_METHODS, PRODUCT_DEFAULTS, PRODUCTS, SALE_UNITS, type Product, type SaleUnit } from "@/lib/trade";
 import type { ActionState } from "@/lib/types";
 
@@ -68,7 +69,9 @@ export async function addSale(_: ActionState, formData: FormData): Promise<Actio
   const product = str(formData, "product") as Product | null;
   if (!product || !(PRODUCTS as readonly string[]).includes(product)) return { error: t("sales.errProduct") };
   const unitRaw = str(formData, "unit");
-  const unit: SaleUnit = (SALE_UNITS as readonly string[]).includes(unitRaw ?? "") ? (unitRaw as SaleUnit) : PRODUCT_DEFAULTS[product].unit;
+  // Birds are always sold by weight.
+  const unit: SaleUnit =
+    product === "birds" ? "kg" : (SALE_UNITS as readonly string[]).includes(unitRaw ?? "") ? (unitRaw as SaleUnit) : PRODUCT_DEFAULTS[product].unit;
 
   const quantity = num(formData, "quantity");
   const unitPrice = num(formData, "unit_price");
@@ -82,14 +85,24 @@ export async function addSale(_: ActionState, formData: FormData): Promise<Actio
   if (paid < 0) return { error: t("sales.errPaid") };
 
   const cattleId = product === "animal" ? uuidOrNull(str(formData, "cattle_id")) : null;
-  const flockId = product === "eggs" || product === "animal" ? uuidOrNull(str(formData, "flock_id")) : null;
-  // Which part of the farm earned it: milk/cows → dairy, eggs/hens → layer.
+  const flockId = product === "eggs" || product === "animal" || product === "birds" ? uuidOrNull(str(formData, "flock_id")) : null;
+  const headCount = product === "birds" ? num(formData, "head_count") : null;
+  if (product === "birds") {
+    if (!flockId) return { error: t("broiler.errBatch") };
+    if (headCount === null || !Number.isInteger(headCount) || headCount <= 0) return { error: t("broiler.errHeads") };
+  }
+  // Which part of the farm earned it: milk → dairy, eggs → layer, birds → broiler,
+  // an animal → its own section (goats, fattening or dairy).
   const moduleRaw = str(formData, "module");
-  const section =
-    product === "milk" || cattleId ? "dairy"
-    : product === "eggs" || flockId ? "layer"
-    : moduleRaw === "dairy" || moduleRaw === "layer" ? moduleRaw
-    : PRODUCT_DEFAULTS[product].module;
+  let section: Module;
+  if (product === "milk") section = "dairy";
+  else if (product === "birds") section = "broiler";
+  else if (cattleId) {
+    const { data: animal } = await supabase.from("cattle").select("species, is_fattening").eq("id", cattleId).eq("farm_id", farm.id).maybeSingle();
+    section = animal?.species === "goat" || animal?.species === "sheep" ? "goat" : animal?.is_fattening ? "fattening" : "dairy";
+  } else if (product === "eggs" || flockId) section = "layer";
+  else if (moduleRaw && isModule(moduleRaw) && moduleAllowed(farm, moduleRaw)) section = moduleRaw;
+  else section = PRODUCT_DEFAULTS[product].module;
 
   const { error } = await supabase.from("sales").insert({
     farm_id: farm.id,
@@ -106,9 +119,14 @@ export async function addSale(_: ActionState, formData: FormData): Promise<Actio
     snf_percent: product === "milk" ? num(formData, "snf_percent") : null,
     cattle_id: cattleId,
     flock_id: flockId,
+    head_count: headCount,
     notes: str(formData, "notes"),
   });
-  if (error) return { error: dbError(t, error) };
+  if (error) {
+    const left = /BIRDS_LEFT:(\d+)/.exec(error.message);
+    if (left) return { error: t("broiler.errBirdsLeft", { n: Number(left[1]) }) };
+    return { error: dbError(t, error) };
+  }
   refresh();
   return { success: t("sales.saleSaved") };
 }

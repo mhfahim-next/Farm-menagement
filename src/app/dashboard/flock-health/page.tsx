@@ -11,6 +11,7 @@ import { dueLabel } from "@/lib/health";
 import { getI18n } from "@/lib/i18n/server";
 import type { FlockHealthRecord } from "@/lib/types";
 import { renewFlockHealth } from "./actions";
+import { keepsPoultry } from "@/lib/modules";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -21,7 +22,7 @@ const typeTone = { vaccination: "blue", parasite_control: "amber", deworming: "a
 
 export default async function FlockHealthPage({ searchParams }: PageProps<"/dashboard/flock-health">) {
   const { supabase, farm } = await requireRole(STAFF);
-  if (!farm.has_layer) notFound();
+  if (!keepsPoultry(farm)) notFound();
   const { t, f, o, options } = await getI18n();
 
   const sp = await searchParams;

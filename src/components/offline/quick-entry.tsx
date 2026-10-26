@@ -16,6 +16,8 @@ export type QuickData = {
   serverToday: string;
   hasDairy: boolean;
   hasLayer: boolean;
+  /** Money sections the farm uses (for the expense form). */
+  modules?: string[];
   isManager: boolean;
   cows: { id: string; tag_number: string; name: string | null }[];
   flocks: { id: string; name: string; lastFeed: string }[];
@@ -225,7 +227,7 @@ export function QuickEntry({ data }: { data: QuickData }) {
                     <Select
                       name="module"
                       defaultValue="general"
-                      options={options("txn_module").filter((m) => (m.value !== "dairy" || data.hasDairy) && (m.value !== "layer" || data.hasLayer))}
+                      options={options("txn_module").filter((m) => (data.modules ? data.modules.includes(m.value) : (m.value !== "dairy" || data.hasDairy) && (m.value !== "layer" || data.hasLayer)))}
                     />
                   </Field>
                   {data.flocks.length > 0 && (

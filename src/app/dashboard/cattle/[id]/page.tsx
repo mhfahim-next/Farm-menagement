@@ -12,7 +12,9 @@ import { LineChart } from "@/components/charts/line-chart";
 import { WeightForm } from "@/components/weight-form";
 import { Badge, ButtonLink, Card, EmptyState, Field, Input, PageHeader, Select, StatCard, Table, Td, Textarea } from "@/components/ui";
 import { MANAGERS, requireFarm } from "@/lib/auth";
-import { animalLabel, breedOptions, typeSexHint, type MotherCandidate } from "@/lib/cattle";
+import { animalLabel, breedOptions, categoryOptions, groupOf, listHref, typeSexHint, type MotherCandidate } from "@/lib/cattle";
+import { loadFattening } from "@/lib/fattening-data";
+import { fattens } from "@/lib/modules";
 import { heatSignsText, reproStatus } from "@/lib/breeding";
 import { getBreedingRules } from "@/lib/breeding-data";
 import { ageInMonths, today } from "@/lib/format";
@@ -23,6 +25,7 @@ import type { BreedingEvent, Cattle, HealthRecord, MilkRecord } from "@/lib/type
 import { deleteBreedingEvent, logBreedingEvent } from "../../breeding/actions";
 import { deleteHealth, recordHealth } from "../../health/actions";
 import { addWeight, archiveCattle, deleteCattle, deleteWeight, restoreCattle, updateCattle } from "../actions";
+import { startFatteningOne, stopFattening } from "../../fattening/actions";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -49,7 +52,7 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
     supabase.from("breeding_events").select("*").eq("cattle_id", id).order("event_date", { ascending: false }).order("event_time", { ascending: false, nullsFirst: false }),
     supabase
       .from("cattle")
-      .select("id, tag_number, name, category, status")
+      .select("id, tag_number, name, category, status, species")
       .eq("farm_id", farm.id)
       .eq("sex", "female")
       .is("deleted_at", null)
@@ -73,14 +76,21 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
   const milk = (milkRes.data ?? []) as MilkRecord[];
   const health = (healthRes.data ?? []) as HealthRecord[];
   const breeding = (breedingRes.data ?? []) as BreedingEvent[];
-  const females = (femalesRes.data ?? []) as MotherCandidate[];
+  // A mother is a female of the same species.
+  const females = ((femalesRes.data ?? []) as (MotherCandidate & { species?: string })[]).filter(
+    (a) => (a.species ?? "cattle") === (cow.species ?? "cattle") || a.id === cow.mother_id,
+  );
   const mother = females.find((a) => a.id === cow.mother_id) ?? null;
   const calves = calvesRes.data ?? [];
 
   const milkTotal = milk.reduce((s, m) => s + Number(m.quantity_liters), 0);
   const milkDays = new Set(milk.map((m) => m.record_date)).size;
   const withdrawal = health.find((h) => h.withdrawal_until && h.withdrawal_until >= today());
-  const rules = await getBreedingRules({ supabase });
+  const rules = await getBreedingRules({ supabase }, cow.species);
+  const group = groupOf(cow.species);
+  const backHref = listHref(cow.species);
+  const fat = fattens(farm) && cow.is_fattening ? (await loadFattening(supabase, farm.id, cow.id)).rows[0] : null;
+  const money = (n: number) => f.money(n, farm.currency);
   const checkDays = rules.pregnancyCheckDays;
   const repro = reproStatus(breeding, today(), rules);
   const dues = dueItems(health, today(), 60);
@@ -97,7 +107,9 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
 
   const stateKey = `breeding.state.${repro.state}` as "breeding.state.open";
   // Bulls and steers: no milk and no breeding (heat, AI, pregnancy, calving) sections.
+  // Goats and sheep: breeding, but no milk.
   const isFemale = cow.sex === "female";
+  const milks = isFemale && group === "cattle";
 
   return (
     <>
@@ -132,11 +144,11 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
                 id={cow.id}
                 label={t("cattle.delete")}
                 confirm={t("cattle.deleteConfirm", { tag: cow.tag_number })}
-                redirectTo="/dashboard/cattle"
+                redirectTo={backHref}
               />
             )}
-            <Link href="/dashboard/cattle" className="text-sm text-stone-500 hover:text-stone-900">
-              {t("cattle.allCattle")}
+            <Link href={backHref} className="text-sm text-stone-500 hover:text-stone-900">
+              {group === "small" ? t("goats.all") : t("cattle.allCattle")}
             </Link>
           </div>
         }
@@ -170,7 +182,7 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
           }
           tone={ws.change !== null ? (ws.change >= 0 ? "good" : "bad") : "default"}
         />
-        {isFemale && (
+        {milks && (
           <>
             <StatCard label={t("cattle.milk30")} value={t("common.litersShort", { n: f.number(milkTotal, 1) })} />
             <StatCard
@@ -232,7 +244,7 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
         {isFemale && (
         <Card title={t("cattle.breeding")}>
           <ActionDisclosure label={t("cattle.recordBreeding")} testId="record-breeding">
-            <BreedingForm action={logBreedingEvent} today={today()} currency={farm.currency} cattleId={cow.id} checkDays={checkDays} gestationDays={rules.gestationDays} />
+            <BreedingForm action={logBreedingEvent} today={today()} currency={farm.currency} cattleId={cow.id} checkDays={checkDays} gestationDays={rules.gestationDays} species={cow.species ?? "cattle"} />
           </ActionDisclosure>
           <p className="mb-4 text-sm text-stone-600">
               <Badge tone={repro.state === "pregnant" ? "green" : repro.state === "inseminated" ? "blue" : "default"}>
@@ -288,7 +300,7 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
         <Card title={t("weight.title")} description={t("weight.desc")}>
           {canWrite && (
             <ActionDisclosure label={t("weight.add")} open={weights.length === 0} testId="record-weight">
-              <WeightForm action={addWeight} cattleId={cow.id} today={today()} />
+              <WeightForm action={addWeight} cattleId={cow.id} today={today()} allowTape={group === "cattle"} />
             </ActionDisclosure>
           )}
           {weights.length === 0 ? (
@@ -350,7 +362,7 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
           )}
         </Card>
 
-        {isFemale && (
+        {milks && (
         <Card title={t("cattle.milkTitle")}>
           {milk.length === 0 ? (
             <EmptyState title={t("cattle.noMilk")}>
@@ -369,6 +381,56 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
             </Table>
           )}
         </Card>
+        )}
+
+        {fattens(farm) && cow.status === "active" && (
+          <Card
+            title={t("fatten.cardTitle")}
+            action={
+              canWrite &&
+              (cow.is_fattening ? (
+                <ConfirmForm action={stopFattening} fields={{ id: cow.id }} label={t("fatten.stop")} confirm={t("fatten.stopConfirm")} />
+              ) : (
+                <ConfirmForm action={startFatteningOne} fields={{ id: cow.id }} label={t("fatten.start")} variant="primary" />
+              ))
+            }
+          >
+            {fat ? (
+              <dl className="grid grid-cols-2 gap-3 text-sm" data-testid="fatten-card">
+                <div>
+                  <dt className="text-stone-500">{t("fatten.colDays")}</dt>
+                  <dd className="font-semibold tabular-nums">{f.number(fat.stats.daysOnFeed)}</dd>
+                </div>
+                <div>
+                  <dt className="text-stone-500">{t("fatten.colAdg")}</dt>
+                  <dd className="font-semibold tabular-nums">{fat.stats.adg !== null ? t("fatten.adgValue", { n: f.number(fat.stats.adg, 2) }) : "—"}</dd>
+                </div>
+                <div>
+                  <dt className="text-stone-500">{t("fatten.colProjected")}</dt>
+                  <dd className="font-semibold tabular-nums">{fat.stats.projectedKg !== null ? kg(fat.stats.projectedKg, 0) : "—"}</dd>
+                </div>
+                <div>
+                  <dt className="text-stone-500">{t("fatten.colCost")}</dt>
+                  <dd className="font-semibold tabular-nums">{money(fat.stats.costAtTarget)}</dd>
+                </div>
+                <div>
+                  <dt className="text-stone-500">{t("fatten.colBreakEven")}</dt>
+                  <dd className="font-semibold tabular-nums">{fat.stats.breakEvenPerKg !== null ? t("fatten.perKg", { amount: money(fat.stats.breakEvenPerKg) }) : "—"}</dd>
+                </div>
+                <div>
+                  <dt className="text-stone-500">{t("fatten.colProfit")}</dt>
+                  <dd className={`font-semibold tabular-nums ${(fat.stats.estProfit ?? 0) >= 0 ? "text-emerald-700" : "text-red-600"}`}>
+                    {fat.stats.estProfit !== null ? money(fat.stats.estProfit) : "—"}
+                  </dd>
+                </div>
+                <p className="col-span-2 text-xs text-stone-500">
+                  <Link href="/dashboard/fattening" className="text-emerald-700 hover:underline">{t("fatten.openPage")}</Link>
+                </p>
+              </dl>
+            ) : (
+              <p className="text-sm text-stone-500">{t("fatten.notOn")}</p>
+            )}
+          </Card>
         )}
 
         <Card title={t("cattle.familyTitle")}>
@@ -426,10 +488,18 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
                 <Input name="name" defaultValue={cow.name ?? ""} />
               </Field>
               <Field label={t("common.breed")}>
-                <Select name="breed" defaultValue={cow.breed ?? ""} options={breedOptions(i18n, "cattle_breed", cow.breed)} />
+                <Select
+                  name="breed"
+                  defaultValue={cow.breed ?? ""}
+                  options={
+                    group === "small"
+                      ? breedOptions(i18n, "cattle_breed", cow.breed).filter((b) => b.value === "" || b.value === "Other" || b.value === cow.breed || b.meta.species === "goat" || b.meta.species === "sheep")
+                      : breedOptions(i18n, "cattle_breed", cow.breed, "cattle")
+                  }
+                />
               </Field>
-              <Field label={t("common.category")} hint={typeSexHint(i18n)}>
-                <Select name="category" defaultValue={cow.category} options={options("cattle_category", cow.category)} />
+              <Field label={t("common.category")} hint={typeSexHint(i18n, group)}>
+                <Select name="category" defaultValue={cow.category} options={categoryOptions(i18n, group, cow.category)} />
               </Field>
               <Field label={t("common.status")}>
                 <Select name="status" defaultValue={cow.status} options={options("cattle_status", cow.status)} />

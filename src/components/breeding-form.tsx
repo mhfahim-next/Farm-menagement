@@ -18,11 +18,12 @@ export function BreedingForm({
   gestationDays,
   record,
   successHref,
+  species,
 }: {
   action: (state: ActionState, formData: FormData) => Promise<ActionState>;
   today: string;
   currency: string;
-  cows?: { id: string; label: string }[];
+  cows?: { id: string; label: string; species?: string }[];
   cattleId?: string;
   defaultType?: string;
   checkDays: number;
@@ -31,14 +32,21 @@ export function BreedingForm({
   record?: BreedingEvent;
   /** Where to go after a successful save. */
   successHref?: string;
+  /** Species of the animal (with cattleId); with a picker it follows the chosen animal. */
+  species?: string;
 }) {
   const { t, options } = useI18n();
   const [type, setType] = useState(record?.event_type ?? defaultType);
+  const [cowId, setCowId] = useState("");
   const timeInput = useRef<HTMLInputElement>(null);
-  // A newborn is usually a female non-milking type (heifer) by default.
-  const calfTypes = options("cattle_category");
-  const defaultCalfType =
-    calfTypes.find((c) => c.meta.sex === "female" && !c.meta.milking)?.value ?? calfTypes[0]?.value ?? "";
+  const animalSpecies = species ?? cows?.find((c) => c.id === cowId)?.species ?? "cattle";
+  const small = animalSpecies === "goat" || animalSpecies === "sheep";
+  // A newborn is the same species as its mother; usually a female non-milking type (heifer, female kid) by default.
+  const calfTypes = options("cattle_category").filter((c) => (c.meta.species ?? "cattle") === animalSpecies);
+  const youngFemale = calfTypes.filter((c) => c.meta.sex === "female" && !c.meta.milking);
+  const defaultCalfType = (youngFemale.at(small ? -1 : 0) ?? calfTypes[0])?.value ?? "";
+  // Goats and sheep are not dried off.
+  const eventTypes = options("breeding_event").filter((o) => !small || o.value !== "dry_off" || o.value === record?.event_type);
 
   return (
     <ActionForm action={action} submitLabel={record ? t("cattle.saveChanges") : t("breeding.submit")} className="grid gap-4" successHref={successHref}>
@@ -50,7 +58,8 @@ export function BreedingForm({
           <Select
             name="cattle_id"
             required
-            defaultValue=""
+            value={cowId}
+            onChange={(e) => setCowId(e.target.value)}
             options={[
               { value: "", label: t("breeding.chooseCowPlaceholder") },
               ...(cows ?? []).map((c) => ({ value: c.id, label: c.label })),
@@ -66,7 +75,7 @@ export function BreedingForm({
             value={type}
             onChange={(e) => setType(e.target.value)}
             disabled={!!record}
-            options={options("breeding_event")}
+            options={eventTypes}
           />
           {record && <input type="hidden" name="event_type" value={record.event_type} />}
         </Field>
@@ -155,7 +164,7 @@ export function BreedingForm({
               <Input name="calf_tag" />
             </Field>
             <Field label={t("breeding.calfType")}>
-              <Select name="calf_category" defaultValue={defaultCalfType} options={calfTypes} />
+              <Select key={animalSpecies} name="calf_category" defaultValue={defaultCalfType} options={calfTypes} />
             </Field>
           </div>
           <Field label={t("breeding.calfName")}>

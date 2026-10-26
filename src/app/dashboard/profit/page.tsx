@@ -21,11 +21,13 @@ export default async function ProfitPage({ searchParams }: PageProps<"/dashboard
   const from = new Date(Date.UTC(y, m - 6, 1)).toISOString().slice(0, 10);
   const to = new Date(Date.UTC(y, m, 0)).toISOString().slice(0, 10);
 
+  // Fattening, goats and broilers show their profit per animal / per batch on their own pages.
+  const hasOther = Boolean(farm.has_fattening || farm.has_goat || farm.has_broiler);
   const { data, error } = await supabase.rpc("farm_monthly_summary", { p_farm: farm.id, p_from: from, p_to: to });
   if (error) throw new Error(error.message);
   const months = (data ?? []) as MonthSummary[];
   const current = months.find((r) => r.month.startsWith(month));
-  const res = current ? monthResults(current, farm.has_dairy, farm.has_layer) : null;
+  const res = current ? monthResults(current, farm.has_dairy, farm.has_layer, hasOther) : null;
 
   const money = (n: number) => f.money(n, farm.currency);
   // Per-litre / per-egg figures need paisa; the money formatter rounds to whole taka.
@@ -120,6 +122,22 @@ export default async function ProfitPage({ searchParams }: PageProps<"/dashboard
         </div>
       )}
 
+      {hasOther && (
+        <div className="mt-6 flex flex-wrap gap-3 rounded-xl border border-stone-200 bg-white p-4 text-sm" data-testid="profit-elsewhere">
+          <span className="text-stone-600">{t("profit.elsewhere")}</span>
+          {farm.has_broiler && (
+            <Link href="/dashboard/broilers" className="font-medium text-emerald-700 hover:underline">
+              {t("nav.broilers")} →
+            </Link>
+          )}
+          {(farm.has_fattening || farm.has_goat) && (
+            <Link href="/dashboard/fattening" className="font-medium text-emerald-700 hover:underline">
+              {t("nav.fattening")} →
+            </Link>
+          )}
+        </div>
+      )}
+
       <Card className="mt-6" title={t("profit.trendTitle")} description={t("profit.trendDesc")}>
         <Table
           head={[
@@ -129,7 +147,7 @@ export default async function ProfitPage({ searchParams }: PageProps<"/dashboard
           ]}
         >
           {[...months].reverse().map((row) => {
-            const r = monthResults(row, farm.has_dairy, farm.has_layer);
+            const r = monthResults(row, farm.has_dairy, farm.has_layer, hasOther);
             const label = f.month(row.month);
             return (
               <tr key={row.month}>

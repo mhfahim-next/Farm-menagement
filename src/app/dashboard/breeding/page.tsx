@@ -8,6 +8,7 @@ import { daysBetween, heatSignsText, type BreedingAlertKind } from "@/lib/breedi
 import { loadBreedingBoard, type CowRepro } from "@/lib/breeding-data";
 import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
+import { breedsAnimals } from "@/lib/modules";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -27,7 +28,7 @@ const stateTone = { pregnant: "green", inseminated: "blue", open: "default" } as
 
 export default async function BreedingPage() {
   const { supabase, farm } = await requireFarm();
-  if (!farm.has_dairy) notFound();
+  if (!breedsAnimals(farm)) notFound();
 
   const { t, f, o } = await getI18n();
   const day = today();

@@ -26,9 +26,12 @@ export function PlanFields({ t, plan }: { t: I18n["t"]; plan?: Plan }) {
           <Input name="price_monthly_usd" type="number" min="0" step="0.01" defaultValue={num(plan?.price_monthly_usd)} className="max-w-48" />
         </Field>
       </div>
-      <div className="grid gap-3 sm:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-5">
         <Field label={t("admin.plans.maxCattle")}>
           <Input name="max_cattle" type="number" min="0" defaultValue={num(plan?.max_cattle)} />
+        </Field>
+        <Field label={t("adminpay.maxGoats")}>
+          <Input name="max_goats" type="number" min="0" defaultValue={num(plan?.max_goats)} />
         </Field>
         <Field label={t("admin.plans.maxFlocks")}>
           <Input name="max_flocks" type="number" min="0" defaultValue={num(plan?.max_flocks)} />

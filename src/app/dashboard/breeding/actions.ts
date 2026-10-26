@@ -11,6 +11,12 @@ import { getI18n } from "@/lib/i18n/server";
 import type { ActionState } from "@/lib/types";
 
 const EVENT_TYPES = ["heat", "insemination", "pregnancy_check", "calving", "dry_off"];
+
+/** The animal's species decides gestation and heat cycle. */
+async function speciesOf(supabase: Awaited<ReturnType<typeof requireFarm>>["supabase"], cattleId: string) {
+  const { data } = await supabase.from("cattle").select("species").eq("id", cattleId).maybeSingle();
+  return (data?.species as string | undefined) ?? "cattle";
+}
 const PREGNANCY_RESULTS = ["positive", "negative", "uncertain"];
 
 /** Optional "HH:MM" from a time input; anything else is ignored as empty. */
@@ -39,7 +45,8 @@ export async function logBreedingEvent(_: ActionState, formData: FormData): Prom
   }
 
   let expected = str(formData, "expected_calving_date");
-  if (!expected && eventType === "insemination") expected = addDays(eventDate, (await getBreedingRules({ supabase })).gestationDays);
+  const rules = await getBreedingRules({ supabase }, await speciesOf(supabase, cattleId));
+  if (!expected && eventType === "insemination") expected = addDays(eventDate, rules.gestationDays);
 
   const heatSigns = formData
     .getAll("heat_sign")
@@ -75,6 +82,9 @@ export async function logBreedingEvent(_: ActionState, formData: FormData): Prom
       .eq("id", cattleId)
       .eq("farm_id", farm.id)
       .eq("category", "heifer");
+    // Likewise a young doe or ewe becomes an adult once she has given birth.
+    await supabase.from("cattle").update({ category: "doe" }).eq("id", cattleId).eq("farm_id", farm.id).eq("category", "doeling");
+    await supabase.from("cattle").update({ category: "ewe" }).eq("id", cattleId).eq("farm_id", farm.id).eq("category", "ewe_lamb");
 
     if (calfTag) {
       const [{ data: dam }, { data: lastAi }] = await Promise.all([
@@ -114,7 +124,7 @@ export async function logBreedingEvent(_: ActionState, formData: FormData): Prom
   } else if (eventType === "insemination" && expected) {
     message = t("breeding.aiSaved", { date: f.date(expected) });
   } else if (eventType === "heat") {
-    message = t("breeding.heatSaved", { date: f.date(addDays(eventDate, (await getBreedingRules({ supabase })).heatCycleDays)) });
+    message = t("breeding.heatSaved", { date: f.date(addDays(eventDate, rules.heatCycleDays)) });
   }
 
   revalidatePath("/dashboard", "layout");
@@ -136,7 +146,7 @@ export async function updateBreedingEvent(_: ActionState, formData: FormData): P
 
   const { data: existing } = await supabase
     .from("breeding_events")
-    .select("event_type")
+    .select("event_type, cattle_id")
     .eq("id", id)
     .eq("farm_id", farm.id)
     .maybeSingle();
@@ -149,7 +159,9 @@ export async function updateBreedingEvent(_: ActionState, formData: FormData): P
   }
 
   let expected: string | null = null;
-  if (eventType === "insemination") expected = str(formData, "expected_calving_date") ?? addDays(eventDate, (await getBreedingRules({ supabase })).gestationDays);
+  if (eventType === "insemination") {
+    expected = str(formData, "expected_calving_date") ?? addDays(eventDate, (await getBreedingRules({ supabase }, await speciesOf(supabase, existing.cattle_id as string))).gestationDays);
+  }
 
   const heatSigns = formData
     .getAll("heat_sign")

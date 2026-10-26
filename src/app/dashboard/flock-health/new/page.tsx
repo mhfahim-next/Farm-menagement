@@ -6,6 +6,7 @@ import { requireRole, STAFF } from "@/lib/auth";
 import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import { recordFlockHealth } from "../actions";
+import { keepsPoultry } from "@/lib/modules";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -14,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function NewFlockHealthPage({ searchParams }: PageProps<"/dashboard/flock-health/new">) {
   const { supabase, farm } = await requireRole(STAFF);
-  if (!farm.has_layer) notFound();
+  if (!keepsPoultry(farm)) notFound();
   const { t } = await getI18n();
   const sp = await searchParams;
 

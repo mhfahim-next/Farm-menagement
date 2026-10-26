@@ -5,6 +5,7 @@ import { requireRole, STAFF } from "@/lib/auth";
 import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import { getPlanContext } from "@/lib/plans";
+import { keepsAnimals, keepsPoultry } from "@/lib/modules";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -29,7 +30,7 @@ export default async function ReportsPage() {
   const { plan } = await getPlanContext();
   const allowed = Boolean(plan?.can_export);
   const canUpgrade = role === "owner" || role === "manager";
-  const shown = reports.filter((r) => !("dairy" in r && r.dairy && !farm.has_dairy) && !("layer" in r && r.layer && !farm.has_layer));
+  const shown = reports.filter((r) => !("dairy" in r && r.dairy && !keepsAnimals(farm)) && !("layer" in r && r.layer && !keepsPoultry(farm)));
 
   return (
     <>

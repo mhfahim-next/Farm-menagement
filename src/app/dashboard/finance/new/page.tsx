@@ -6,6 +6,7 @@ import { requireRole, STAFF } from "@/lib/auth";
 import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import { addTransaction } from "../actions";
+import { moduleAllowed } from "@/lib/modules";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -17,7 +18,7 @@ export default async function NewTransactionPage() {
   const { t, options } = await getI18n();
   // Only the modules this farm uses; labels come from the admin-managed list.
   const moduleOptions = options("txn_module").filter(
-    (m) => (m.value !== "dairy" || farm.has_dairy) && (m.value !== "layer" || farm.has_layer),
+    (m) => moduleAllowed(farm, m.value),
   );
 
   return (

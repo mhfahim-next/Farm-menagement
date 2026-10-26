@@ -37,6 +37,10 @@ export type OptionMeta = {
   record_type?: string;
   product?: string;
   interval_days?: number;
+  /** cattle_category / cattle_breed: goat or sheep (cattle when missing). */
+  species?: "cattle" | "goat" | "sheep";
+  /** flock_breed: "meat" for broiler breeds. */
+  kind?: "meat";
 };
 
 export type OptionRow = {

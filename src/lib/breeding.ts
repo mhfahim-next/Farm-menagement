@@ -20,6 +20,22 @@ export type BreedingRules = {
   voluntaryWaitDays: number;
 };
 
+/** Defaults for goats and sheep (gestation is admin-editable). */
+export const GOAT_GESTATION_DAYS = 150;
+export const SHEEP_GESTATION_DAYS = 147;
+export const SHEEP_HEAT_CYCLE_DAYS = 17;
+
+/** The calendar for one species, from the cattle rules and the goat / sheep gestation. */
+export function rulesForSpecies(
+  cattle: BreedingRules,
+  species: string | null | undefined,
+  small: { goatGestationDays: number; sheepGestationDays: number } = { goatGestationDays: GOAT_GESTATION_DAYS, sheepGestationDays: SHEEP_GESTATION_DAYS },
+): BreedingRules {
+  if (species === "goat") return { ...cattle, gestationDays: small.goatGestationDays, heatCycleDays: HEAT_CYCLE_DAYS, dryOffDays: 0 };
+  if (species === "sheep") return { ...cattle, gestationDays: small.sheepGestationDays, heatCycleDays: SHEEP_HEAT_CYCLE_DAYS, dryOffDays: 0 };
+  return cattle;
+}
+
 export const DEFAULT_BREEDING_RULES: BreedingRules = {
   pregnancyCheckDays: PREGNANCY_CHECK_AFTER_DAYS,
   gestationDays: GESTATION_DAYS,
@@ -156,7 +172,8 @@ export function reproStatus(
     daysSinceCalving !== null &&
     daysSinceCalving > rules.voluntaryWaitDays;
 
-  const dryOffDue = expectedCalving ? addDays(expectedCalving, -rules.dryOffDays) : null;
+  // Goats and sheep are not dried off (dryOffDays = 0).
+  const dryOffDue = expectedCalving && rules.dryOffDays > 0 ? addDays(expectedCalving, -rules.dryOffDays) : null;
 
   return {
     state,

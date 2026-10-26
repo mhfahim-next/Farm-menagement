@@ -19,6 +19,8 @@ export type MonthSummary = {
   milk_sales_amount: number;
   eggs_sold: number;
   egg_sales_amount: number;
+  /** Spending of the other sections (fattening, goats, broilers); they take a share of shared costs too. */
+  other_expense?: number;
 };
 
 export type SectionResult = {
@@ -42,20 +44,28 @@ const div = (a: number, b: number) => (b > 0 ? a / b : null);
 
 /**
  * Shared costs and income (rent, electricity, manure… entered as "general")
- * are split between dairy and layer in proportion to each section's own costs.
+ * are split between the farm's sections in proportion to each section's own
+ * costs (dairy, layer, and the others: fattening, goats, broilers).
  * A farm that runs only one section carries all of them there.
- * Returns dairy's share (0–1); layer gets the rest.
+ * Returns the dairy and layer shares (0–1); the others get the rest.
  */
-export function dairyShare(s: MonthSummary, hasDairy: boolean, hasLayer: boolean) {
-  if (!hasLayer) return 1;
-  if (!hasDairy) return 0;
-  const d = Number(s.dairy_expense);
-  const l = Number(s.layer_expense);
-  return d + l > 0 ? d / (d + l) : 0.5;
+export function sectionShares(s: MonthSummary, hasDairy: boolean, hasLayer: boolean, hasOther = false) {
+  const d = hasDairy ? Number(s.dairy_expense) : 0;
+  const l = hasLayer ? Number(s.layer_expense) : 0;
+  const o = hasOther ? Number(s.other_expense ?? 0) : 0;
+  const total = d + l + o;
+  if (total > 0) return { dairy: d / total, layer: l / total };
+  const parts = [hasDairy, hasLayer, hasOther].filter(Boolean).length || 1;
+  return { dairy: hasDairy ? 1 / parts : 0, layer: hasLayer ? 1 / parts : 0 };
 }
 
-export function monthResults(s: MonthSummary, hasDairy: boolean, hasLayer: boolean) {
-  const ratio = dairyShare(s, hasDairy, hasLayer);
+/** Dairy's share of shared costs (kept for callers that only run dairy and layer). */
+export function dairyShare(s: MonthSummary, hasDairy: boolean, hasLayer: boolean) {
+  return sectionShares(s, hasDairy, hasLayer).dairy;
+}
+
+export function monthResults(s: MonthSummary, hasDairy: boolean, hasLayer: boolean, hasOther = false) {
+  const shares = sectionShares(s, hasDairy, hasLayer, hasOther);
   const sharedCost = Number(s.general_expense);
   const sharedIncome = Number(s.general_income);
 
@@ -89,11 +99,11 @@ export function monthResults(s: MonthSummary, hasDairy: boolean, hasLayer: boole
 
   return {
     dairy: section(
-      Number(s.dairy_expense), sharedCost * ratio, Number(s.dairy_income), sharedIncome * ratio,
+      Number(s.dairy_expense), sharedCost * shares.dairy, Number(s.dairy_income), sharedIncome * shares.dairy,
       Number(s.milk_litres), Number(s.dairy_feed_expense), Number(s.milk_sold_litres), Number(s.milk_sales_amount),
     ),
     layer: section(
-      Number(s.layer_expense), sharedCost * (1 - ratio), Number(s.layer_income), sharedIncome * (1 - ratio),
+      Number(s.layer_expense), sharedCost * shares.layer, Number(s.layer_income), sharedIncome * shares.layer,
       Number(s.eggs_collected), Number(s.layer_feed_expense), Number(s.eggs_sold), Number(s.egg_sales_amount),
     ),
     /** kg of feed per egg collected (layer). */

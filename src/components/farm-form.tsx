@@ -1,4 +1,5 @@
 import { ActionForm } from "@/components/action-form";
+import { FarmKindFields } from "@/components/farm-kind-fields";
 import { Field, Input, Select } from "@/components/ui";
 import type { I18n } from "@/lib/i18n/core";
 import type { ActionState } from "@/lib/types";
@@ -30,23 +31,7 @@ export function FarmForm({
       <Field label={t("common.currency")}>
         <Select name="currency" defaultValue={defaultCurrency} options={currencies} />
       </Field>
-      <fieldset className="grid gap-2">
-        <legend className="mb-1.5 text-sm font-medium text-stone-700">{t("onboarding.farmTypeLegend")}</legend>
-        <ModuleOption name="has_dairy" title={t("onboarding.dairyTitle")} body={t("onboarding.dairyBody")} />
-        <ModuleOption name="has_layer" title={t("onboarding.layerTitle")} body={t("onboarding.layerBody")} />
-      </fieldset>
+      <FarmKindFields t={t} />
     </ActionForm>
-  );
-}
-
-function ModuleOption({ name, title, body }: { name: string; title: string; body: string }) {
-  return (
-    <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-stone-200 p-3 has-[:checked]:border-emerald-600 has-[:checked]:bg-emerald-50">
-      <input type="checkbox" name={name} defaultChecked className="mt-1 accent-emerald-700" />
-      <span>
-        <span className="block text-sm font-medium">{title}</span>
-        <span className="block text-xs text-stone-500">{body}</span>
-      </span>
-    </label>
   );
 }

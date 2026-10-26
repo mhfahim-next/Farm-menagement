@@ -6,6 +6,8 @@ import { Card, PageHeader, Select } from "@/components/ui";
 import { requireRole, STAFF } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
 import { animalUrl, qrSvg } from "@/lib/qr";
+import { keepsAnimals } from "@/lib/modules";
+import { GROUP_SPECIES } from "@/lib/cattle";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -24,14 +26,16 @@ const PRINT_COLS = { small: "print:grid-cols-4", medium: "print:grid-cols-3", la
 
 export default async function AnimalTagsPage({ searchParams }: PageProps<"/dashboard/cattle/tags">) {
   const { supabase, farm } = await requireRole(STAFF);
-  if (!farm.has_dairy) notFound();
+  if (!keepsAnimals(farm)) notFound();
   const { t, e, o } = await getI18n();
 
   const sp = await searchParams;
   const status = STATUSES.find((s) => s === sp.status) ?? "active";
   const size = SIZES.find((s) => s === sp.size) ?? "medium";
 
-  let query = supabase.from("cattle").select("id, tag_number, name, category, status").eq("farm_id", farm.id).is("deleted_at", null).order("tag_number");
+  // Goats & sheep print from their own list (?group=small).
+  const group = sp.group === "small" ? "small" : "cattle";
+  let query = supabase.from("cattle").select("id, tag_number, name, category, status").eq("farm_id", farm.id).in("species", GROUP_SPECIES[group]).is("deleted_at", null).order("tag_number");
   if (status !== "all") query = query.eq("status", status);
   const { data, error } = await query;
   if (error) throw new Error(error.message);
@@ -45,13 +49,14 @@ export default async function AnimalTagsPage({ searchParams }: PageProps<"/dashb
           title={t("print.tagsTitle")}
           description={t("print.tagsDesc")}
           action={
-            <Link href="/dashboard/cattle" className="text-sm text-stone-500 hover:text-stone-900">
-              {t("cattle.allCattle")}
+            <Link href={group === "small" ? "/dashboard/goats" : "/dashboard/cattle"} className="text-sm text-stone-500 hover:text-stone-900">
+              {group === "small" ? t("goats.all") : t("cattle.allCattle")}
             </Link>
           }
         />
         <Card>
           <form className="flex flex-wrap items-end gap-3">
+            {group === "small" && <input type="hidden" name="group" value="small" />}
             <label className="flex flex-col gap-1.5 text-sm">
               <span className="font-medium text-stone-700">{t("common.status")}</span>
               <Select

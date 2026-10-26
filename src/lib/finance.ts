@@ -1,13 +1,14 @@
 // Helpers for the unified money ledger (the finance_ledger view).
+import type { Module } from "./modules";
 
 export type LedgerSource = "manual" | "health" | "breeding" | "flock_health" | "salary" | "inventory" | "sale";
-export type LedgerView = "all" | "dairy" | "layer";
+export type LedgerView = "all" | Module;
 
 export type LedgerRow = {
   farm_id: string;
   txn_date: string;
   txn_type: "income" | "expense";
-  module: "dairy" | "layer" | "general";
+  module: Module;
   category: string;
   amount: number;
   description: string | null;

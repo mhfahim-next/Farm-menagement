@@ -9,6 +9,8 @@ export type Plan = {
   /** Price for visitors outside Bangladesh; null = shown in taka only. */
   price_monthly_usd?: number | null;
   max_cattle: number | null;
+  /** Goats and sheep together; null = unlimited. */
+  max_goats?: number | null;
   max_flocks: number | null;
   max_members: number | null;
   max_farms: number | null;
@@ -20,11 +22,16 @@ export type Plan = {
   sort_order: number;
 };
 
-export type UsageKey = "cattle" | "flocks" | "members";
+export type UsageKey = "cattle" | "goats" | "flocks" | "members";
 export type Usage = Record<UsageKey, number>;
 export type LimitState = "ok" | "warn" | "full" | "over";
 
-export const USAGE_KEYS: UsageKey[] = ["cattle", "flocks", "members"];
+export const USAGE_KEYS: UsageKey[] = ["cattle", "goats", "flocks", "members"];
+
+/** Usage meters worth showing for a farm: goats only on farms that keep them. */
+export function usageKeysFor(farm: { has_goat?: boolean }) {
+  return USAGE_KEYS.filter((k) => k !== "goats" || farm.has_goat);
+}
 
 export function planName(plan: Pick<Plan, "name_en" | "name_bn"> | undefined, locale: string, fallback = "") {
   if (!plan) return fallback;
@@ -32,6 +39,7 @@ export function planName(plan: Pick<Plan, "name_en" | "name_bn"> | undefined, lo
 }
 
 export function limitOf(plan: Plan, key: UsageKey): number | null {
+  if (key === "goats") return plan.max_goats ?? null;
   return key === "cattle" ? plan.max_cattle : key === "flocks" ? plan.max_flocks : plan.max_members;
 }
 
@@ -47,6 +55,9 @@ export function limitState(used: number, max: number | null): LimitState {
 export function planFeatures(t: I18n["t"], plan: Plan): string[] {
   const out: string[] = [];
   out.push(plan.max_cattle === null ? t("plans.feat.cattleUnlimited") : t("plans.feat.cattle", { n: plan.max_cattle }));
+  if (plan.max_goats !== undefined) {
+    out.push(plan.max_goats === null ? t("plans.feat.goatsUnlimited") : t("plans.feat.goats", { n: plan.max_goats }));
+  }
   out.push(plan.max_flocks === null ? t("plans.feat.flocksUnlimited") : t("plans.feat.flocks", { n: plan.max_flocks }));
   out.push(plan.max_members === null ? t("plans.feat.membersUnlimited") : t("plans.feat.members", { n: plan.max_members }));
   out.push(plan.max_farms === null ? t("plans.feat.farmsUnlimited") : t("plans.feat.farms", { n: plan.max_farms }));

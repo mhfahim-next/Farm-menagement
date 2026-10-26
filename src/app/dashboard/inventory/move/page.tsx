@@ -8,6 +8,8 @@ import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import { MOVE_TYPES, type MoveType, type StockItem } from "@/lib/trade";
 import { addMove } from "../actions";
+import { moduleAllowed } from "@/lib/modules";
+import { keepsPoultry } from "@/lib/modules";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -23,14 +25,14 @@ export default async function StockMovePage({ searchParams }: PageProps<"/dashbo
 
   const [{ data }, { data: flockRows }] = await Promise.all([
     supabase.from("inventory_stock").select("*").eq("farm_id", farm.id).eq("archived", false).order("name"),
-    farm.has_layer
+    keepsPoultry(farm)
       ? supabase.from("flocks").select("id, name").eq("farm_id", farm.id).eq("status", "active").is("deleted_at", null).order("name")
       : Promise.resolve({ data: [] }),
   ]);
   const items = (data ?? []) as StockItem[];
   const flocks = (flockRows ?? []) as { id: string; name: string }[];
   const modules = options("txn_module").filter(
-    (m) => (m.value !== "dairy" || farm.has_dairy) && (m.value !== "layer" || farm.has_layer),
+    (m) => moduleAllowed(farm, m.value),
   );
   const selected = items.find((i) => i.id === preset);
   const unitOf = (i: StockItem) => t(`stock.unit.${i.unit}`);

@@ -11,6 +11,9 @@ export type Farm = {
   currency: string;
   has_dairy: boolean;
   has_layer: boolean;
+  has_goat?: boolean;
+  has_fattening?: boolean;
+  has_broiler?: boolean;
   plan: "free" | "pro" | "business";
   /** When the paid period ends (null = no end date). */
   plan_expires_at?: string | null;
@@ -34,6 +37,11 @@ export type Cattle = {
   mother_id: string | null;
   father: string | null;
   notes: string | null;
+  species?: "cattle" | "goat" | "sheep";
+  /** Being fattened for sale (Qurbani). */
+  is_fattening?: boolean;
+  fattening_start?: string | null;
+  target_weight_kg?: number | null;
   created_at: string;
 };
 
@@ -97,6 +105,10 @@ export type Flock = {
   age_at_placement_weeks: number;
   initial_count: number;
   status: "active" | "sold" | "culled";
+  /** layer, or a meat batch (broiler / sonali). */
+  kind?: "layer" | "broiler" | "sonali";
+  /** Price paid per day-old chick (meat batches). */
+  chick_price?: number | null;
   notes: string | null;
 };
 
@@ -108,6 +120,9 @@ export type FlockStats = {
   current_count: number;
   total_eggs: number;
   total_feed_kg: number;
+  total_sold?: number;
+  total_sold_kg?: number;
+  total_sales?: number;
 };
 
 export type FlockDailyLog = {
@@ -121,6 +136,8 @@ export type FlockDailyLog = {
   feed_kg: number | null;
   feed_item_id?: string | null;
   water_liters: number | null;
+  /** Average live weight of a sample of birds, grams (meat batches). */
+  avg_weight_g?: number | null;
   notes: string | null;
 };
 
@@ -128,7 +145,7 @@ export type Transaction = {
   id: string;
   txn_date: string;
   txn_type: "income" | "expense";
-  module: "dairy" | "layer" | "general";
+  module: import("./modules").Module;
   category: string;
   amount: number;
   description: string | null;
