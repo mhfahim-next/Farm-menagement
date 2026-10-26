@@ -20,6 +20,7 @@ export function AppShell({
   user,
   inAdmin = false,
   banner,
+  actions,
   children,
 }: {
   logoHref: string;
@@ -31,6 +32,8 @@ export function AppShell({
   user: MenuUser;
   inAdmin?: boolean;
   banner?: ReactNode;
+  /** Extra buttons in the top bar, before the language switch (e.g. the reminders bell). */
+  actions?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -49,6 +52,7 @@ export function AppShell({
             )}
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2">
+            {actions}
             <LanguageSwitcher />
             <ThemeToggle />
             <UserMenu user={user} inAdmin={inAdmin} />

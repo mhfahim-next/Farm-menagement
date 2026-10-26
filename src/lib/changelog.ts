@@ -29,10 +29,10 @@ export const UPCOMING: Upcoming[] = [
   },
   {
     status: "next",
-    title: { en: "Reminders on your phone", bn: "ফোনে রিমাইন্ডার" },
+    title: { en: "Reminders on WhatsApp", bn: "WhatsApp-এ রিমাইন্ডার" },
     body: {
-      en: "Vaccine due, cow in heat, pregnancy check and calving dates sent to your phone, so you don't have to open the app to find out.",
-      bn: "টিকার তারিখ, গরম, গর্ভ পরীক্ষা আর বাচ্চা হওয়ার দিন ফোনে জানানো হবে, অ্যাপ খুলে খুঁজতে হবে না।",
+      en: "The morning summary on WhatsApp too, for phones where app notifications are easy to miss.",
+      bn: "সকালের সারাংশ WhatsApp-এও, যাদের ফোনে অ্যাপের নোটিফিকেশন চোখ এড়িয়ে যায় তাদের জন্য।",
     },
   },
   {
@@ -78,6 +78,21 @@ export const UPCOMING: Upcoming[] = [
 ];
 
 export const RELEASES: Release[] = [
+  {
+    id: "2026-10-26-reminders",
+    date: "2026-10-26",
+    title: { en: "Reminders on your phone and by email", bn: "ফোনে আর ইমেইলে রিমাইন্ডার" },
+    summary: {
+      en: "A bell in the top bar with everything that needs doing, a morning summary as a phone notification, and an optional daily or weekly email.",
+      bn: "ওপরের বারে ঘণ্টা আইকনে সব করণীয়, সকালে ফোনে নোটিফিকেশনে সারাংশ, আর চাইলে প্রতিদিন বা সপ্তাহে একবার ইমেইল।",
+    },
+    changes: [
+      { type: "new", en: "🔔 Reminders: vaccines and deworming, heat, pregnancy checks, births, low stock, buyer dues, broiler weighing and sale age, the Qurbani countdown and your plan ending — worked out from your records.", bn: "🔔 রিমাইন্ডার: টিকা ও কৃমিনাশক, গরম আসা, গর্ভ পরীক্ষা, বাচ্চা হওয়া, স্টক কম, ক্রেতার বাকি, ব্রয়লারের ওজন ও বিক্রির বয়স, কোরবানির দিন গণনা আর প্ল্যানের মেয়াদ — আপনার হিসাব থেকেই।" },
+      { type: "new", en: "Phone notifications: a summary at 7 am, and at 8 pm if today's milk or eggs are not entered. Turn them on in Reminders.", bn: "ফোনে নোটিফিকেশন: সকাল ৭টায় সারাংশ, আর রাত ৮টায় যদি আজকের দুধ বা ডিম লেখা না হয়। রিমাইন্ডার পাতা থেকে চালু করুন।" },
+      { type: "new", en: "Email summary every morning or once a week.", bn: "প্রতিদিন সকালে বা সপ্তাহে একবার ইমেইলে সারাংশ।" },
+      { type: "improved", en: "Each person chooses what to be reminded about; workers get daily work and vaccines, vets get health and breeding.", bn: "প্রত্যেকে নিজে বেছে নেন কোন রিমাইন্ডার চান; কর্মীরা পান প্রতিদিনের কাজ আর টিকা, ডাক্তাররা পান স্বাস্থ্য আর প্রজনন।" },
+    ],
+  },
   {
     id: "2026-10-26-reliability",
     date: "2026-10-26",

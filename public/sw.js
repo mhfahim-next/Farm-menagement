@@ -6,9 +6,11 @@
  *  - the one exception is the quick-entry page (/dashboard/quick): a copy is
  *    kept so daily entries can be made without internet. That copy holds the
  *    farm's animal / flock / staff names, so it is deleted on sign-out;
- *  - API and Supabase responses are never cached.
+ *  - API and Supabase responses are never cached;
+ *  - reminder notifications (Web Push) are shown, and tapping one opens
+ *    the page it is about (an open FarmFlows window is reused).
  */
-const VERSION = "v3";
+const VERSION = "v4";
 const CACHE = `farmflow-static-${VERSION}`;
 const PAGES = "farmflow-pages-v1";
 const QUICK = "/dashboard/quick";
@@ -121,4 +123,36 @@ self.addEventListener("fetch", (event) => {
       ),
     );
   }
+});
+
+self.addEventListener("push", (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = { body: event.data ? event.data.text() : "" };
+  }
+  const url = typeof data.url === "string" && data.url.startsWith("/") ? data.url : "/dashboard/notifications";
+  event.waitUntil(
+    self.registration.showNotification(data.title || "FarmFlows", {
+      body: data.body || "",
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+      tag: data.tag || "farmflows",
+      renotify: Boolean(data.tag),
+      data: { url },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = new URL((event.notification.data && event.notification.data.url) || "/dashboard/notifications", self.location.origin).href;
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((wins) => {
+      const win = wins.find((w) => new URL(w.url).origin === self.location.origin);
+      if (win) return win.navigate(url).then((w) => (w || win).focus()).catch(() => win.focus());
+      return self.clients.openWindow(url);
+    }),
+  );
 });

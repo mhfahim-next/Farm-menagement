@@ -9,6 +9,14 @@ export function today(offsetDays = 0) {
   return new Intl.DateTimeFormat("en-CA", { timeZone: TIMEZONE }).format(d);
 }
 
+/** Hour of the day (0–23) and weekday (0 = Sunday) in the farm's timezone. */
+export function farmClock(at = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-US", { timeZone: TIMEZONE, hour: "numeric", hourCycle: "h23", weekday: "short" }).formatToParts(at);
+  const hour = Number(parts.find((p) => p.type === "hour")?.value ?? 0) % 24;
+  const weekday = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(parts.find((p) => p.type === "weekday")?.value ?? "Sun");
+  return { hour, weekday };
+}
+
 export function monthStart() {
   return today().slice(0, 8) + "01";
 }

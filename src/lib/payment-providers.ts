@@ -4,19 +4,12 @@ import "server-only";
 //   STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
 //   SSLCOMMERZ_STORE_ID, SSLCOMMERZ_STORE_PASSWORD, SSLCOMMERZ_LIVE=true (else sandbox)
 //   SUPABASE_SERVICE_ROLE_KEY (to mark a checked payment paid)
-import { createClient } from "@supabase/supabase-js";
 import { SITE_URL } from "@/lib/site";
+import { serviceClient } from "@/lib/supabase/service";
 export { stripeSignatureOk } from "@/lib/stripe-signature";
-import { SUPABASE_URL } from "@/lib/supabase/env";
+export { serviceClient };
 
 const env = (k: string) => process.env[k]?.trim() || null;
-
-/** Supabase with the service-role key: only for confirming online payments. */
-export function serviceClient() {
-  const key = env("SUPABASE_SERVICE_ROLE_KEY");
-  if (!key) return null;
-  return createClient(SUPABASE_URL, key, { auth: { persistSession: false, autoRefreshToken: false } });
-}
 
 export type ProviderStatus = {
   serviceKey: boolean;

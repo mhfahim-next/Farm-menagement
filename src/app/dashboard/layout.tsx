@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import { AppShell } from "@/components/app-shell";
 import type { NavItem } from "@/components/dashboard-nav";
 import { LazyAiAssistant as AiAssistant } from "@/components/ai-assistant-lazy";
 import { FarmSwitcher } from "@/components/farm-switcher";
+import { BellLink, NotificationBell } from "@/components/notification-bell";
 import { OfflineSync } from "@/components/offline/offline-sync";
 import { getProfile, MANAGERS, requireFarm, STAFF } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
@@ -73,6 +75,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
         { href: "/dashboard/health", label: t("nav.health") },
         { href: "/dashboard/breeding", label: t("nav.breeding") },
         { href: "/dashboard/approvals", label: t("nav.approvals") },
+        { href: "/dashboard/notifications", label: t("nav.reminders") },
         { href: "/doctor", label: `← ${t("doctor.consoleNav")}` },
       ]
     : [
@@ -115,6 +118,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
           ...(isManager ? [{ href: "/dashboard/approvals", label: pendingApprovals > 0 ? `${t("nav.approvals")} (${f.number(pendingApprovals)})` : t("nav.approvals") }] : []),
           ...(isManager ? [{ href: "/dashboard/plan", label: t("nav.plan") }] : []),
           ...(isManager ? [{ href: "/dashboard/import", label: t("nav.import") }] : []),
+          { href: "/dashboard/notifications", label: t("nav.reminders") },
           { href: "/dashboard/settings", label: t("nav.settings") },
           { href: "/dashboard/review", label: t("nav.review") },
           { href: "/community", label: t("community.nav") },
@@ -152,6 +156,11 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
         ) : undefined
       }
       nav={nav}
+      actions={
+        <Suspense fallback={<BellLink label={t("notif.bell")} count={null} />}>
+          <NotificationBell ctx={{ supabase, farm, role, user }} />
+        </Suspense>
+      }
       user={{
         name: profile?.full_name ?? null,
         email: user.email ?? null,
