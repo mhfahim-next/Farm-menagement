@@ -2,6 +2,7 @@ import type { EnMessages } from "../en";
 import { ai } from "./ai";
 import { account } from "./account";
 import { adminplans } from "./adminplans";
+import { analyticsplus } from "./analyticsplus";
 import { auth } from "./auth";
 import { blog } from "./blog";
 import { changelog } from "./changelog";
@@ -28,5 +29,5 @@ export const bn: Record<keyof EnMessages, string> = {
   ...account,
   ...plans,
   ...team,
-  ...adminplans, ...blog, ...ai, ...farmops, ...community, ...trade, ...changelog, ...offline, ...importing, ...printing,
+  ...adminplans, ...blog, ...ai, ...farmops, ...community, ...trade, ...changelog, ...offline, ...importing, ...printing, ...analyticsplus,
 };

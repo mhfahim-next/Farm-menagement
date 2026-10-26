@@ -4,7 +4,14 @@ import Link, { useLinkStatus } from "next/link";
 import { Spinner } from "./ui";
 import { usePathname } from "next/navigation";
 
-export type NavItem = { href: string; label: string; /** Heading shown above this item when it starts a new group. */ group?: string };
+export type NavItem = {
+  href: string;
+  label: string;
+  /** Heading shown above this item when it starts a new group. */
+  group?: string;
+  /** A count shown as a small pill (things waiting for the person); hidden when 0. */
+  badge?: number;
+};
 
 /** Fixed-size slot so the spinner never shifts the label. */
 function PendingHint() {
@@ -39,6 +46,15 @@ export function DashboardNav({ items }: { items: NavItem[] }) {
             }`}
           >
             {item.label}
+            {item.badge ? (
+              <span
+                data-testid="nav-badge"
+                aria-label={`${item.badge}`}
+                className="ml-2 inline-grid min-w-5 place-items-center rounded-full bg-red-600 px-1.5 py-0.5 text-[11px] font-bold leading-none text-white"
+              >
+                {item.badge > 99 ? "99+" : item.badge}
+              </span>
+            ) : null}
             <PendingHint />
           </Link>
         );

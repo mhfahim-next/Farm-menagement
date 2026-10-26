@@ -8,8 +8,11 @@ import { getI18n } from "@/lib/i18n/server";
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
-  const { user, profile } = await requireSuperAdmin();
+  const { user, profile, supabase } = await requireSuperAdmin();
   const { t } = await getI18n();
+  // Things waiting for an admin: open requests and unread messages (shown as menu badges).
+  const { data: inbox } = await supabase.rpc("admin_inbox_counts");
+  const counts = (inbox ?? {}) as { requests?: number; messages?: number };
 
   const nav: NavItem[] = [
     { href: "/admin", label: t("nav.adminOverview") },
@@ -17,11 +20,11 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
     { href: "/admin/users", label: t("nav.adminUsers") },
     { href: "/admin/farms", label: t("nav.adminFarms") },
     { href: "/admin/plans", label: t("nav.adminPlans") },
-    { href: "/admin/requests", label: t("nav.adminRequests") },
+    { href: "/admin/requests", label: t("nav.adminRequests"), badge: counts.requests ?? 0 },
     { href: "/admin/blog", label: t("nav.adminBlog") },
     { href: "/admin/community", label: t("nav.adminCommunity") },
     { href: "/admin/reviews", label: t("nav.adminReviews") },
-    { href: "/admin/messages", label: t("nav.adminMessages") },
+    { href: "/admin/messages", label: t("nav.adminMessages"), badge: counts.messages ?? 0 },
     { href: "/admin/site", label: t("nav.adminSite") },
     { href: "/admin/ai", label: t("nav.adminAi") },
     { href: "/admin/options", label: t("nav.adminOptions") },

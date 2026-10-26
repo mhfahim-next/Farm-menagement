@@ -1,6 +1,7 @@
 import { ai } from "./ai";
 import { account } from "./account";
 import { adminplans } from "./adminplans";
+import { analyticsplus } from "./analyticsplus";
 import { auth } from "./auth";
 import { blog } from "./blog";
 import { changelog } from "./changelog";
@@ -17,5 +18,5 @@ import { importing } from "./importing";
 import { offline } from "./offline";
 import { trade } from "./trade";
 
-export const en = { ...common, ...auth, ...landing, ...farm, ...dairy, ...account, ...plans, ...team, ...adminplans, ...blog, ...ai, ...farmops, ...community, ...trade, ...changelog, ...offline, ...importing, ...printing } as const;
+export const en = { ...common, ...auth, ...landing, ...farm, ...dairy, ...account, ...plans, ...team, ...adminplans, ...blog, ...ai, ...farmops, ...community, ...trade, ...changelog, ...offline, ...importing, ...printing, ...analyticsplus } as const;
 export type EnMessages = typeof en;
