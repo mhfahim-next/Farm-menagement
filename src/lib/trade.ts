@@ -3,7 +3,7 @@
 export const ITEM_KINDS = ["feed", "medicine", "vaccine", "supplement", "other"] as const;
 export const ITEM_UNITS = ["kg", "bag", "litre", "ml", "dose", "piece", "packet", "bottle"] as const;
 export const MOVE_TYPES = ["purchase", "use", "adjust"] as const;
-export const PRODUCTS = ["milk", "eggs", "animal", "manure", "other"] as const;
+export const PRODUCTS = ["milk", "eggs", "animal", "birds", "manure", "other"] as const;
 export const SALE_UNITS = ["litre", "kg", "piece", "hali", "dozen", "tray", "head", "other"] as const;
 export const PAY_METHODS = ["cash", "bkash", "nagad", "rocket", "bank", "other"] as const;
 
@@ -13,7 +13,8 @@ export type MoveType = (typeof MOVE_TYPES)[number];
 export type Product = (typeof PRODUCTS)[number];
 export type SaleUnit = (typeof SALE_UNITS)[number];
 export type PayMethod = (typeof PAY_METHODS)[number];
-export type Module = "dairy" | "layer" | "general";
+export type { Module } from "./modules";
+import type { Module } from "./modules";
 
 export type StockItem = {
   id: string;
@@ -78,6 +79,8 @@ export type Sale = {
   snf_percent: number | null;
   cattle_id: string | null;
   flock_id: string | null;
+  /** Birds in a bird sale (the quantity is their weight in kg). */
+  head_count?: number | null;
   notes: string | null;
 };
 
@@ -88,6 +91,7 @@ export const PRODUCT_DEFAULTS: Record<Product, { unit: SaleUnit; module: Module 
   milk: { unit: "litre", module: "dairy" },
   eggs: { unit: "piece", module: "layer" },
   animal: { unit: "head", module: "dairy" },
+  birds: { unit: "kg", module: "broiler" },
   manure: { unit: "kg", module: "general" },
   other: { unit: "other", module: "general" },
 };

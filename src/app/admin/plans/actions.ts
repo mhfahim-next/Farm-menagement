@@ -26,6 +26,7 @@ function fields(fd: FormData) {
   const priceUsd = str(fd, "price_monthly_usd") === null ? null : num(fd, "price_monthly_usd");
   const caps = {
     max_cattle: limit(fd, "max_cattle"),
+    max_goats: limit(fd, "max_goats"),
     max_flocks: limit(fd, "max_flocks"),
     max_members: limit(fd, "max_members"),
     max_farms: limit(fd, "max_farms"),

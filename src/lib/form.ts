@@ -45,6 +45,7 @@ const RULE_MESSAGES: Record<string, Parameters<I18n["t"]>[0]> = {
 
 const PLAN_LIMIT_KEYS = {
   cattle: "plan.limit.cattle",
+  goats: "plan.limit.goats",
   flocks: "plan.limit.flocks",
   members: "plan.limit.members",
   farms: "plan.limit.farms",
@@ -56,7 +57,7 @@ export function dbError(t: I18n["t"], error: { code?: string; message: string })
   const rule = RULE_MESSAGES[error.message];
   if (rule) return t(rule);
   // Raised by the plan-limit triggers: "PLAN_LIMIT:cattle:25"
-  const limit = /^PLAN_LIMIT:(cattle|flocks|members|farms|ai):(\d+)/.exec(error.message);
+  const limit = /^PLAN_LIMIT:(cattle|goats|flocks|members|farms|ai):(\d+)/.exec(error.message);
   if (limit) return t(PLAN_LIMIT_KEYS[limit[1] as keyof typeof PLAN_LIMIT_KEYS], { n: Number(limit[2]) });
   if (error.code === "23505") return t("common.dbDuplicate");
   if (error.code === "23514") return t("common.dbRange");

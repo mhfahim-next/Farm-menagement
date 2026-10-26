@@ -1,4 +1,5 @@
 import type { I18n } from "./i18n/core";
+import type { OptionMeta } from "./options";
 
 export type MotherCandidate = {
   id: string;
@@ -42,18 +43,50 @@ export function milkingCategories(rows: I18n["rows"]) {
 }
 
 /** "Female: Cow, Heifer · Male: Bull" — explains that the type sets the sex. */
-export function typeSexHint({ t, options }: Pick<I18n, "t" | "options">) {
-  const types = options("cattle_category");
+export function typeSexHint(i18n: Pick<I18n, "t" | "options">, group: AnimalGroup = "cattle") {
+  const { t } = i18n;
+  const types = categoryOptions(i18n, group);
   const names = (sex: string) =>
     types.filter((x) => x.meta.sex === sex).map((x) => x.label).join(", ") || "—";
   return t("cattle.typeHint", { female: names("female"), male: names("male") });
 }
 
-/** "Breed" dropdown options: an empty first choice, then the managed list. */
+/** "Breed" dropdown options: an empty first choice, then the managed list (for one species when given). */
 export function breedOptions(
   { t, options }: Pick<I18n, "t" | "options">,
   list: "cattle_breed" | "flock_breed",
   current?: string | null,
+  species?: Species,
 ) {
-  return [{ value: "", label: t("cattle.breedChoose") }, ...options(list, current)];
+  const all = options(list, current).filter(
+    (o) => !species || o.value === current || o.value === "Other" || (o.meta.species ?? "cattle") === species,
+  );
+  return [{ value: "", label: t("cattle.breedChoose"), meta: {} as OptionMeta }, ...all];
+}
+
+// ---------------------------------------------------------------------
+// Species: cattle, goats and sheep share one animal register. The animal
+// type (cattle_category) decides the species, like it decides the sex.
+// ---------------------------------------------------------------------
+export type Species = "cattle" | "goat" | "sheep";
+/** Pages show cattle, or goats and sheep together ("small"). */
+export type AnimalGroup = "cattle" | "small";
+
+export const GROUP_SPECIES: Record<AnimalGroup, Species[]> = { cattle: ["cattle"], small: ["goat", "sheep"] };
+
+export function groupOf(species: string | null | undefined): AnimalGroup {
+  return species === "goat" || species === "sheep" ? "small" : "cattle";
+}
+
+/** Animal types for one group (a goat farm only sees doe, buck, khashi …). */
+export function categoryOptions({ options }: Pick<I18n, "options">, group: AnimalGroup, current?: string | null) {
+  const allowed = GROUP_SPECIES[group];
+  return options("cattle_category", current).filter(
+    (o) => o.value === current || allowed.includes((o.meta.species ?? "cattle") as Species),
+  );
+}
+
+/** Where an animal's list lives. */
+export function listHref(species: string | null | undefined) {
+  return groupOf(species) === "small" ? "/dashboard/goats" : "/dashboard/cattle";
 }

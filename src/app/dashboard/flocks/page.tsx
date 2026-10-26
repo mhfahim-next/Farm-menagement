@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Badge, ButtonLink, EmptyState, PageHeader } from "@/components/ui";
 import { requireRole, STAFF } from "@/lib/auth";
 import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import type { Flock, FlockStats } from "@/lib/types";
 import { flockAgeWeeks } from "./utils";
+import { keepsPoultry } from "@/lib/modules";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -15,7 +16,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function FlocksPage() {
   const { supabase, farm } = await requireRole(STAFF);
-  if (!farm.has_layer) notFound();
+  if (!keepsPoultry(farm)) notFound();
+  if (!farm.has_layer) redirect("/dashboard/broilers");
   const { t, f, o } = await getI18n();
 
   const [flocksRes, statsRes, todayRes] = await Promise.all([
@@ -23,6 +25,7 @@ export default async function FlocksPage() {
       .from("flocks")
       .select("*")
       .eq("farm_id", farm.id)
+      .eq("kind", "layer")
       .is("deleted_at", null)
       .order("status")
       .order("placed_date", { ascending: false }),
@@ -39,7 +42,7 @@ export default async function FlocksPage() {
       <PageHeader
         title={t("flocks.title")}
         description={t("flocks.desc")}
-        action={<ButtonLink href="/dashboard/flocks/new">+ {t("flocks.addTitle")}</ButtonLink>}
+        action={<ButtonLink href="/dashboard/flocks/new?kind=layer">+ {t("flocks.addTitle")}</ButtonLink>}
       />
 
       <div>

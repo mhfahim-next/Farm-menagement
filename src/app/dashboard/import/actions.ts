@@ -5,6 +5,7 @@ import { MANAGERS, requireRole } from "@/lib/auth";
 import { dbError } from "@/lib/form";
 import { getI18n, getOptionRows } from "@/lib/i18n/server";
 import { cleanRow, IMPORT_FIELDS, IMPORT_KINDS, MAX_IMPORT_ROWS, type CleanRow, type ImportKind } from "@/lib/import";
+import { keepsAnimals, keepsPoultry, moduleAllowed } from "@/lib/modules";
 
 export type ImportRowInput = { row: number; cells: Record<string, string> };
 
@@ -26,8 +27,8 @@ export async function runImport(kind: ImportKind, input: ImportRowInput[], commi
   const { t } = await getI18n();
   const options = await getOptionRows();
   if (!(IMPORT_KINDS as readonly string[]).includes(kind)) return { error: t("common.errorGeneric") };
-  if ((kind === "cattle" || kind === "milk") && !farm.has_dairy) return { error: t("import.noDairy") };
-  if (kind === "flock" && !farm.has_layer) return { error: t("import.noLayer") };
+  if ((kind === "cattle" && !keepsAnimals(farm)) || (kind === "milk" && !farm.has_dairy)) return { error: t("import.noDairy") };
+  if (kind === "flock" && !keepsPoultry(farm)) return { error: t("import.noLayer") };
   if (!Array.isArray(input) || input.length === 0) return { error: t("import.noRows") };
   if (input.length > MAX_IMPORT_ROWS) return { error: t("import.tooMany", { n: MAX_IMPORT_ROWS }) };
 
@@ -111,7 +112,7 @@ export async function runImport(kind: ImportKind, input: ImportRowInput[], commi
   } else {
     for (const r of clean) {
       const section = v(r, "module") ?? "general";
-      if ((section === "dairy" && !farm.has_dairy) || (section === "layer" && !farm.has_layer)) add(r.row, t("import.err.section"));
+      if (!moduleAllowed(farm, String(section))) add(r.row, t("import.err.section"));
       insertRows.push({
         farm_id: farm.id,
         txn_date: v(r, "txn_date"),

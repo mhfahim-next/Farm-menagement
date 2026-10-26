@@ -10,6 +10,7 @@ import { dueItems, dueLabel } from "@/lib/health";
 import { getI18n } from "@/lib/i18n/server";
 import type { HealthRecord } from "@/lib/types";
 import { renewHealth } from "./actions";
+import { keepsAnimals } from "@/lib/modules";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -26,7 +27,7 @@ const typeTone = {
 
 export default async function HealthPage({ searchParams }: PageProps<"/dashboard/health">) {
   const { supabase, farm } = await requireFarm();
-  if (!farm.has_dairy) notFound();
+  if (!keepsAnimals(farm)) notFound();
   const { t, f, o, options } = await getI18n();
 
   const sp = await searchParams;

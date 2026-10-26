@@ -86,7 +86,7 @@ export default async function AnimalReportPage({ params }: PageProps<"/dashboard
   const months12 = [...byMonth.entries()].sort((a, b) => b[0].localeCompare(a[0])).slice(0, 12);
 
   // Breeding state (females).
-  const rules = isFemale ? await getBreedingRules({ supabase }) : null;
+  const rules = isFemale ? await getBreedingRules({ supabase }, cow.species) : null;
   const repro = isFemale && rules ? reproStatus(breeding, today(), rules) : null;
 
   // Money recorded against this animal.

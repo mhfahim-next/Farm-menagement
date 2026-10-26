@@ -34,7 +34,18 @@ export function OptionFields({
       </div>
 
       {list === "cattle_category" && (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Field label={t("options.species")}>
+            <Select
+              name="meta_species"
+              defaultValue={meta.species ?? "cattle"}
+              options={[
+                { value: "cattle", label: t("options.species.cattle") },
+                { value: "goat", label: t("options.species.goat") },
+                { value: "sheep", label: t("options.species.sheep") },
+              ]}
+            />
+          </Field>
           <Field label={t("options.sex")}>
             <Select
               name="meta_sex"

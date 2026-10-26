@@ -26,7 +26,12 @@ const DB_RULES: Record<string, MessageKey> = {
 /** Reads the per-list extra settings from the form. */
 function metaFrom(list: ListKey, fd: FormData): OptionMeta | undefined {
   if (list === "cattle_category") {
-    return { sex: str(fd, "meta_sex") === "male" ? "male" : "female", milking: fd.get("meta_milking") === "on" };
+    const species = str(fd, "meta_species");
+    return {
+      sex: str(fd, "meta_sex") === "male" ? "male" : "female",
+      milking: fd.get("meta_milking") === "on",
+      species: species === "goat" || species === "sheep" ? species : "cattle",
+    };
   }
   if (list === "finance_category") {
     return { txn_type: str(fd, "meta_txn_type") === "income" ? "income" : "expense" };

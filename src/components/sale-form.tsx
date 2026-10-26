@@ -19,6 +19,9 @@ export function SaleForm({
   today,
   presetBuyer,
   products,
+  meatFlocks = [],
+  presetProduct,
+  presetFlock,
 }: {
   buyers: BuyerOpt[];
   cattle: { id: string; label: string }[];
@@ -27,15 +30,23 @@ export function SaleForm({
   today: string;
   presetBuyer?: string;
   products: Product[];
+  /** Broiler / Sonali batches with birds alive, for a bird sale. */
+  meatFlocks?: { id: string; name: string; live: number }[];
+  presetProduct?: Product;
+  presetFlock?: string;
 }) {
   const { t, f } = useI18n();
   const [buyerId, setBuyerId] = useState(presetBuyer ?? "");
   const buyer = buyers.find((b) => b.id === buyerId);
-  const [product, setProduct] = useState<Product>(products[0] ?? "milk");
-  const [unit, setUnit] = useState<SaleUnit>(PRODUCT_DEFAULTS[products[0] ?? "milk"].unit);
+  const first = presetProduct && products.includes(presetProduct) ? presetProduct : (products[0] ?? "milk");
+  const [product, setProduct] = useState<Product>(first);
+  const [unit, setUnit] = useState<SaleUnit>(PRODUCT_DEFAULTS[first].unit);
+  const [heads, setHeads] = useState("");
+  const [batchId, setBatchId] = useState(presetFlock && meatFlocks.some((x) => x.id === presetFlock) ? presetFlock : (meatFlocks[0]?.id ?? ""));
+  const batch = meatFlocks.find((x) => x.id === batchId);
   const [qty, setQty] = useState("");
   const usualRate = (p: Product, b?: BuyerOpt) => (p === "milk" ? b?.milk_rate : p === "eggs" ? b?.egg_rate : null);
-  const [rate, setRate] = useState(String(usualRate(products[0] ?? "milk", buyer) ?? ""));
+  const [rate, setRate] = useState(String(usualRate(first, buyer) ?? ""));
   const [paid, setPaid] = useState("");
 
   const q = Number(qty);
@@ -44,6 +55,7 @@ export function SaleForm({
   const paidNum = buyerId ? Math.min(Number(paid || 0), total ?? Infinity) : total ?? 0;
   const owed = total !== null && buyerId ? Math.max(0, Math.round((total - paidNum) * 100) / 100) : 0;
   const eggs = product === "eggs" && q > 0 ? eggCount(q, unit) : null;
+  const perBird = product === "birds" && q > 0 && Number(heads) > 0 ? q / Number(heads) : null;
   const money = (n: number) => f.money(n, currency);
 
   function pickProduct(p: Product) {
@@ -93,6 +105,33 @@ export function SaleForm({
           <Select name="cattle_id" options={[{ value: "", label: "—" }, ...cattle.map((c) => ({ value: c.id, label: c.label }))]} />
         </Field>
       )}
+      {product === "birds" && (
+        <div className="grid grid-cols-2 gap-3">
+          <Field label={t("broiler.batch")} hint={batch ? t("broiler.liveNow", { n: f.number(batch.live) }) : undefined}>
+            <Select
+              name="flock_id"
+              required
+              value={batchId}
+              onChange={(e) => setBatchId(e.target.value)}
+              options={meatFlocks.map((x) => ({ value: x.id, label: x.name }))}
+            />
+          </Field>
+          <Field label={t("broiler.birdsSold")}>
+            <Input
+              name="head_count"
+              type="number"
+              min="1"
+              step="1"
+              max={batch?.live}
+              inputMode="numeric"
+              required
+              value={heads}
+              onChange={(e) => setHeads(e.target.value)}
+              data-testid="head-count"
+            />
+          </Field>
+        </div>
+      )}
       {(product === "eggs" || product === "animal") && flocks.length > 0 && (
         <Field label={t("sales.whichFlock")}>
           <Select name="flock_id" options={[{ value: "", label: "—" }, ...flocks.map((x) => ({ value: x.id, label: x.name }))]} />
@@ -100,21 +139,26 @@ export function SaleForm({
       )}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <Field label={t("finance.quantity")}>
+        <Field label={product === "birds" ? t("broiler.totalKg") : t("finance.quantity")}>
           <Input name="quantity" type="number" min="0.001" step="0.001" inputMode="decimal" required value={qty} onChange={(e) => setQty(e.target.value)} />
         </Field>
-        <Field label={t("sales.unit")}>
-          <Select
-            name="unit"
-            value={unit}
-            onChange={(e) => setUnit(e.target.value as SaleUnit)}
-            options={SALE_UNITS.map((u) => ({ value: u, label: t(`sales.unitName.${u}`) }))}
-          />
-        </Field>
-        <Field label={t("sales.ratePer", { cur: currency })} className="col-span-2 sm:col-span-1">
+        {product === "birds" ? (
+          <input type="hidden" name="unit" value="kg" />
+        ) : (
+          <Field label={t("sales.unit")}>
+            <Select
+              name="unit"
+              value={unit}
+              onChange={(e) => setUnit(e.target.value as SaleUnit)}
+              options={SALE_UNITS.map((u) => ({ value: u, label: t(`sales.unitName.${u}`) }))}
+            />
+          </Field>
+        )}
+        <Field label={product === "birds" ? t("broiler.ratePerKg", { cur: currency }) : t("sales.ratePer", { cur: currency })} className="col-span-2 sm:col-span-1">
           <Input name="unit_price" type="number" min="0" step="0.01" inputMode="decimal" required value={rate} onChange={(e) => setRate(e.target.value)} />
         </Field>
       </div>
+      {perBird !== null && <p className="-mt-2 text-xs text-stone-500">{t("broiler.perBird", { kg: f.number(perBird, 2) })}</p>}
       {eggs !== null && <p className="-mt-2 text-xs text-stone-500">{t("sales.eggsEquals", { n: f.number(eggs) })}</p>}
 
       {product === "milk" && (

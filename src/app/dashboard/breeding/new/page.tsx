@@ -7,6 +7,7 @@ import { loadBreedingBoard } from "@/lib/breeding-data";
 import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import { logBreedingEvent } from "../actions";
+import { breedsAnimals } from "@/lib/modules";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -15,8 +16,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function NewBreedingPage() {
   const { supabase, farm } = await requireFarm();
-  if (!farm.has_dairy) notFound();
-  const { t } = await getI18n();
+  if (!breedsAnimals(farm)) notFound();
+  const { t, o } = await getI18n();
   const { cows, rules, checkDays } = await loadBreedingBoard({ supabase, farm });
 
   return (
@@ -37,7 +38,7 @@ export default async function NewBreedingPage() {
             checkDays={checkDays}
             gestationDays={rules.gestationDays}
             successHref="/dashboard/breeding"
-            cows={cows.map((c) => ({ id: c.id, label: `${c.tag_number}${c.name ? ` · ${c.name}` : ""}` }))}
+            cows={cows.map((c) => ({ id: c.id, species: c.species, label: `${c.tag_number}${c.name ? ` · ${c.name}` : ""} — ${o("cattle_category", c.category)}` }))}
           />
         )}
       </Card>

@@ -79,6 +79,22 @@ export const UPCOMING: Upcoming[] = [
 
 export const RELEASES: Release[] = [
   {
+    id: "2026-10-26-livestock",
+    date: "2026-10-26",
+    title: { en: "Goats & sheep, cattle fattening for Qurbani, and broiler batches", bn: "ছাগল ও ভেড়া, কোরবানির গরু মোটাতাজাকরণ, আর ব্রয়লার ব্যাচ" },
+    summary: {
+      en: "FarmFlows now handles goats and sheep, bulls and khashi fattened for sale, and broiler and Sonali batches, each with its own numbers and profit.",
+      bn: "FarmFlows-এ এখন ছাগল ও ভেড়া, বিক্রির জন্য মোটাতাজা ষাঁড় ও খাসি, আর ব্রয়লার ও সোনালি ব্যাচ রাখা যায়, প্রতিটির নিজস্ব হিসাব আর লাভসহ।",
+    },
+    changes: [
+      { type: "new", en: "Choose what your farm keeps: dairy cows, cattle fattening, goats & sheep, layers, broiler & Sonali. The menu shows only those parts (Settings to change).", bn: "আপনার খামারে কী আছে বেছে নিন: দুধের গাভী, গরু মোটাতাজা, ছাগল ও ভেড়া, লেয়ার, ব্রয়লার ও সোনালি। মেনুতে শুধু সেগুলোই দেখাবে (সেটিংস থেকে বদলানো যায়)।" },
+      { type: "new", en: "Goats & sheep: doe, buck, khashi, kids, ewe, ram and lambs with Black Bengal, Jamunapari, Garole and other breeds; kidding with 150-day (goat) and 147-day (sheep) gestation; PPR, goat pox and ET vaccine presets; weights, tags and reports.", bn: "ছাগল ও ভেড়া: ছাগী, পাঁঠা, খাসি, বাচ্চা, ভেড়ি, পুরুষ ভেড়া, ভেড়ার বাচ্চা, সাথে ব্ল্যাক বেঙ্গল, যমুনাপাড়ি, গাড়ল ইত্যাদি জাত; ১৫০ দিন (ছাগল) ও ১৪৭ দিন (ভেড়া) গর্ভকালে বাচ্চা দেওয়ার হিসাব; পিপিআর, বসন্ত ও ET টিকা; ওজন, ট্যাগ আর রিপোর্ট।" },
+      { type: "new", en: "Fattening & Qurbani: countdown to Eid-ul-Adha, daily gain, weight expected on the sale day, cost so far, break-even price per kg and expected profit for every bull and khashi, and the real profit once sold.", bn: "মোটাতাজা ও কোরবানি: ঈদুল আযহার কাউন্টডাউন, প্রতিটি ষাঁড় ও খাসির দৈনিক ওজন বৃদ্ধি, বিক্রির দিনের সম্ভাব্য ওজন, এ পর্যন্ত খরচ, কেজিপ্রতি লাভ-ক্ষতির দাম আর সম্ভাব্য লাভ, বিক্রির পর আসল লাভ।" },
+      { type: "new", en: "Broiler & Sonali batches: chicks and their price, daily deaths and feed, sample weights, FCR, EPEF, cost per kg, bird sales by weight and head, and profit per batch.", bn: "ব্রয়লার ও সোনালি ব্যাচ: বাচ্চা ও তার দাম, দৈনিক মৃত্যু ও খাবার, নমুনা ওজন, FCR, EPEF, কেজিপ্রতি খরচ, ওজন ও সংখ্যা ধরে মুরগি বিক্রি, আর প্রতিটি ব্যাচের লাভ।" },
+      { type: "improved", en: "Finance has separate sections for fattening, goats and broilers, so cost per litre and per egg stay accurate.", bn: "হিসাবে মোটাতাজা, ছাগল আর ব্রয়লারের আলাদা বিভাগ, তাই প্রতি লিটার আর প্রতি ডিমের খরচ সঠিক থাকে।" },
+    ],
+  },
+  {
     id: "2026-10-26-payments",
     date: "2026-10-26",
     title: { en: "Pay for your plan with bKash, Nagad, card and more", bn: "বিকাশ, নগদ, কার্ড ও আরও মাধ্যমে প্ল্যানের পেমেন্ট" },

@@ -26,21 +26,22 @@ export default async function FlockLogPage({ params, searchParams }: PageProps<"
     // Feed in stock that can be measured in kg (sold per kg, or bags with a known weight).
     supabase
       .from("inventory_stock")
-      .select("id, name, unit, unit_kg, on_hand")
+      .select("id, name, unit, unit_kg, on_hand, module")
       .eq("farm_id", farm.id)
       .eq("archived", false)
       .in("kind", ["feed", "supplement"])
-      .in("module", ["layer", "general"])
+      .in("module", ["layer", "broiler", "general"])
       .order("name"),
   ]);
   const flock = flockRes.data as Flock | null;
   if (!flock) notFound();
+  const meat = flock.kind === "broiler" || flock.kind === "sonali";
   const logs = (logsRes.data ?? []) as FlockDailyLog[];
 
   const logDate = typeof sp.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(sp.date) ? sp.date : today();
   const existing = logs.find((l) => l.log_date === logDate);
-  const feeds = ((feedRes.data ?? []) as { id: string; name: string; unit: string; unit_kg: number | null; on_hand: number }[]).filter(
-    (x) => x.unit === "kg" || (x.unit_kg ?? 0) > 0,
+  const feeds = ((feedRes.data ?? []) as { id: string; name: string; unit: string; unit_kg: number | null; on_hand: number; module: string }[]).filter(
+    (x) => (x.unit === "kg" || (x.unit_kg ?? 0) > 0) && (x.module === "general" || x.module === (meat ? "broiler" : "layer")),
   );
   // Default to the feed used most recently for this flock.
   const lastFeed = [...logs].sort((a, b) => b.log_date.localeCompare(a.log_date)).find((l) => l.feed_item_id)?.feed_item_id ?? "";
@@ -53,19 +54,23 @@ export default async function FlockLogPage({ params, searchParams }: PageProps<"
         description={existing ? t("flocks.logTitleEdit", { date: f.date(logDate) }) : t("flocks.logTitle")}
         action={<ButtonLink href={`/dashboard/flocks/${flock.id}`} variant="secondary">{t("common.back")}</ButtonLink>}
       />
-      <Card className="max-w-2xl" description={t("flocks.logDesc")}>
+      <Card className="max-w-2xl" description={meat ? t("broiler.logDesc") : t("flocks.logDesc")}>
             <ActionForm action={saveDailyLog} submitLabel={t("flocks.saveLog")} key={logDate} successHref={`/dashboard/flocks/${flock.id}`}>
               <input type="hidden" name="flock_id" value={flock.id} />
               <Field label={t("common.date")} className="mb-3">
                 <AutoLoad name="log_date" param="date" defaultValue={logDate} max={today()} />
               </Field>
               <div className="grid grid-cols-2 gap-3">
-                <Field label={t("flocks.eggsCollected")}>
-                  <Input name="eggs_collected" type="number" min="0" inputMode="numeric" defaultValue={existing?.eggs_collected ?? ""} required />
-                </Field>
-                <Field label={t("flocks.eggsBroken")}>
-                  <Input name="eggs_broken" type="number" min="0" inputMode="numeric" defaultValue={existing?.eggs_broken ?? ""} />
-                </Field>
+                {!meat && (
+                  <>
+                    <Field label={t("flocks.eggsCollected")}>
+                      <Input name="eggs_collected" type="number" min="0" inputMode="numeric" defaultValue={existing?.eggs_collected ?? ""} required />
+                    </Field>
+                    <Field label={t("flocks.eggsBroken")}>
+                      <Input name="eggs_broken" type="number" min="0" inputMode="numeric" defaultValue={existing?.eggs_broken ?? ""} />
+                    </Field>
+                  </>
+                )}
                 <Field label={t("flocks.deaths")}>
                   <Input name="mortality" type="number" min="0" inputMode="numeric" defaultValue={existing?.mortality ?? ""} />
                 </Field>
@@ -78,6 +83,11 @@ export default async function FlockLogPage({ params, searchParams }: PageProps<"
                 <Field label={t("flocks.waterL")}>
                   <Input name="water_liters" type="number" min="0" step="0.1" inputMode="decimal" defaultValue={existing?.water_liters ?? ""} />
                 </Field>
+                {meat && (
+                  <Field label={t("broiler.avgWeight")} hint={t("broiler.avgWeightHint")} className="col-span-2">
+                    <Input name="avg_weight_g" type="number" min="1" max="9999" step="1" inputMode="numeric" defaultValue={existing?.avg_weight_g ?? ""} data-testid="avg-weight" />
+                  </Field>
+                )}
               </div>
               {feeds.length > 0 && (
                 <Field label={t("stock.feedFrom")} hint={t("stock.feedFromHint")}>

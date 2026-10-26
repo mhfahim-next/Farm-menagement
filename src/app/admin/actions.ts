@@ -112,3 +112,16 @@ export async function saveBreedingRules(_: ActionState, formData: FormData): Pro
     t("admin.breedingRules.saved"),
   );
 }
+
+/** Goat / sheep gestation and the Eid-ul-Adha date (fattening pages count down to it). */
+export async function saveLivestockRules(_: ActionState, formData: FormData): Promise<ActionState> {
+  const { t } = await getI18n();
+  const goat = Number(str(formData, "goat_gestation_days"));
+  const sheep = Number(str(formData, "sheep_gestation_days"));
+  const ok = (v: number) => Number.isInteger(v) && v >= 130 && v <= 170;
+  if (!ok(goat) || !ok(sheep)) return { error: t("admin.breedingRules.invalid") };
+  return run(
+    (s) => s.rpc("admin_set_livestock_rules", { p_goat: goat, p_sheep: sheep, p_qurbani: str(formData, "qurbani_date") }),
+    t("adminlive.saved"),
+  );
+}

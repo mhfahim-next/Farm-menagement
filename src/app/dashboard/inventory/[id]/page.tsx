@@ -9,6 +9,7 @@ import { MANAGERS, requireRole, STAFF } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
 import { daysLeft, isLow, type StockItem, type StockMove } from "@/lib/trade";
 import { deleteMove, updateItem } from "../actions";
+import { moduleAllowed } from "@/lib/modules";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -37,7 +38,7 @@ export default async function StockItemPage({ params }: PageProps<"/dashboard/in
   const qty = (n: number) => `${f.number(n, 3)} ${unit}`;
   const days = daysLeft(item);
   const modules = options("txn_module").filter(
-    (m) => (m.value !== "dairy" || farm.has_dairy) && (m.value !== "layer" || farm.has_layer),
+    (m) => moduleAllowed(farm, m.value),
   );
 
   return (

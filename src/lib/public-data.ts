@@ -21,7 +21,7 @@ export const getCachedOptionRows = unstable_cache(
     if (error) throw new Error(error.message); // not cached; the caller falls back
     return (data ?? []) as OptionRow[];
   },
-  ["dropdown-options-v1"],
+  ["dropdown-options-v2"],
   { tags: [OPTIONS_TAG], revalidate: 3600 },
 );
 
@@ -31,7 +31,7 @@ export const getCachedPlans = unstable_cache(
     if (error) throw new Error(error.message);
     return (data ?? []) as Plan[];
   },
-  ["plans-v1"],
+  ["plans-v2"],
   { tags: [PLANS_TAG], revalidate: 3600 },
 );
 

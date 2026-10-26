@@ -25,10 +25,8 @@ export default async function EditBreedingPage({ params }: PageProps<"/dashboard
   const { data } = await supabase.from("breeding_events").select("*").eq("id", id).eq("farm_id", farm.id).maybeSingle();
   const record = data as BreedingEvent | null;
   if (!record) notFound();
-  const [{ data: cow }, rules] = await Promise.all([
-    supabase.from("cattle").select("id, tag_number, name").eq("id", record.cattle_id).eq("farm_id", farm.id).maybeSingle(),
-    getBreedingRules({ supabase }),
-  ]);
+  const { data: cow } = await supabase.from("cattle").select("id, tag_number, name, species").eq("id", record.cattle_id).eq("farm_id", farm.id).maybeSingle();
+  const rules = await getBreedingRules({ supabase }, cow?.species);
 
   return (
     <>
@@ -50,6 +48,7 @@ export default async function EditBreedingPage({ params }: PageProps<"/dashboard
           checkDays={rules.pregnancyCheckDays}
           gestationDays={rules.gestationDays}
           record={record}
+          species={cow?.species ?? "cattle"}
         />
       </Card>
       {MANAGERS.includes(role) && (

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { MANAGERS, requireRole, STAFF } from "@/lib/auth";
 import { dbError, num, str } from "@/lib/form";
+import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import type { ActionState } from "@/lib/types";
 
@@ -40,8 +41,13 @@ export async function addCattle(_: ActionState, formData: FormData): Promise<Act
   const motherError = await validateMother(supabase, farm.id, motherId, null, t);
   if (motherError) return { error: motherError };
 
-  const { error } = await supabase.from("cattle").insert({
+  const fattening = formData.get("is_fattening") === "on";
+  const startDate = str(formData, "purchase_date") ?? today();
+  const { data: created, error } = await supabase.from("cattle").insert({
     farm_id: farm.id,
+    is_fattening: fattening,
+    fattening_start: fattening ? startDate : null,
+    target_weight_kg: fattening ? num(formData, "target_weight_kg") : null,
     tag_number: tag,
     name: str(formData, "name"),
     breed: str(formData, "breed"),
@@ -53,11 +59,16 @@ export async function addCattle(_: ActionState, formData: FormData): Promise<Act
     mother_id: motherId,
     father: str(formData, "father"),
     notes: str(formData, "notes"),
-  });
+  }).select("id").single();
   if (error) {
     return {
       error: error.code === "23505" ? t("cattle.dupTag", { tag }) : dbError(t, error),
     };
+  }
+  // The weight on arrival is the start of the fattening growth curve.
+  const startWeight = num(formData, "start_weight_kg");
+  if (startWeight && startWeight > 0 && created) {
+    await supabase.from("cattle_weights").insert({ farm_id: farm.id, cattle_id: created.id, weigh_date: startDate, weight_kg: startWeight, method: "scale" });
   }
 
   revalidatePath("/dashboard", "layout");

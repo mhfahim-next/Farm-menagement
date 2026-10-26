@@ -63,9 +63,9 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   // The middle paid plan is highlighted as the recommended one.
   const highlightKey = plans.length >= 3 ? plans[1].key : null;
 
-  const features = [1, 2, 3, 13, 4, 7, 8, 5, 9, 10, 14, 15, 11, 12, 6] as const;
+  const features = [1, 2, 3, 13, 16, 17, 4, 18, 7, 8, 5, 9, 10, 14, 15, 11, 12, 6] as const;
   const featureIcons = {
-    1: "🐄", 2: "🥛", 3: "💉", 4: "🐔", 5: "💰", 6: "🌐", 7: "📦", 8: "🧾", 9: "📶", 10: "📥", 11: "🤖", 12: "👥", 13: "⚖️", 14: "🏷️", 15: "📄",
+    1: "🐄", 2: "🥛", 3: "💉", 4: "🐔", 5: "💰", 6: "🌐", 7: "📦", 8: "🧾", 9: "📶", 10: "📥", 11: "🤖", 12: "👥", 13: "⚖️", 14: "🏷️", 15: "📄", 16: "🐐", 17: "🐂", 18: "🐥",
   } as const;
   const rotating = ([1, 2, 3, 4, 5, 6] as const).map((n) => t(`landing.rotate.${n}`));
 
@@ -101,7 +101,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
               inLanguage: ["bn", "en"],
               featureList: [
                 "Cattle and herd records", "Milk records", "Vaccine and treatment reminders", "Breeding and calving calendar",
-                "Layer flock and egg records", "Feed and medicine stock", "Sales and buyer dues", "Staff attendance and salary",
+                "Layer flock and egg records", "Broiler and Sonali batches with FCR", "Goat and sheep records", "Cattle fattening and Qurbani profit", "Feed and medicine stock", "Sales and buyer dues", "Staff attendance and salary",
                 "Income, expenses and profit per litre and per egg", "Works offline", "Import from Excel or CSV",
                 "AI assistant in Bangla and English", "Vet approvals", "Weight and growth tracking", "QR tags for animals", "PDF report per animal", "Bangla and English",
               ],

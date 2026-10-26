@@ -7,6 +7,7 @@ import { FarmSwitcher } from "@/components/farm-switcher";
 import { OfflineSync } from "@/components/offline/offline-sync";
 import { getProfile, MANAGERS, requireFarm, STAFF } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
+import { breedsAnimals, fattens, keepsAnimals, keepsCattle, keepsPoultry } from "@/lib/modules";
 import { farmQuota, planName } from "@/lib/plan-utils";
 import { getPlanContext, getPlans } from "@/lib/plans";
 
@@ -48,7 +49,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
     const { plan, usage, limits, states } = await getPlanContext();
     // The owner always uses the first team seat, so a full seat count is normal;
     // only cattle/flocks being full (or the team being over its limit) is worth a banner.
-    const hit = (["cattle", "flocks", "members"] as const).filter((k) =>
+    const hit = (["cattle", "goats", "flocks", "members"] as const).filter((k) =>
       k === "members" ? states[k] === "over" : states[k] === "full" || states[k] === "over",
     );
     if (hit.length > 0) {
@@ -77,19 +78,28 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
     : [
         { href: "/dashboard", label: t("nav.overview") },
         ...(isStaff ? [{ href: "/dashboard/quick", label: `⚡ ${t("nav.quick")}` }] : []),
-        ...(farm.has_dairy
+        ...(keepsAnimals(farm)
           ? [
-              { href: "/dashboard/cattle", label: t("nav.cattle") },
-              { href: "/dashboard/milk", label: t("nav.milk") },
+              ...(keepsCattle(farm) ? [{ href: "/dashboard/cattle", label: t("nav.cattle") }] : []),
+              ...(farm.has_goat ? [{ href: "/dashboard/goats", label: t("nav.goats") }] : []),
+              ...(farm.has_dairy ? [{ href: "/dashboard/milk", label: t("nav.milk") }] : []),
               { href: "/dashboard/health", label: t("nav.health") },
-              { href: "/dashboard/breeding", label: t("nav.breeding") },
-            ].map((i) => ({ ...i, group: t("nav.group.cow") }))
+              ...(breedsAnimals(farm) ? [{ href: "/dashboard/breeding", label: t("nav.breeding") }] : []),
+              ...(fattens(farm) ? [{ href: "/dashboard/fattening", label: t("nav.fattening") }] : []),
+            ].map((i) => ({
+              ...i,
+              group: t(keepsCattle(farm) && farm.has_goat ? "nav.group.livestock" : farm.has_goat ? "nav.group.goat" : "nav.group.cow"),
+            }))
           : []),
-        ...(farm.has_layer
+        ...(keepsPoultry(farm)
           ? [
-              { href: "/dashboard/flocks", label: t("nav.flocks") },
+              ...(farm.has_layer ? [{ href: "/dashboard/flocks", label: t("nav.flocks") }] : []),
+              ...(farm.has_broiler ? [{ href: "/dashboard/broilers", label: t("nav.broilers") }] : []),
               ...(isStaff ? [{ href: "/dashboard/flock-health", label: t("nav.flockHealth") }] : []),
-            ].map((i) => ({ ...i, group: t("nav.group.layer") }))
+            ].map((i) => ({
+              ...i,
+              group: t(farm.has_layer && farm.has_broiler ? "nav.group.poultry" : farm.has_broiler ? "nav.group.broiler" : "nav.group.layer"),
+            }))
           : []),
         ...(isStaff
           ? [

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { FarmKindFields } from "@/components/farm-kind-fields";
 import Link from "next/link";
 import { ActionForm } from "@/components/action-form";
 import { LimitNotice } from "@/components/limit-notice";
@@ -53,16 +54,7 @@ export default async function SettingsPage() {
                 <Field label={t("common.currency")}>
                   <Select name="currency" defaultValue={farm.currency} options={options("currency", farm.currency)} />
                 </Field>
-                <div className="flex flex-wrap gap-4 text-sm">
-                  <label className="flex items-center gap-2">
-                    <input type="checkbox" name="has_dairy" defaultChecked={farm.has_dairy} className="accent-emerald-700" />
-                    {t("settings.dairy")}
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input type="checkbox" name="has_layer" defaultChecked={farm.has_layer} className="accent-emerald-700" />
-                    {t("settings.layer")}
-                  </label>
-                </div>
+                <FarmKindFields t={t} farm={farm} />
               </fieldset>
             </ActionForm>
           </Card>
@@ -71,6 +63,12 @@ export default async function SettingsPage() {
             <p className="text-sm text-stone-600">{t("settings.planText", { plan: planName(plan, locale, farm.plan) })}</p>
             <p className="mt-2 text-sm text-stone-500">
               {t("plan.usage.cattle")}: {limits.cattle === null ? t("plan.usageUnlimited", { used: usage.cattle }) : t("plan.usageOf", { used: usage.cattle, max: limits.cattle })}
+              {farm.has_goat && (
+                <>
+                  {" · "}
+                  {t("plan.usage.goats")}: {limits.goats === null ? t("plan.usageUnlimited", { used: usage.goats }) : t("plan.usageOf", { used: usage.goats, max: limits.goats })}
+                </>
+              )}
               {" · "}
               {t("plan.usage.flocks")}: {limits.flocks === null ? t("plan.usageUnlimited", { used: usage.flocks }) : t("plan.usageOf", { used: usage.flocks, max: limits.flocks })}
             </p>

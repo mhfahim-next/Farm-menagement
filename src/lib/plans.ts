@@ -38,12 +38,13 @@ export const getPlanContext = cache(async () => {
   const plans = await getPlans();
   const plan = plans.find((p) => p.key === farm.plan) ?? plans[0];
 
-  const [cattle, flocks, members] = await Promise.all([
-    supabase.from("cattle").select("id", { count: "exact", head: true }).eq("farm_id", farm.id).eq("status", "active").is("deleted_at", null),
+  const [cattle, goats, flocks, members] = await Promise.all([
+    supabase.from("cattle").select("id", { count: "exact", head: true }).eq("farm_id", farm.id).eq("species", "cattle").eq("status", "active").is("deleted_at", null),
+    supabase.from("cattle").select("id", { count: "exact", head: true }).eq("farm_id", farm.id).in("species", ["goat", "sheep"]).eq("status", "active").is("deleted_at", null),
     supabase.from("flocks").select("id", { count: "exact", head: true }).eq("farm_id", farm.id).eq("status", "active").is("deleted_at", null),
     supabase.from("farm_members").select("user_id", { count: "exact", head: true }).eq("farm_id", farm.id).neq("role", "vet"),
   ]);
-  const usage: Usage = { cattle: cattle.count ?? 0, flocks: flocks.count ?? 0, members: members.count ?? 0 };
+  const usage: Usage = { cattle: cattle.count ?? 0, goats: goats.count ?? 0, flocks: flocks.count ?? 0, members: members.count ?? 0 };
 
   const limits = {} as Record<UsageKey, number | null>;
   const states = {} as Record<UsageKey, LimitState>;

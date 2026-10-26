@@ -5,6 +5,7 @@ import { Badge, ButtonLink, Card, EmptyState, Input, PageHeader, StatCard, Table
 import { requireRole, STAFF } from "@/lib/auth";
 import { ledgerHref, ledgerTotals, type LedgerRow, type LedgerView } from "@/lib/finance";
 import { today } from "@/lib/format";
+import { farmModules } from "@/lib/modules";
 import { getI18n } from "@/lib/i18n/server";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -21,9 +22,10 @@ export default async function FinancePage({ searchParams }: PageProps<"/dashboar
   const from = `${month}-01`;
   const to = new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 10);
 
-  // The two-section switch only exists on farms that run both.
-  const both = farm.has_dairy && farm.has_layer;
-  const view: LedgerView = both && (sp.view === "dairy" || sp.view === "layer") ? sp.view : "all";
+  // The section switch only exists on farms that run more than one part.
+  const sections = farmModules(farm).filter((m) => m !== "general");
+  const both = sections.length > 1;
+  const view: LedgerView = both && sections.some((m) => m === sp.view) ? (sp.view as LedgerView) : "all";
 
   let query = supabase
     .from("finance_ledger")
@@ -42,8 +44,7 @@ export default async function FinancePage({ searchParams }: PageProps<"/dashboar
   const qs = (v: LedgerView) => `?month=${month}${v === "all" ? "" : `&view=${v}`}`;
   const tabs: { v: LedgerView; label: string }[] = [
     { v: "all", label: t("finance.viewAll") },
-    { v: "dairy", label: t("finance.viewCow") },
-    { v: "layer", label: t("finance.viewLayer") },
+    ...sections.map((m) => ({ v: m, label: m === "dairy" ? t("finance.viewCow") : m === "layer" ? t("finance.viewLayer") : o("txn_module", m) })),
   ];
 
   return (
@@ -56,7 +57,7 @@ export default async function FinancePage({ searchParams }: PageProps<"/dashboar
 
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         {both ? (
-          <div role="tablist" aria-label={t("finance.viewLabel")} className="inline-flex rounded-lg border border-stone-300 p-0.5 text-sm">
+          <div role="tablist" aria-label={t("finance.viewLabel")} className="inline-flex flex-wrap rounded-lg border border-stone-300 p-0.5 text-sm">
             {tabs.map((x) => (
               <Link
                 key={x.v}

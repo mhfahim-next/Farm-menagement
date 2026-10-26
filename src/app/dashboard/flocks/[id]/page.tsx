@@ -8,6 +8,7 @@ import { requireRole, STAFF } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
 import type { Flock, FlockDailyLog, FlockHealthRecord } from "@/lib/types";
 import { updateFlockStatus } from "../actions";
+import { BroilerBatch } from "./broiler-batch";
 import { flockAgeWeeks, withDailyStats } from "../utils";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -18,7 +19,8 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function FlockDetailPage({ params }: PageProps<"/dashboard/flocks/[id]">) {
   const { id } = await params;
   const { supabase, farm } = await requireRole(STAFF);
-  const { t, f, o, options } = await getI18n();
+  const i18n = await getI18n();
+  const { t, f, o, options } = i18n;
 
   const [flockRes, logsRes, healthRes] = await Promise.all([
     supabase.from("flocks").select("*").eq("id", id).eq("farm_id", farm.id).maybeSingle(),
@@ -28,6 +30,9 @@ export default async function FlockDetailPage({ params }: PageProps<"/dashboard/
   const health = (healthRes.data ?? []) as FlockHealthRecord[];
   const flock = flockRes.data as Flock | null;
   if (!flock) notFound();
+  if (flock.kind === "broiler" || flock.kind === "sonali") {
+    return <BroilerBatch supabase={supabase} farm={farm} flock={flock} health={health} i18n={i18n} />;
+  }
   const logs = (logsRes.data ?? []) as FlockDailyLog[];
 
   const { rows, alive } = withDailyStats(flock.initial_count, logs);

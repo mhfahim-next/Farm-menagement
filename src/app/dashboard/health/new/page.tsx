@@ -7,6 +7,7 @@ import { milkingCategories } from "@/lib/cattle";
 import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import { recordHealth } from "../actions";
+import { keepsAnimals } from "@/lib/modules";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -15,7 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function NewHealthPage() {
   const { supabase, farm } = await requireFarm();
-  if (!farm.has_dairy) notFound();
+  if (!keepsAnimals(farm)) notFound();
   const { t, rows } = await getI18n();
   const { data } = await supabase
     .from("cattle")

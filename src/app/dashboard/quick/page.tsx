@@ -5,6 +5,7 @@ import { MANAGERS, requireRole, STAFF } from "@/lib/auth";
 import { milkingCategories } from "@/lib/cattle";
 import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
+import { farmModules, keepsPoultry } from "@/lib/modules";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -32,11 +33,11 @@ export default async function QuickEntryPage() {
           .is("deleted_at", null)
           .order("tag_number")
       : Promise.resolve({ data: [] }),
-    farm.has_layer
+    keepsPoultry(farm)
       ? supabase.from("flocks").select("id, name").eq("farm_id", farm.id).eq("status", "active").is("deleted_at", null).order("name")
       : Promise.resolve({ data: [] }),
     // Recent logs, to default each flock to the feed it used last.
-    farm.has_layer
+    keepsPoultry(farm)
       ? supabase
           .from("flock_daily_logs")
           .select("flock_id, feed_item_id, log_date")
@@ -64,13 +65,14 @@ export default async function QuickEntryPage() {
     userId: user.id,
     serverToday: today(),
     hasDairy: farm.has_dairy,
-    hasLayer: farm.has_layer,
+    hasLayer: keepsPoultry(farm),
+    modules: farmModules(farm),
     isManager,
     cows: (cows.data ?? []) as QuickData["cows"],
     flocks: ((flocks.data ?? []) as { id: string; name: string }[]).map((x) => ({ ...x, lastFeed: lastFeed[x.id] ?? "" })),
     // Feed for flock logs must be measurable in kg.
     layerFeeds: items
-      .filter((x) => ["feed", "supplement"].includes(x.kind) && ["layer", "general"].includes(x.module) && (x.unit === "kg" || (x.unit_kg ?? 0) > 0))
+      .filter((x) => ["feed", "supplement"].includes(x.kind) && ["layer", "broiler", "general"].includes(x.module) && (x.unit === "kg" || (x.unit_kg ?? 0) > 0))
       .map((x) => ({ id: x.id, name: x.name })),
     items: items.map((x) => ({ id: x.id, name: x.name, unit: x.unit, module: x.module })),
     staff: (staff.data ?? []) as QuickData["staff"],

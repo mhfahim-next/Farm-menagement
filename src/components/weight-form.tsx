@@ -12,10 +12,13 @@ export function WeightForm({
   action,
   cattleId,
   today,
+  allowTape = true,
 }: {
   action: (state: ActionState, formData: FormData) => Promise<ActionState>;
   cattleId: string;
   today: string;
+  /** The tape formula is for cattle; goats and sheep use a scale or an estimate. */
+  allowTape?: boolean;
 }) {
   const { t, f } = useI18n();
   const [method, setMethod] = useState("scale");
@@ -37,7 +40,7 @@ export function WeightForm({
             onChange={(e) => setMethod(e.target.value)}
             options={[
               { value: "scale", label: t("weight.methods.scale") },
-              { value: "tape", label: t("weight.methods.tape") },
+              ...(allowTape ? [{ value: "tape", label: t("weight.methods.tape") }] : []),
               { value: "estimate", label: t("weight.methods.estimate") },
             ]}
           />

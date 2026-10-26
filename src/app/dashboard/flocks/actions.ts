@@ -14,13 +14,20 @@ export async function addFlock(_: ActionState, formData: FormData): Promise<Acti
   if (!name) return { error: t("flocks.giveName") };
   if (!initialCount || initialCount <= 0) return { error: t("flocks.enterBirds") };
 
+  const kindRaw = str(formData, "kind");
+  const kind = kindRaw === "broiler" || kindRaw === "sonali" ? kindRaw : "layer";
+  if (kind === "layer" ? !farm.has_layer : !farm.has_broiler) return { error: t("broiler.errKind") };
+  const meat = kind !== "layer";
+
   const { error } = await supabase.from("flocks").insert({
     farm_id: farm.id,
+    kind,
+    chick_price: meat ? num(formData, "chick_price") : null,
     name,
     breed: str(formData, "breed"),
     shed: str(formData, "shed"),
     placed_date: str(formData, "placed_date"),
-    age_at_placement_weeks: int(formData, "age_at_placement_weeks") ?? 0,
+    age_at_placement_weeks: meat ? 0 : (int(formData, "age_at_placement_weeks") ?? 0),
     initial_count: initialCount,
     notes: str(formData, "notes"),
   });
@@ -64,6 +71,8 @@ export async function saveDailyLog(_: ActionState, formData: FormData): Promise<
       culled: int(formData, "culled") ?? 0,
       feed_kg: num(formData, "feed_kg"),
       water_liters: num(formData, "water_liters"),
+      // Only meat-batch forms send a weight; other forms keep what was saved.
+      ...(formData.has("avg_weight_g") ? { avg_weight_g: num(formData, "avg_weight_g") } : {}),
       // Only sent when the form offers stock feed; otherwise the saved choice is kept.
       ...(formData.has("feed_item_id") ? { feed_item_id: str(formData, "feed_item_id") } : {}),
       notes: str(formData, "notes"),

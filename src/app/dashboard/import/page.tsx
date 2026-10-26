@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/ui";
 import { MANAGERS, requireRole } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
 import type { ImportKind } from "@/lib/import";
+import { keepsAnimals, keepsPoultry } from "@/lib/modules";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -14,8 +15,9 @@ export default async function ImportPage() {
   const { farm } = await requireRole(MANAGERS);
   const { t } = await getI18n();
   const kinds: ImportKind[] = [
-    ...(farm.has_dairy ? (["cattle", "milk"] as const) : []),
-    ...(farm.has_layer ? (["flock"] as const) : []),
+    ...(keepsAnimals(farm) ? (["cattle"] as const) : []),
+    ...(farm.has_dairy ? (["milk"] as const) : []),
+    ...(keepsPoultry(farm) ? (["flock"] as const) : []),
     "finance",
   ];
   return (

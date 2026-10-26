@@ -9,6 +9,7 @@ import { monthStart, today } from "@/lib/format";
 import { dueItems, dueLabel } from "@/lib/health";
 import { getI18n } from "@/lib/i18n/server";
 import type { FlockStats, HealthRecord } from "@/lib/types";
+import { breedsAnimals, fattens, keepsAnimals, keepsCattle, keepsPoultry } from "@/lib/modules";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -34,10 +35,10 @@ export default async function OverviewPage() {
   );
 
   const [cattleRes, milkRes, flocksRes, statsRes, eggsRes, txnRes, scheduleRes, board] = await Promise.all([
-    farm.has_dairy
+    keepsAnimals(farm)
       ? supabase
           .from("cattle")
-          .select("id, tag_number, name, category", { count: "exact" })
+          .select("id, tag_number, name, category, species, is_fattening", { count: "exact" })
           .eq("farm_id", farm.id)
           .eq("status", "active")
           .is("deleted_at", null)
@@ -49,15 +50,15 @@ export default async function OverviewPage() {
           .eq("farm_id", farm.id)
           .gte("record_date", weekAgo)
       : null,
-    farm.has_layer
+    keepsPoultry(farm)
       ? supabase
           .from("flocks")
-          .select("id")
+          .select("id, kind")
           .eq("farm_id", farm.id)
           .eq("status", "active")
           .is("deleted_at", null)
       : null,
-    farm.has_layer
+    keepsPoultry(farm)
       ? supabase.from("flock_stats").select("*").eq("farm_id", farm.id)
       : null,
     farm.has_layer
@@ -72,24 +73,29 @@ export default async function OverviewPage() {
       .select("txn_type, amount")
       .eq("farm_id", farm.id)
       .gte("txn_date", monthStart()),
-    farm.has_dairy
+    keepsAnimals(farm)
       ? supabase
           .from("health_records")
           .select("*")
           .eq("farm_id", farm.id)
           .not("next_due_date", "is", null)
       : null,
-    farm.has_dairy ? loadBreedingBoard({ supabase, farm }) : null,
+    breedsAnimals(farm) ? loadBreedingBoard({ supabase, farm }) : null,
   ]);
 
-  const cattle = cattleRes?.data ?? [];
+  const animals = cattleRes?.data ?? [];
+  const cattle = animals.filter((c) => (c.species ?? "cattle") === "cattle");
+  const smallCount = animals.length - cattle.length;
+  const fatteningCount = animals.filter((c) => c.is_fattening).length;
   const milkingTypes = milkingCategories(rows);
   const milkingCows = cattle.filter((c) => milkingTypes.includes(c.category)).length;
   const milk = milkRes?.data ?? [];
-  const activeFlockIds = new Set((flocksRes?.data ?? []).map((fl) => fl.id));
-  const birds = ((statsRes?.data ?? []) as FlockStats[])
-    .filter((s) => activeFlockIds.has(s.flock_id))
-    .reduce((sum, s) => sum + s.current_count, 0);
+  const activeFlocks = (flocksRes?.data ?? []) as { id: string; kind: string | null }[];
+  const activeFlockIds = new Set(activeFlocks.filter((fl) => (fl.kind ?? "layer") === "layer").map((fl) => fl.id));
+  const meatIds = new Set(activeFlocks.filter((fl) => fl.kind && fl.kind !== "layer").map((fl) => fl.id));
+  const flockStats = (statsRes?.data ?? []) as FlockStats[];
+  const birds = flockStats.filter((s) => activeFlockIds.has(s.flock_id)).reduce((sum, s) => sum + s.current_count, 0);
+  const meatBirds = flockStats.filter((s) => meatIds.has(s.flock_id)).reduce((sum, s) => sum + s.current_count, 0);
   const eggs = eggsRes?.data ?? [];
   const txns = txnRes.data ?? [];
 
@@ -104,7 +110,7 @@ export default async function OverviewPage() {
 
   // Reminders: health schedules + breeding alerts, most urgent first.
   const animalName = new Map(
-    cattle.map((c) => [c.id, `${c.tag_number}${c.name ? ` · ${c.name}` : ""}`]),
+    animals.map((c) => [c.id, `${c.tag_number}${c.name ? ` · ${c.name}` : ""}`]),
   );
   // Only active animals — sold or dead ones shouldn't raise reminders.
   const healthDue = dueItems((scheduleRes?.data ?? []) as HealthRecord[], day, 14).filter((d) =>
@@ -146,15 +152,24 @@ export default async function OverviewPage() {
       <PageHeader title={t("overview.meta")} description={t("overview.today", { farm: farm.name })} />
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        {farm.has_dairy && (
-          <>
-            <StatCard
-              label={t("overview.activeCattle")}
-              value={f.number(cattleRes?.count ?? 0)}
-              hint={t("overview.cows", { n: milkingCows })}
-            />
-            <StatCard label={t("overview.milkToday")} value={t("common.litersShort", { n: f.number(milkToday, 1) })} />
-          </>
+        {keepsCattle(farm) && (
+          <StatCard
+            label={t("overview.activeCattle")}
+            value={f.number(cattle.length)}
+            hint={farm.has_dairy ? t("overview.cows", { n: milkingCows }) : undefined}
+          />
+        )}
+        {farm.has_dairy && <StatCard label={t("overview.milkToday")} value={t("common.litersShort", { n: f.number(milkToday, 1) })} />}
+        {farm.has_goat && <StatCard label={t("nav.goats")} value={f.number(smallCount)} />}
+        {fattens(farm) && (
+          <Link href="/dashboard/fattening" className="contents">
+            <StatCard label={t("fatten.onFeed")} value={f.number(fatteningCount)} />
+          </Link>
+        )}
+        {farm.has_broiler && (
+          <Link href="/dashboard/broilers" className="contents">
+            <StatCard label={t("broiler.liveBirds")} value={f.number(meatBirds)} hint={t("broiler.runningCount", { n: f.number(meatIds.size) })} />
+          </Link>
         )}
         {farm.has_layer && (
           <>
@@ -218,7 +233,7 @@ export default async function OverviewPage() {
         </div>
       )}
 
-      {farm.has_dairy && (
+      {keepsAnimals(farm) && (
         <Card
           className="mt-6"
           title={t("overview.attentionTitle")}
@@ -226,7 +241,7 @@ export default async function OverviewPage() {
           action={
             <div className="flex gap-2">
               <ButtonLink href="/dashboard/health" variant="secondary">{t("nav.health")}</ButtonLink>
-              <ButtonLink href="/dashboard/breeding" variant="secondary">{t("nav.breeding")}</ButtonLink>
+              {breedsAnimals(farm) && <ButtonLink href="/dashboard/breeding" variant="secondary">{t("nav.breeding")}</ButtonLink>}
             </div>
           }
         >
@@ -272,7 +287,7 @@ export default async function OverviewPage() {
         )}
       </div>
 
-      {farm.has_dairy && !cattleRes?.count && (
+      {keepsCattle(farm) && cattle.length === 0 && (
         <div className="mt-6">
           <EmptyState title={t("overview.startTitle")}>
             <Link href="/dashboard/cattle" className="text-emerald-700 hover:underline">
