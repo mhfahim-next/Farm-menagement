@@ -1,0 +1,52 @@
+{
+  "expo": {
+    "name": "FarmFlows",
+    "slug": "farmflows",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "farmflows",
+    "userInterfaceStyle": "automatic",
+    "description": "Farm records for dairy, cattle fattening, goats & sheep, layer and broiler poultry — in Bangla and English.",
+    "primaryColor": "#047857",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.farmflows"
+    },
+    "android": {
+      "package": "app.farmflows",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#16a34a",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": true
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "output": "single"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      "expo-sqlite",
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 120,
+          "backgroundColor": "#ffffff",
+          "dark": { "image": "./assets/splash-icon.png", "backgroundColor": "#101413" }
+        }
+      ],
+      "expo-web-browser",
+      "expo-localization"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

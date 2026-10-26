@@ -38,6 +38,30 @@ jobs:
       - name: No known vulnerabilities in production dependencies
         run: npm audit --omit=dev --audit-level=high
 
+  mobile:
+    name: Android app (lint, types, tests, bundle)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test -- --ci
+      - name: Bundle for Android
+        run: npx expo export --platform android --output-dir /tmp/android-bundle
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: https://ci.supabase.co
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder
+
   database:
     name: Migrations and database rules
     runs-on: ubuntu-latest

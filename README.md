@@ -82,6 +82,19 @@ A multi-tenant farm management web app built with **Next.js 16 (App Router)** an
 - **Breeding rules** (Admin → Announcement & settings): gestation (calving) days, heat cycle, pregnancy check, dry-off and waiting period are editable and used everywhere.
 - **Overview dashboard**: today's milk and eggs, herd and flock size, this month's P&L, and 7-day charts.
 
+## Android app
+
+A native Android app (Expo / React Native, Material 3) lives in [`mobile/`](mobile/README.md). It uses the same Supabase project, accounts and security rules as the website.
+
+The first version has:
+- a welcome guide on first launch;
+- sign in (email or Google);
+- account creation, with farm setup and plan choice;
+- a Home screen with today's numbers;
+- a More tab with language, theme, farm switcher and sign out.
+
+See `mobile/README.md` for setup, checks and building the APK / Play Store bundle with EAS.
+
 ## Super admin
 
 A super admin controls the whole system from `/admin` (only they can open it; everyone else gets a 404):
