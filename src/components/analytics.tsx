@@ -20,11 +20,17 @@ export function Analytics() {
     } catch {
       /* storage blocked */
     }
+    // Campaign tags from links such as ?utm_source=facebook&utm_campaign=day3 (kept short).
+    const q = new URLSearchParams(window.location.search);
+    const tag = (k: string) => (q.get(k) ?? "").slice(0, 80);
     const body = JSON.stringify({
       path: pathname,
       referrer: document.referrer,
       visitor,
       locale: document.documentElement.lang,
+      utm_source: tag("utm_source"),
+      utm_medium: tag("utm_medium"),
+      utm_campaign: tag("utm_campaign"),
     });
     if (!navigator.sendBeacon?.("/api/track", new Blob([body], { type: "application/json" }))) {
       fetch("/api/track", { method: "POST", body, keepalive: true, headers: { "Content-Type": "application/json" } }).catch(() => {});
