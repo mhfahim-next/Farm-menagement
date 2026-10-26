@@ -196,9 +196,18 @@ Sign up, create your farm, then add cattle and flocks.
 | --- | --- |
 | `npm run dev` / `build` / `start` | Next.js |
 | `npm run lint` / `typecheck` | ESLint / TypeScript |
+| `npm test` | Unit tests for the farm maths (broiler FCR, fattening, prices, gestation, imports, Stripe signatures) — Node's built-in test runner, no extra packages |
 | `npm run db:start` / `db:stop` | Local Supabase |
 | `npm run db:reset` | Recreate the local database from migrations |
 | `npm run db:types` | Generate TypeScript types from the database |
+
+### Tests and CI
+
+Every pull request and push to `main` runs **GitHub Actions** (`.github/workflows/ci.yml`):
+- **app**: `npm ci`, lint, typecheck, `npm test`, a production build (placeholder Supabase settings), and `npm audit` for high/critical issues in production dependencies.
+- **database**: starts Supabase from scratch (`supabase start`), so every migration must apply cleanly, then runs `tests/sql/checks.sql`: every table has row-level security, payment and admin functions can't be called by the wrong people, and business rules hold (animal type sets species, a goat's mother must be a goat, no selling more birds than are alive, broiler logs stay out of cost per egg, farmers can't approve payments).
+
+Locally: `npm test`, and `docker exec -i supabase_db_farm-management psql -U postgres -v ON_ERROR_STOP=1 < tests/sql/checks.sql` (rolls back, changes nothing).
 
 ## Deploy
 
@@ -218,6 +227,17 @@ bKash / Nagad / Rocket / Upay / bank need no keys: turn them on in *Admin → Pa
 | `STRIPE_WEBHOOK_SECRET` | Stripe → Developers → Webhooks → add `https://<your-domain>/api/payments/stripe/webhook` with `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`, `checkout.session.expired` → *Signing secret* (`whsec_…`) |
 
 SSLCommerz sends its IPN to `https://<your-domain>/api/payments/sslcommerz/ipn` (set it in the merchant panel too). Stripe needs a business in a country Stripe supports; check stripe.com/global. Everything a payment does is in migration `20261112000000_payments.sql` (tables `payment_methods`, `billing_periods`, `payments`; only a super admin or the server with the service-role key can mark a payment paid).
+
+### Error monitoring (Sentry)
+
+Off until you set it up. Create a free project at sentry.io (platform **Next.js**) and add to Vercel → Environment Variables:
+
+| Variable | What |
+| --- | --- |
+| `NEXT_PUBLIC_SENTRY_DSN` | The project's DSN (browser and server errors) |
+| `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` | Optional, build time: uploads source maps so reports show your real code lines |
+
+Then redeploy. Browser errors, server errors (pages, server actions, API routes) and a 10% sample of performance traces are sent; no IP addresses, cookies or request bodies. Without a DSN nothing extra is downloaded. Farmers see a friendly "Something went wrong — try again" page (`src/app/error.tsx`, `global-error.tsx`) with an error code that matches the report.
 
 ### SEO
 

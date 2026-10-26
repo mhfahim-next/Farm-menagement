@@ -79,6 +79,20 @@ export const UPCOMING: Upcoming[] = [
 
 export const RELEASES: Release[] = [
   {
+    id: "2026-10-26-reliability",
+    date: "2026-10-26",
+    title: { en: "Safer and more reliable", bn: "আরও নিরাপদ ও নির্ভরযোগ্য" },
+    summary: {
+      en: "A security update for the app's framework, a friendlier error page, and automatic checks before every change goes live.",
+      bn: "অ্যাপের ফ্রেমওয়ার্কের নিরাপত্তা আপডেট, সহজ ভাষার ত্রুটির পাতা, আর প্রতিটি পরিবর্তন চালুর আগে স্বয়ংক্রিয় পরীক্ষা।",
+    },
+    changes: [
+      { type: "fixed", en: "Security update for Next.js (the framework FarmFlows is built on).", bn: "Next.js (যার ওপর FarmFlows তৈরি) এর নিরাপত্তা আপডেট।" },
+      { type: "improved", en: "If a page fails to load you now see a clear message with a Try again button, and we are told about the problem.", bn: "কোনো পাতা না খুললে এখন সহজ বার্তা আর “আবার চেষ্টা করুন” বোতাম দেখাবে, আর সমস্যাটা আমরা জানতে পারব।" },
+      { type: "improved", en: "Every change is checked automatically before release: farm calculations, database security rules and a full build.", bn: "প্রতিটি পরিবর্তন চালুর আগে স্বয়ংক্রিয়ভাবে পরীক্ষা হয়: খামারের হিসাব, ডাটাবেসের নিরাপত্তা নিয়ম আর পুরো বিল্ড।" },
+    ],
+  },
+  {
     id: "2026-10-26-livestock",
     date: "2026-10-26",
     title: { en: "Goats & sheep, cattle fattening for Qurbani, and broiler batches", bn: "ছাগল ও ভেড়া, কোরবানির গরু মোটাতাজাকরণ, আর ব্রয়লার ব্যাচ" },
