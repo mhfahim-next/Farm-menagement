@@ -13,17 +13,15 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function AdminOverviewPage() {
-  const { supabase } = await requireSuperAdmin();
-  const { t, f, locale } = await getI18n();
-  const plans = await getPlans();
-
-  const { data, error } = await supabase.rpc("admin_stats");
-  if (error) throw new Error(error.message);
-  const s = data as AdminStats;
-  const [{ count: openRequests }, { count: unverified }] = await Promise.all([
+  const [{ supabase }, { t, f, locale }] = await Promise.all([requireSuperAdmin(), getI18n()]);
+  const [plans, { data, error }, { count: openRequests }, { count: unverified }] = await Promise.all([
+    getPlans(),
+    supabase.rpc("admin_stats"),
     supabase.from("requests").select("id", { count: "exact", head: true }).eq("status", "open"),
     supabase.from("profiles").select("id", { count: "exact", head: true }).eq("account_type", "doctor").eq("doctor_verified", false),
   ]);
+  if (error) throw new Error(error.message);
+  const s = data as AdminStats;
 
   return (
     <>

@@ -17,14 +17,13 @@ import { getPlanContext, getPlans } from "@/lib/plans";
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function DashboardLayout({ children }: LayoutProps<"/dashboard">) {
-  const { farm, user, role, farms, supabase } = await requireFarm();
-  const profile = await getProfile();
-  const { t, f, o, locale } = await getI18n();
+  const [{ farm, user, role, farms, supabase }, profile, { t, f, o, locale }] = await Promise.all([requireFarm(), getProfile(), getI18n()]);
   const isManager = MANAGERS.includes(role);
   const isStaff = STAFF.includes(role);
   const isVet = role === "vet";
 
-  const [{ data: settings }, { data: invites }, plans] = await Promise.all([
+  // Everything the frame needs, in one round trip to the database.
+  const [{ data: settings }, { data: invites }, plans, planCtx, pending, ai] = await Promise.all([
     supabase
       .from("system_settings")
       .select("announcement_en, announcement_bn, announcement_active")
@@ -32,6 +31,11 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
       .maybeSingle(),
     supabase.rpc("my_pending_invites"),
     getPlans(),
+    isManager ? getPlanContext() : null,
+    // Entries doctors submitted that wait for an owner / manager to approve.
+    isManager ? supabase.from("pending_entries").select("id", { count: "exact", head: true }).eq("farm_id", farm.id).eq("status", "pending") : null,
+    // AI assistant (staff only): how many prompts this farm has used this month.
+    isStaff ? supabase.rpc("ai_prompts_status", { p_farm: farm.id }) : null,
   ]);
   const announcement = settings?.announcement_active
     ? ((locale === "bn" ? settings.announcement_bn : settings.announcement_en) ??
@@ -47,8 +51,8 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
 
   // Plan limit banner for people who can act on it.
   let limitBanner: string | null = null;
-  if (isManager) {
-    const { plan, usage, limits, states } = await getPlanContext();
+  if (planCtx) {
+    const { plan, usage, limits, states } = planCtx;
     // The owner always uses the first team seat, so a full seat count is normal;
     // only cattle/flocks being full (or the team being over its limit) is worth a banner.
     const hit = (["cattle", "goats", "flocks", "members"] as const).filter((k) =>
@@ -62,12 +66,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
     }
   }
 
-  // Entries doctors submitted that wait for an owner / manager to approve.
-  let pendingApprovals = 0;
-  if (isManager) {
-    const { count } = await supabase.from("pending_entries").select("id", { count: "exact", head: true }).eq("farm_id", farm.id).eq("status", "pending");
-    pendingApprovals = count ?? 0;
-  }
+  const pendingApprovals = pending?.count ?? 0;
 
   const nav: NavItem[] = isVet
     ? [
@@ -128,13 +127,8 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
 
   const invitesCount = invites?.length ?? 0;
 
-  // AI assistant (staff only): how many prompts this farm has used this month.
-  let aiStatus: { used: number; max: number | null } | null = null;
-  if (isStaff) {
-    const { data } = await supabase.rpc("ai_prompts_status", { p_farm: farm.id });
-    const st = data as { used?: number; max?: number | null } | null;
-    aiStatus = { used: st?.used ?? 0, max: st?.max ?? null };
-  }
+  const st = ai?.data as { used?: number; max?: number | null } | null | undefined;
+  const aiStatus = ai ? { used: st?.used ?? 0, max: st?.max ?? null } : null;
 
   return (
     <AppShell

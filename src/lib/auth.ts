@@ -13,6 +13,25 @@ export const getUser = cache(async () => {
   return user;
 });
 
+/**
+ * The user id inside the session cookie, NOT verified. It is only used to start
+ * a page's first queries at the same time as getUser() (one round trip instead
+ * of two); callers then compare it with the verified user and stop if they
+ * differ. Row-level security applies to those queries either way.
+ */
+const sessionUserId = cache(async (): Promise<string | null> => {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) return null;
+  try {
+    const sub = JSON.parse(Buffer.from(token.split(".")[1] ?? "", "base64url").toString("utf8")).sub;
+    return typeof sub === "string" ? sub : null;
+  } catch {
+    return null;
+  }
+});
+
 export async function requireUser() {
   const user = await getUser();
   if (!user) redirect("/login");
@@ -49,14 +68,19 @@ export const getViewer = cache(async () => {
 });
 
 export const getProfile = cache(async (): Promise<Profile | null> => {
-  const user = await getUser();
-  if (!user) return null;
+  const id = await sessionUserId();
+  if (!id) return null;
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("profiles")
-    .select("id, full_name, phone, avatar_url, is_super_admin, account_type, doctor_reg_no, doctor_specialty, doctor_verified")
-    .eq("id", user.id)
-    .maybeSingle();
+  // The profile is read while the session is being verified, not after.
+  const [user, { data }] = await Promise.all([
+    getUser(),
+    supabase
+      .from("profiles")
+      .select("id, full_name, phone, avatar_url, is_super_admin, account_type, doctor_reg_no, doctor_specialty, doctor_verified")
+      .eq("id", id)
+      .maybeSingle(),
+  ]);
+  if (!user || user.id !== id) return null;
   return data;
 });
 
@@ -65,8 +89,7 @@ export const getProfile = cache(async (): Promise<Profile | null> => {
  * area's existence isn't revealed. Every admin RPC re-checks this in Postgres.
  */
 export async function requireSuperAdmin() {
-  const user = await requireUser();
-  const profile = await getProfile();
+  const [user, profile] = await Promise.all([requireUser(), getProfile()]);
   if (!profile?.is_super_admin) notFound();
   return { user, profile, supabase: await createClient() };
 }
@@ -101,14 +124,16 @@ export type FarmContext = {
  * the real guard, this just picks the tenant and redirects when there isn't one.
  */
 export const requireFarm = cache(async (): Promise<FarmContext> => {
-  const user = await requireUser();
+  const id = await sessionUserId();
+  if (!id) redirect("/login");
   const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from("farm_members")
-    .select("role, created_at, farms(*)")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: true });
+  // Verify the session and read the farms in the same round trip.
+  const [user, { data, error }] = await Promise.all([
+    getUser(),
+    supabase.from("farm_members").select("role, created_at, farms(*)").eq("user_id", id).order("created_at", { ascending: true }),
+  ]);
+  if (!user || user.id !== id) redirect("/login");
   if (error) throw new Error(error.message);
 
   const memberships = (data ?? [])
@@ -144,8 +169,7 @@ export const requireFarm = cache(async (): Promise<FarmContext> => {
 
 /** Guards the doctor console: farmers are sent to their dashboard. */
 export async function requireDoctor() {
-  const user = await requireUser();
-  const profile = await getProfile();
+  const [user, profile] = await Promise.all([requireUser(), getProfile()]);
   if (profile?.account_type !== "doctor") redirect("/dashboard");
   return { user, profile, supabase: await createClient() };
 }

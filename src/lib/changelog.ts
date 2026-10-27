@@ -71,6 +71,19 @@ export const UPCOMING: Upcoming[] = [
 
 export const RELEASES: Release[] = [
   {
+    id: "2026-10-27-speed",
+    date: "2026-10-27",
+    title: { en: "Faster pages", bn: "আরও দ্রুত পাতা" },
+    summary: {
+      en: "The dashboard and animal pages open about twice as fast, and the home page downloads less.",
+      bn: "ড্যাশবোর্ড আর পশুর পাতা প্রায় দ্বিগুণ দ্রুত খোলে, আর হোম পেজ কম ডাটা নামায়।",
+    },
+    changes: [
+      { type: "improved", en: "Pages fetch their data in fewer steps, from servers in Mumbai next to the database.", bn: "পাতাগুলো কম ধাপে ডাটা আনে, ডাটাবেসের পাশেই মুম্বাইয়ের সার্ভার থেকে।" },
+      { type: "improved", en: "Lighter animations on the public pages: less to download on slow connections.", bn: "পাবলিক পাতায় হালকা অ্যানিমেশন: ধীর ইন্টারনেটে কম ডাটা লাগে।" },
+    ],
+  },
+  {
     id: "2026-10-26-animal-profit",
     date: "2026-10-26",
     title: { en: "Profit per animal", bn: "প্রতিটি পশুর লাভ-লোকসান" },
