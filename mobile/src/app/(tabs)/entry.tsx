@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { Button, Chip, Icon, SegmentedButtons, Snackbar, Text, TextInput, useTheme } from "react-native-paper";
@@ -51,7 +52,10 @@ export default function Entry() {
           {!staff ? (
             <Empty icon="stethoscope" title={t("entry.vetOnly")} />
           ) : !canMilk && !canBirds ? (
-            <Empty icon="information-outline" title={t("entry.nothingKept")} />
+            <>
+              <QuickActions />
+              <Empty icon="information-outline" title={t("entry.nothingKept")} />
+            </>
           ) : (
             <>
               {canMilk && canBirds && (
@@ -74,6 +78,7 @@ export default function Entry() {
                   { value: minusDays(today, 2), label: date(minusDays(today, 2), true) },
                 ]}
               />
+              <QuickActions />
               {what === "milk" ? <MilkSheet key={`milk-${day}`} farmId={farm.id} day={day} onDone={done} /> : <BirdSheet farmId={farm.id} day={day} onDone={done} />}
             </>
           )}
@@ -83,6 +88,30 @@ export default function Entry() {
         {toast ?? ""}
       </Snackbar>
     </View>
+  );
+}
+
+/** Shortcuts to the other records: vaccine / treatment, breeding, sale. */
+function QuickActions() {
+  const { t } = usePrefs();
+  const farm = useSession().current?.farm;
+  const animals = farm?.has_dairy || farm?.has_fattening || farm?.has_goat;
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quick}>
+      {animals && (
+        <Chip icon="needle" onPress={() => router.push("/record/health")} testID="quick-health">
+          {t("rec.healthTitle")}
+        </Chip>
+      )}
+      {animals && (
+        <Chip icon="heart-pulse" onPress={() => router.push("/record/breeding")} testID="quick-breeding">
+          {t("rec.breedingTitle")}
+        </Chip>
+      )}
+      <Chip icon="cart-outline" onPress={() => router.push("/record/sale")} testID="quick-sale">
+        {t("sale.newSale")}
+      </Chip>
+    </ScrollView>
   );
 }
 
@@ -366,6 +395,7 @@ const styles = StyleSheet.create({
   total: { textAlign: "right", marginTop: 4, fontVariant: ["tabular-nums"] },
   btn: { height: 50 },
   chips: { gap: 8, paddingVertical: 2 },
+  quick: { gap: 8 },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   half: { flexGrow: 1, flexBasis: "45%" },
   empty: { alignItems: "center", gap: 8, marginTop: 32, paddingHorizontal: 24 },

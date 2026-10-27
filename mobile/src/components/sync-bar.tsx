@@ -18,7 +18,9 @@ export function SyncBar() {
   const label = (e: OutboxEntry) =>
     e.kind === "milk"
       ? t("sync.milkLabel", { date: date(e.data.record_date, true), session: optionLabel(options, "milk_session", e.data.session, locale), n: e.data.rows.length })
-      : t("sync.flockLabel", { flock: e.data.flock_name, date: date(e.data.log_date, true) });
+      : e.kind === "flock"
+        ? t("sync.flockLabel", { flock: e.data.flock_name, date: date(e.data.log_date, true) })
+        : e.data.label;
 
   return (
     <Card mode="contained" style={[styles.card, { backgroundColor: theme.colors.secondaryContainer }]} testID="sync-bar">

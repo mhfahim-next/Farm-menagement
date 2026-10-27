@@ -14,6 +14,7 @@ import { PaperProvider } from "react-native-paper";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { OutboxProvider } from "@/lib/outbox";
 import { PrefsProvider, usePrefs } from "@/lib/prefs";
+import { ToastProvider } from "@/lib/toast";
 import { SessionProvider, useSession } from "@/lib/session";
 import { makeTheme } from "@/lib/theme";
 
@@ -51,7 +52,14 @@ function App({ fontsReady }: { fontsReady: boolean }) {
     const base = dark ? DarkTheme : DefaultTheme;
     return {
       ...base,
-      colors: { ...base.colors, primary: theme.colors.primary, background: theme.colors.background, card: theme.colors.surface, text: theme.colors.onSurface, border: theme.colors.outlineVariant },
+      colors: {
+        ...base.colors,
+        primary: theme.colors.primary,
+        background: theme.colors.background,
+        card: theme.colors.surface,
+        text: theme.colors.onSurface,
+        border: theme.colors.outlineVariant,
+      },
     };
   }, [dark, theme]);
   const ready = fontsReady && s.ready;
@@ -65,27 +73,37 @@ function App({ fontsReady }: { fontsReady: boolean }) {
   const hasFarm = s.memberships.length > 0;
   return (
     <PaperProvider theme={theme}>
-      <ThemeProvider value={navTheme}>
-        <StatusBar style={dark ? "light" : "dark"} />
-        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.colors.background }, animation: "fade_from_bottom" }}>
-          <Stack.Screen name="index" />
-          {/* First launch: a short guide, then sign in. */}
-          <Stack.Protected guard={!s.introSeen}>
-            <Stack.Screen name="intro" />
-          </Stack.Protected>
-          <Stack.Protected guard={s.introSeen && !signedIn}>
-            <Stack.Screen name="(auth)" />
-          </Stack.Protected>
-          {/* New account: create the farm, then choose a plan. */}
-          <Stack.Protected guard={signedIn && (!hasFarm || s.planPending)}>
-            <Stack.Screen name="onboarding" />
-          </Stack.Protected>
-          <Stack.Protected guard={signedIn && hasFarm && !s.planPending}>
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="animal/[id]" options={{ animation: "slide_from_right" }} />
-          </Stack.Protected>
-        </Stack>
-      </ThemeProvider>
+      <ToastProvider>
+        <ThemeProvider value={navTheme}>
+          <StatusBar style={dark ? "light" : "dark"} />
+          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.colors.background }, animation: "fade_from_bottom" }}>
+            <Stack.Screen name="index" />
+            {/* Google sign-in comes back here, signed in or not. */}
+            <Stack.Screen name="auth/callback" />
+            {/* First launch: a short guide, then sign in. */}
+            <Stack.Protected guard={!s.introSeen}>
+              <Stack.Screen name="intro" />
+            </Stack.Protected>
+            <Stack.Protected guard={s.introSeen && !signedIn}>
+              <Stack.Screen name="(auth)" />
+            </Stack.Protected>
+            {/* New account: create the farm, then choose a plan. */}
+            <Stack.Protected guard={signedIn && (!hasFarm || s.planPending)}>
+              <Stack.Screen name="onboarding" />
+            </Stack.Protected>
+            <Stack.Protected guard={signedIn && hasFarm && !s.planPending}>
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="animal/[id]" options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="buyer/[id]" options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="record/health" />
+              <Stack.Screen name="record/breeding" />
+              <Stack.Screen name="record/sale" />
+              <Stack.Screen name="record/payment" />
+              <Stack.Screen name="record/buyer" />
+            </Stack.Protected>
+          </Stack>
+        </ThemeProvider>
+      </ToastProvider>
     </PaperProvider>
   );
 }

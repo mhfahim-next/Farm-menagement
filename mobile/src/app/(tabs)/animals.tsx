@@ -1,12 +1,12 @@
-import { router } from "expo-router";
-import { useMemo, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useMemo, useState } from "react";
 import { FlatList, RefreshControl, StyleSheet, View } from "react-native";
 import { Chip, Icon, List, Searchbar, SegmentedButtons, Text, useTheme } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { OfflineNote } from "@/components/offline-note";
 import { useAnimals, useOptions, type Animal } from "@/lib/data";
-import { farmToday } from "@/lib/dates";
-import { ageParts, optionLabel } from "@/lib/options";
+import { useDescribe } from "@/lib/describe";
+import { optionLabel } from "@/lib/options";
 import { usePrefs } from "@/lib/prefs";
 import { useSession } from "@/lib/session";
 
@@ -26,6 +26,12 @@ export default function Animals() {
   const hasGoats = Boolean(farm?.has_goat);
   const [group, setGroup] = useState<"cattle" | "goats">(hasCattle || !hasGoats ? "cattle" : "goats");
   const [refreshing, setRefreshing] = useState(false);
+  // Up to date after a sale or a birth recorded elsewhere in the app.
+  useFocusEffect(
+    useCallback(() => {
+      reload();
+    }, [reload]),
+  );
 
   const list = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -37,14 +43,7 @@ export default function Animals() {
     );
   }, [data, q, onlyActive, group, hasCattle, hasGoats]);
 
-  const today = farmToday();
-  const describe = (a: Animal) => {
-    const age = ageParts(a.date_of_birth, today);
-    const ageText = !age ? "" : age.y ? `${t("age.y", { n: age.y })}${age.m ? ` ${t("age.m", { n: age.m })}` : ""}` : age.m ? t("age.m", { n: age.m }) : t("age.d", { n: age.d });
-    return [optionLabel(options, "cattle_category", a.category, locale), a.breed ? optionLabel(options, "cattle_breed", a.breed, locale) : "", ageText]
-      .filter(Boolean)
-      .join(" · ");
-  };
+  const describe = useDescribe(options);
 
   const refresh = async () => {
     setRefreshing(true);

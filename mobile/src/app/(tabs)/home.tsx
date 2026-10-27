@@ -1,4 +1,5 @@
 import * as WebBrowser from "expo-web-browser";
+import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { Button, Card, Chip, Icon, Text, useTheme } from "react-native-paper";
@@ -37,6 +38,12 @@ export default function Home() {
       cancelled = true;
     };
   }, [farm]);
+
+  useFocusEffect(
+    useCallback(() => {
+      load().catch(() => {});
+    }, [load]),
+  );
 
   const refresh = async () => {
     setRefreshing(true);
