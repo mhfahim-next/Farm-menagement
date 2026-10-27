@@ -41,15 +41,20 @@ export function ChoiceChips({
 }
 
 /** A date: today / yesterday in one tap, or typed as YYYY-MM-DD. */
-export function DateField({ value, onChange, label }: { value: string; onChange: (v: string) => void; label?: string }) {
+export function DateField({ value, onChange, label, optional, testID }: { value: string; onChange: (v: string) => void; label?: string; optional?: boolean; testID?: string }) {
   const { t, date } = usePrefs();
   const today = farmToday();
   const quick = [today, addDays(today, -1)];
-  const [typing, setTyping] = useState(!quick.includes(value));
+  const [typing, setTyping] = useState(!quick.includes(value) && !(optional && !value));
   return (
     <View style={styles.gap}>
       <Label>{label ?? t("rec.date")}</Label>
-      <View style={styles.chips}>
+      <View style={styles.chips} testID={testID}>
+        {optional && (
+          <Chip selected={!typing && !value} showSelectedCheck onPress={() => (setTyping(false), onChange(""))} testID="date-none">
+            {t("rec.notKnown")}
+          </Chip>
+        )}
         <Chip selected={!typing && value === today} showSelectedCheck onPress={() => (setTyping(false), onChange(today))} testID="date-today">
           {t("entry.today")}
         </Chip>

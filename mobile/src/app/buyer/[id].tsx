@@ -4,7 +4,9 @@ import { Linking, ScrollView, StyleSheet, View } from "react-native";
 import { Appbar, Button, Card, List, Text, useTheme } from "react-native-paper";
 import { OfflineNote } from "@/components/offline-note";
 import { useCached } from "@/lib/cache";
-import { fetchSales, useBuyers } from "@/lib/data";
+import { RecordMenu } from "@/components/record-menu";
+import { deleteRow, fetchSales, isManager, useBuyers } from "@/lib/data";
+import { useToast } from "@/lib/toast";
 import { usePrefs } from "@/lib/prefs";
 import { useSession } from "@/lib/session";
 
@@ -26,6 +28,8 @@ export default function BuyerPage() {
     }, [reloadBuyers, reloadHistory]),
   );
   const b = (buyers.data ?? []).find((x) => x.id === id);
+  const manager = isManager(useSession().current?.role);
+  const toast = useToast();
   const back = () => (router.canGoBack() ? router.back() : router.replace("/sales"));
 
   const lines = [
@@ -37,6 +41,7 @@ export default function BuyerPage() {
       note: Number(s.paid_amount) > 0 ? t("sale.paidN", { amount: money(Number(s.paid_amount), currency) }) : "",
       icon: "receipt-text-outline",
       payment: false,
+      id: s.id,
     })),
     ...(history.data?.payments ?? []).map((p) => ({
       key: `p${p.id}`,
@@ -46,6 +51,7 @@ export default function BuyerPage() {
       note: "",
       icon: "cash-check",
       payment: true,
+      id: p.id,
     })),
   ].sort((x, y) => y.date.localeCompare(x.date));
 
@@ -90,9 +96,22 @@ export default function BuyerPage() {
                 description={[date(l.date), l.note].filter(Boolean).join(" · ")}
                 left={(p) => <List.Icon {...p} icon={l.icon} color={l.payment ? theme.colors.primary : p.color} />}
                 right={() => (
-                  <Text variant="titleSmall" style={[styles.center, { color: l.payment ? theme.colors.primary : theme.colors.onSurface }]}>
-                    {`${l.payment ? "−" : ""}${money(l.amount, currency)}`}
-                  </Text>
+                  <View style={styles.right}>
+                    <Text variant="titleSmall" style={[styles.center, { color: l.payment ? theme.colors.primary : theme.colors.onSurface }]}>
+                      {`${l.payment ? "−" : ""}${money(l.amount, currency)}`}
+                    </Text>
+                    {manager && (
+                      <RecordMenu
+                        onDelete={async () => {
+                          const err = await deleteRow(l.payment ? "buyer_payments" : "sales", l.id);
+                          toast(err ? `${t("common.error")} ${err}` : t("rec.deleted"));
+                          reloadBuyers();
+                          reloadHistory();
+                        }}
+                        testID={`line-menu-${l.key}`}
+                      />
+                    )}
+                  </View>
                 )}
               />
             ))
@@ -111,4 +130,5 @@ const styles = StyleSheet.create({
   actions: { flexDirection: "row", gap: 10 },
   btn: { height: 48 },
   center: { alignSelf: "center" },
+  right: { flexDirection: "row", alignItems: "center" },
 });

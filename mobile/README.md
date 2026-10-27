@@ -84,7 +84,34 @@ The Android app comes first. The same code can later build the iPhone app.
   - Enter either an amount or quantity × price. Works offline.
 - **Profit** (Sales tab → Profit): this month or last month, money in, money out and profit per part of the farm. It uses the same ledger as the website: sales, costs, medicine, breeding and staff pay.
 
-**Next steps:** Play Store release, adding and editing animals in the app, and staff attendance.
+- **Animals: add, edit, delete** (Animals → **+ Add**, or ✏ on an animal's page):
+  - Tag, name, type, breed, birth date, purchase date and price, mother (from the farm's females), sire and notes, plus a **photo** from the camera or gallery.
+    - Photos are shrunk to 1024 px and stored in the `animal-photos` bucket under the farm's folder. Only that farm's staff can add or change them.
+  - A bought animal can start fattening straight away, with its weight now and a target weight.
+  - The status can be changed (sold, dead, archived). Owners and managers can delete an animal.
+  - Duplicate tags and plan limits are explained in plain words.
+- **Change or delete records:** the ⋮ menu on a vaccine, breeding event, weight, sale, payment or expense.
+  - Staff can edit vaccines and breeding events. Owners and managers can delete records, which matches the database rules.
+- **Weights and fattening:**
+  - Weigh on a scale, or with a **measuring tape**: girth² × length ÷ 10838, the same formula as the website.
+  - The animal's page shows the latest weight, grams gained a day, and for fattening animals: days on feed, expected weight on the sale day, cost so far, break-even price per kg and expected profit.
+  - **Fattening** (Animals → Fattening) lists every animal being fattened. Its settings hold the sale day (Qurbani by default), daily cost and price per kg.
+  - The numbers come from the same code as the website (`src/lib/fattening.ts` is copied).
+- **Flocks and batches** (Animals → Flocks & batches; the Birds tab on farms that keep only birds):
+  - Start a layer flock or a broiler / Sonali batch.
+  - Layer page: birds alive, laying % over 7 days, mortality, feed per dozen eggs, age.
+  - Batch page: age, live birds, mortality, average weight, FCR, cost per kg, sales and profit (`src/lib/broiler.ts` is copied too).
+  - Vaccines and medicine for one or more flocks, with Newcastle, Gumboro and other presets.
+  - A flock can be marked sold or culled.
+- **Profile:** name, phone, photo, a new password, and **Delete account** (type DELETE to confirm).
+  - Google Play requires the delete option. The website has the same button under Profile.
+  - Farms owned alone are deleted with all their records.
+  - A farm shared with others has to be handed over first.
+- **Farm settings** (owners and managers): name, area, what the farm keeps, currency, and the profit-per-animal switch. **Add another farm**, within the plan's limit.
+
+**Next steps:** stock (feed and medicine), staff attendance and pay, the team (invite managers, workers and vets), milk and egg charts, profit per litre or egg and per animal, and sharing reports as PDF or Excel.
+
+For the Play Console's account-deletion question, give: in the app, More → Profile → Delete account; on the web, https://www.farmflows.app/dashboard/profile (sign in, then Delete account).
 
 ## Setup
 

@@ -14,6 +14,8 @@ export type Animal = {
   species: string | null;
   date_of_birth: string | null;
   is_fattening: boolean;
+  sex: string | null;
+  photo_path: string | null;
 };
 
 export type Flock = { id: string; name: string; kind: "layer" | "broiler" | "sonali"; breed: string | null; birds: number };
@@ -31,7 +33,7 @@ export const fetchAnimals = (farmId: string) =>
   rows<Animal>(
     supabase
       .from("cattle")
-      .select("id, tag_number, name, breed, category, status, species, date_of_birth, is_fattening")
+      .select("id, tag_number, name, breed, category, status, species, date_of_birth, is_fattening, sex, photo_path")
       .eq("farm_id", farmId)
       .is("deleted_at", null)
       .order("tag_number"),
@@ -104,3 +106,98 @@ export const fetchLedger = (farmId: string, from: string, to: string) =>
   rows<{ txn_type: string; module: string | null; amount: number; category: string | null }>(
     supabase.from("finance_ledger").select("txn_type, module, amount, category").eq("farm_id", farmId).gte("txn_date", from).lte("txn_date", to),
   );
+
+/** A database refusal in the reader's words when we know it (duplicate tag, plan limit), else null. */
+export function knownDbError(message: string): { key: "animal.err.dupTag" | "plan.err.limit"; n?: number } | null {
+  if (/duplicate key|23505|unique/i.test(message)) return { key: "animal.err.dupTag" };
+  const limit = /PLAN_LIMIT:\w+:(\d+)/.exec(message);
+  if (limit) return { key: "plan.err.limit", n: Number(limit[1]) };
+  return null;
+}
+
+/** Owners and managers may delete records (the database allows only them). */
+export const isManager = (role: string | undefined) => role === "owner" || role === "manager";
+
+/** Deletes one saved record; the error text when the server refuses. */
+export async function deleteRow(table: "health_records" | "breeding_events" | "sales" | "buyer_payments" | "transactions" | "cattle_weights" | "flock_health_records", id: string) {
+  const { error } = await supabase.from(table).delete().eq("id", id);
+  return error?.message ?? null;
+}
+
+export type TxnRow = { id: string; txn_date: string; txn_type: string; module: string; category: string; amount: number; description: string | null };
+
+/** Money in and out typed in by hand (not sales or medicine), newest first. */
+export const fetchTransactions = (farmId: string, from: string, to: string) =>
+  rows<TxnRow>(
+    supabase
+      .from("transactions")
+      .select("id, txn_date, txn_type, module, category, amount, description")
+      .eq("farm_id", farmId)
+      .gte("txn_date", from)
+      .lte("txn_date", to)
+      .order("txn_date", { ascending: false })
+      .limit(50),
+  );
+
+export type FlockRow = {
+  id: string;
+  name: string;
+  kind: "layer" | "broiler" | "sonali";
+  breed: string | null;
+  shed: string | null;
+  status: string;
+  placed_date: string;
+  initial_count: number;
+  age_at_placement_weeks: number;
+  chick_price: number | null;
+  current_count: number;
+};
+
+/** Every flock and batch (active first), with live birds. */
+export async function fetchAllFlocks(farmId: string): Promise<FlockRow[]> {
+  const [flocks, stats] = await Promise.all([
+    rows<Omit<FlockRow, "current_count">>(
+      supabase
+        .from("flocks")
+        .select("id, name, kind, breed, shed, status, placed_date, initial_count, age_at_placement_weeks, chick_price")
+        .eq("farm_id", farmId)
+        .is("deleted_at", null)
+        .order("placed_date", { ascending: false }),
+    ),
+    rows<{ flock_id: string; current_count: number }>(supabase.from("flock_stats").select("flock_id, current_count").eq("farm_id", farmId)),
+  ]);
+  const live = new Map(stats.map((s) => [s.flock_id, Number(s.current_count)]));
+  return flocks.map((f) => ({ ...f, current_count: live.get(f.id) ?? f.initial_count })).sort((a, b) => Number(a.status !== "active") - Number(b.status !== "active"));
+}
+
+export type FlockDetail = {
+  flock: FlockRow | null;
+  logs: { log_date: string; eggs_collected: number; eggs_broken: number; mortality: number; culled: number; feed_kg: number | null; avg_weight_g: number | null }[];
+  health: { id: string; record_date: string; record_type: string; product: string | null; next_due_date: string | null; cost: number | null }[];
+  sold: { birds: number; kg: number; amount: number };
+  feedCost: number;
+};
+
+export async function fetchFlockDetail(id: string): Promise<FlockDetail> {
+  const [f, logs, health, stats, moves] = await Promise.all([
+    supabase.from("flocks").select("id, name, kind, breed, shed, status, placed_date, initial_count, age_at_placement_weeks, chick_price").eq("id", id).maybeSingle(),
+    supabase.from("flock_daily_logs").select("log_date, eggs_collected, eggs_broken, mortality, culled, feed_kg, avg_weight_g").eq("flock_id", id).order("log_date"),
+    supabase.from("flock_health_records").select("id, record_date, record_type, product, next_due_date, cost").eq("flock_id", id).order("record_date", { ascending: false }),
+    supabase.from("flock_stats").select("current_count, total_sold, total_sold_kg, total_sales").eq("flock_id", id).maybeSingle(),
+    supabase.from("inventory_moves").select("item_id, quantity").eq("flock_id", id).eq("move_type", "use"),
+  ]);
+  const err = f.error ?? logs.error ?? health.error;
+  if (err) throw new Error(err.message);
+  const s = stats.data as { current_count: number; total_sold: number; total_sold_kg: number; total_sales: number } | null;
+  // Feed taken from stock for this flock, at each item's average cost.
+  const mv = (moves.data ?? []) as { item_id: string; quantity: number }[];
+  const items = mv.length ? await supabase.from("inventory_stock").select("id, avg_cost").in("id", [...new Set(mv.map((m) => m.item_id))]) : { data: [] };
+  const cost = new Map(((items.data ?? []) as { id: string; avg_cost: number | null }[]).map((i) => [i.id, Number(i.avg_cost ?? 0)]));
+  return {
+    flock: f.data ? { ...(f.data as Omit<FlockRow, "current_count">), current_count: Number(s?.current_count ?? (f.data as FlockRow).initial_count) } : null,
+    logs: (logs.data ?? []) as FlockDetail["logs"],
+    health: (health.data ?? []) as FlockDetail["health"],
+    sold: { birds: Number(s?.total_sold ?? 0), kg: Number(s?.total_sold_kg ?? 0), amount: Number(s?.total_sales ?? 0) },
+    feedCost: mv.reduce((sum, m) => sum + Number(m.quantity) * (cost.get(m.item_id) ?? 0), 0),
+  };
+}

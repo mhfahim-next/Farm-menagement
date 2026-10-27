@@ -23,8 +23,8 @@ export const UPCOMING: Upcoming[] = [
     status: "next",
     title: { en: "The Android app on the Play Store, then iPhone", bn: "Play Store-এ Android অ্যাপ, তারপর iPhone" },
     body: {
-      en: "The Android app is being tested now. Next: the Play Store, adding and editing animals in the app, then the App Store.",
-      bn: "Android অ্যাপের পরীক্ষা চলছে। এরপর: Play Store, অ্যাপ থেকেই পশু যোগ ও সম্পাদনা, তারপর App Store।",
+      en: "The Android app is being tested now. Next in the app: stock, staff, the team and reports; then the Play Store and the App Store.",
+      bn: "Android অ্যাপের পরীক্ষা চলছে। অ্যাপে এরপর: স্টক, কর্মী, টিম আর রিপোর্ট; তারপর Play Store আর App Store।",
     },
   },
   {
@@ -70,6 +70,23 @@ export const UPCOMING: Upcoming[] = [
 ];
 
 export const RELEASES: Release[] = [
+  {
+    id: "2026-10-28-app-manage",
+    date: "2026-10-28",
+    title: { en: "Run the farm from the app", bn: "অ্যাপ থেকেই খামার চালান" },
+    summary: {
+      en: "Add and edit animals with photos, weigh them, follow fattening, start flocks and batches, fix or delete records, and manage your profile and farm, all on the phone.",
+      bn: "ছবিসহ পশু যোগ ও সম্পাদনা, ওজন, মোটাতাজাকরণ, নতুন ফ্লক ও ব্যাচ, ভুল হিসাব ঠিক করা বা মোছা, আর প্রোফাইল ও খামারের সেটিং — সব ফোন থেকেই।",
+    },
+    changes: [
+      { type: "new", en: "App: add, edit and delete animals, with a photo from the camera or gallery.", bn: "অ্যাপ: পশু যোগ, সম্পাদনা ও মোছা, ক্যামেরা বা গ্যালারি থেকে ছবিসহ।" },
+      { type: "new", en: "App: weights from a scale or a measuring tape, and fattening with expected weight on the sale day, break-even and profit.", bn: "অ্যাপ: পাল্লা বা মাপার ফিতা দিয়ে ওজন, আর মোটাতাজাকরণে বিক্রির দিনের সম্ভাব্য ওজন, লাভ-ক্ষতির সীমা ও লাভ।" },
+      { type: "new", en: "App: start layer flocks and broiler or Sonali batches; FCR, mortality, laying rate, vaccines with presets.", bn: "অ্যাপ: লেয়ার ফ্লক আর ব্রয়লার বা সোনালি ব্যাচ খুলুন; FCR, মৃত্যুহার, ডিম পাড়ার হার, দ্রুত বাছাইসহ টিকা।" },
+      { type: "new", en: "App: change or delete a vaccine, breeding event, weight, sale, payment or expense.", bn: "অ্যাপ: টিকা, প্রজনন, ওজন, বিক্রি, জমা বা খরচের হিসাব বদলান বা মুছুন।" },
+      { type: "new", en: "App: profile (name, photo, password), farm settings and a second farm.", bn: "অ্যাপ: প্রোফাইল (নাম, ছবি, পাসওয়ার্ড), খামারের সেটিং আর দ্বিতীয় খামার।" },
+      { type: "new", en: "Delete your account from the app or from Profile on the website.", bn: "অ্যাপ বা ওয়েবসাইটের প্রোফাইল থেকে নিজের অ্যাকাউন্ট মুছতে পারবেন।" },
+    ],
+  },
   {
     id: "2026-10-27-android-app",
     date: "2026-10-27",

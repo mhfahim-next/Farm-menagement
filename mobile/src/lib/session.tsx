@@ -7,7 +7,7 @@ import type { Farm, Membership } from "./farm";
 import { getItem, KEYS, setItem } from "./storage";
 import { supabase } from "./supabase";
 
-type Profile = { full_name: string | null; account_type: "farmer" | "doctor" };
+type Profile = { full_name: string | null; account_type: "farmer" | "doctor"; avatar_url: string | null; phone: string | null };
 
 type SessionState = {
   ready: boolean;
@@ -28,7 +28,7 @@ type SessionState = {
 
 const Ctx = createContext<SessionState | null>(null);
 
-const FARM_COLUMNS = "id, name, currency, plan, plan_expires_at, suspended, has_dairy, has_layer, has_goat, has_fattening, has_broiler";
+const FARM_COLUMNS = "id, name, location, currency, plan, plan_expires_at, suspended, has_dairy, has_layer, has_goat, has_fattening, has_broiler, show_animal_profit";
 
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [introSeen, setIntroSeen] = useState(() => getItem(KEYS.introSeen) === "1");
@@ -110,7 +110,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
 async function fetchAccount(userId: string): Promise<{ profile: Profile | null; memberships: Membership[] }> {
   const [p, m] = await Promise.all([
-    supabase.from("profiles").select("full_name, account_type").eq("id", userId).maybeSingle(),
+    supabase.from("profiles").select("full_name, account_type, avatar_url, phone").eq("id", userId).maybeSingle(),
     supabase.from("farm_members").select(`role, created_at, farm:farms!inner(${FARM_COLUMNS})`).eq("user_id", userId).order("created_at"),
   ]);
   if (m.error) throw new Error(m.error.message);

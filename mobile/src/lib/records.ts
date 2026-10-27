@@ -350,3 +350,162 @@ export function monthRange(today: string, which: "this" | "last") {
   const to = which === "this" ? today : new Date(Date.UTC(y, m - 1, 0)).toISOString().slice(0, 10);
   return { from, to };
 }
+
+// ---------------------------------------------------------------- animals
+
+/** The species an animal type belongs to (cattle when the type says nothing). */
+export const speciesOfCategory = (meta: Record<string, unknown> | null | undefined) =>
+  meta?.species === "goat" || meta?.species === "sheep" ? (meta.species as "goat" | "sheep") : "cattle";
+
+export type AnimalEntry = {
+  tag_number: string;
+  name: string | null;
+  category: string;
+  breed: string | null;
+  date_of_birth: string | null;
+  purchase_date: string | null;
+  purchase_price: number | null;
+  mother_id: string | null;
+  father: string | null;
+  notes: string | null;
+  status?: string;
+  is_fattening?: boolean;
+  fattening_start?: string | null;
+  target_weight_kg?: number | null;
+};
+
+export type AnimalInput = {
+  id: string | null;
+  tag: string;
+  name: string;
+  category: string;
+  breed: string;
+  dob: string;
+  purchaseDate: string;
+  purchasePrice: string;
+  motherId: string | null;
+  father: string;
+  notes: string;
+  status: string;
+  fattening: boolean;
+  targetKg: string;
+  startKg: string;
+};
+
+export function animalEntry(i: AnimalInput, today: string):
+  | { ok: true; entry: AnimalEntry; startKg: number | null }
+  | Err<"animal.err.tag" | "animal.err.type" | "rec.err.date" | "rec.err.future" | "animal.err.motherSelf" | "entry.err.number"> {
+  const tag = i.tag.trim();
+  if (!tag) return { ok: false, error: "animal.err.tag" };
+  if (!i.category) return { ok: false, error: "animal.err.type" };
+  for (const d of [i.dob, i.purchaseDate]) {
+    if (d && !isDate(d)) return { ok: false, error: "rec.err.date" };
+    if (d && d > today) return { ok: false, error: "rec.err.future" };
+  }
+  if (i.motherId && i.motherId === i.id) return { ok: false, error: "animal.err.motherSelf" };
+  const price = optionalNumber(i.purchasePrice);
+  const target = optionalNumber(i.targetKg);
+  const start = optionalNumber(i.startKg);
+  if (!price.ok || !target.ok || !start.ok) return { ok: false, error: "entry.err.number" };
+  const entry: AnimalEntry = {
+    tag_number: tag,
+    name: i.name.trim() || null,
+    category: i.category,
+    breed: i.breed.trim() || null,
+    date_of_birth: i.dob || null,
+    purchase_date: i.purchaseDate || null,
+    purchase_price: price.v,
+    mother_id: i.motherId,
+    father: i.father.trim() || null,
+    notes: i.notes.trim() || null,
+  };
+  if (i.id) entry.status = i.status || "active";
+  else if (i.fattening) {
+    entry.is_fattening = true;
+    entry.fattening_start = i.purchaseDate || today;
+    entry.target_weight_kg = target.v;
+  }
+  return { ok: true, entry, startKg: !i.id && i.fattening && start.v ? start.v : null };
+}
+
+/** Live weight of cattle from a measuring tape (Schaeffer): girth² × length ÷ 10838, in cm and kg. */
+export const tapeWeight = (girthCm: number, lengthCm: number) => Math.round(((girthCm * girthCm * lengthCm) / 10838) * 10) / 10;
+
+export type WeightEntry = { weigh_date: string; weight_kg: number; method: "scale" | "tape"; heart_girth_cm: number | null; body_length_cm: number | null };
+
+export function weightEntry(i: { date: string; method: string; kg: string; girth: string; length: string }, today: string):
+  | { ok: true; entry: WeightEntry }
+  | Err<"rec.err.date" | "rec.err.future" | "weight.err.kg" | "weight.err.tape"> {
+  if (!isDate(i.date)) return { ok: false, error: "rec.err.date" };
+  if (i.date > today) return { ok: false, error: "rec.err.future" };
+  if (i.method === "tape") {
+    const g = parseNumber(i.girth);
+    const l = parseNumber(i.length);
+    if (!g || !l || !Number.isFinite(g) || !Number.isFinite(l) || g < 30 || g > 300 || l < 30 || l > 300) return { ok: false, error: "weight.err.tape" };
+    return { ok: true, entry: { weigh_date: i.date, weight_kg: tapeWeight(g, l), method: "tape", heart_girth_cm: g, body_length_cm: l } };
+  }
+  const kg = parseNumber(i.kg);
+  if (kg === null || !Number.isFinite(kg) || kg <= 0 || kg > 2000) return { ok: false, error: "weight.err.kg" };
+  return { ok: true, entry: { weigh_date: i.date, weight_kg: Math.round(kg * 10) / 10, method: "scale", heart_girth_cm: null, body_length_cm: null } };
+}
+
+// ---------------------------------------------------------------- birds
+
+export type FlockNew = { name: string; kind: "layer" | "broiler" | "sonali"; breed: string | null; shed: string | null; placed_date: string; initial_count: number; age_at_placement_weeks: number; chick_price: number | null };
+
+export function flockNew(i: { name: string; kind: string; breed: string; shed: string; date: string; count: string; ageWeeks: string; chickPrice: string }, today: string):
+  | { ok: true; entry: FlockNew }
+  | Err<"flock.err.name" | "flock.err.count" | "rec.err.date" | "rec.err.future" | "entry.err.number"> {
+  const name = i.name.trim();
+  if (!name) return { ok: false, error: "flock.err.name" };
+  const count = parseNumber(i.count);
+  if (count === null || !Number.isInteger(count) || count <= 0) return { ok: false, error: "flock.err.count" };
+  if (!isDate(i.date)) return { ok: false, error: "rec.err.date" };
+  if (i.date > today) return { ok: false, error: "rec.err.future" };
+  const kind = i.kind === "broiler" || i.kind === "sonali" ? i.kind : "layer";
+  const meat = kind !== "layer";
+  const age = optionalNumber(i.ageWeeks);
+  const price = optionalNumber(i.chickPrice);
+  if (!age.ok || !price.ok || (age.v !== null && !Number.isInteger(age.v))) return { ok: false, error: "entry.err.number" };
+  return {
+    ok: true,
+    entry: {
+      name,
+      kind,
+      breed: i.breed.trim() || null,
+      shed: i.shed.trim() || null,
+      placed_date: i.date,
+      initial_count: count,
+      age_at_placement_weeks: meat ? 0 : (age.v ?? 0),
+      chick_price: meat ? price.v : null,
+    },
+  };
+}
+
+/** A layer flock's age in weeks today. */
+export const flockWeeks = (placedDate: string, ageAtPlacement: number, today: string) =>
+  Math.max(0, Math.floor((Date.parse(today) - Date.parse(placedDate)) / (7 * 86_400_000))) + Number(ageAtPlacement ?? 0);
+
+/** Layer flock numbers: hen-day % over the last 7 logged days, mortality and feed per dozen eggs. */
+export function layerStats(initial: number, logs: { log_date: string; eggs_collected: number; mortality: number; culled: number; feed_kg: number | null }[]) {
+  const sorted = [...logs].sort((a, b) => a.log_date.localeCompare(b.log_date));
+  let alive = initial;
+  const rows = sorted.map((l) => {
+    const henDay = alive > 0 ? (Number(l.eggs_collected) / alive) * 100 : 0;
+    alive = Math.max(0, alive - Number(l.mortality) - Number(l.culled));
+    return { ...l, henDay, alive };
+  });
+  const last7 = rows.slice(-7);
+  const deaths = sorted.reduce((s, l) => s + Number(l.mortality) + Number(l.culled), 0);
+  const eggs = sorted.reduce((s, l) => s + Number(l.eggs_collected), 0);
+  const feed = sorted.reduce((s, l) => s + Number(l.feed_kg ?? 0), 0);
+  return {
+    alive,
+    henDay7: last7.length ? last7.reduce((s, r) => s + r.henDay, 0) / last7.length : 0,
+    mortalityPct: initial > 0 ? (deaths / initial) * 100 : 0,
+    deaths,
+    eggs,
+    feedPerDozen: eggs > 0 ? feed / (eggs / 12) : null,
+    rows,
+  };
+}

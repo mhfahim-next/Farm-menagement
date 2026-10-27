@@ -19,6 +19,8 @@ export type Farm = {
   plan: string;
   plan_expires_at: string | null;
   suspended: boolean;
+  location?: string | null;
+  show_animal_profit?: boolean;
 } & Record<FarmKind, boolean>;
 
 export type Membership = { role: Role; farm: Farm };

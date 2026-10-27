@@ -145,8 +145,52 @@ begin
   exception when others then v_ok := true;
   end;
   if not v_ok then raise exception 'animal profit of another farm was readable'; end if;
+
+  -- animal photos: only into your own farm's folder
+  if not public.can_write_animal_photo(v_farm::text || '/cow.jpg') then raise exception 'staff could not add an animal photo'; end if;
+  if public.can_write_animal_photo(gen_random_uuid()::text || '/cow.jpg') then raise exception 'a photo could go into another farm'; end if;
+  if public.can_write_animal_photo('../cow.jpg') then raise exception 'a photo path outside a farm was accepted'; end if;
 end $$;
 
 reset role;
+
+-- 4. Deleting your own account (Google Play rule): refused while others share a farm you own.
+insert into auth.users (id, instance_id, aud, role, email, raw_user_meta_data, created_at, updated_at) values
+  ('00000000-0000-4000-8000-0000000000c2', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'ci-owner@example.com', '{}', now(), now()),
+  ('00000000-0000-4000-8000-0000000000c3', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'ci-worker@example.com', '{}', now(), now());
+\o /dev/null
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-0000000000c2","role":"authenticated"}', true);
+\o
+set local role authenticated;
+do $$
+declare v_farm uuid; v_ok boolean := false;
+begin
+  v_farm := public.create_farm('CI shared farm', null, 'BDT', true, false, false, false, false);
+  perform set_config('ci.farm', v_farm::text, true);
+end $$;
+reset role;
+update public.farms set plan = 'business' where id = current_setting('ci.farm')::uuid;
+insert into public.farm_members (farm_id, user_id, role) values (current_setting('ci.farm')::uuid, '00000000-0000-4000-8000-0000000000c3', 'worker');
+set local role authenticated;
+do $$
+declare v_ok boolean := false;
+begin
+  begin
+    perform public.delete_my_account();
+  exception when others then v_ok := sqlerrm like 'SHARED_FARM:%';
+  end;
+  if not v_ok then raise exception 'an owner could delete their account while others share the farm'; end if;
+end $$;
+reset role;
+delete from public.farm_members where user_id = '00000000-0000-4000-8000-0000000000c3';
+set local role authenticated;
+select public.delete_my_account();
+reset role;
+do $$
+begin
+  if exists (select 1 from auth.users where id = '00000000-0000-4000-8000-0000000000c2') then raise exception 'the account was not deleted'; end if;
+  if exists (select 1 from public.farms where id = current_setting('ci.farm')::uuid) then raise exception 'the farm owned alone was not deleted'; end if;
+  if has_function_privilege('anon', 'public.delete_my_account()', 'execute') then raise exception 'visitors can call delete_my_account'; end if;
+end $$;
 rollback;
 \echo 'database checks passed'

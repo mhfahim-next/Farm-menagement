@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button, Card, Text, TextInput, useTheme } from "react-native-paper";
 import { AnimalPicker, ChoiceChips, DateField, Label, NumberField } from "@/components/fields";
 import { FormError } from "@/components/form-error";
@@ -12,13 +12,14 @@ import { useOutbox } from "@/lib/outbox";
 import { usePrefs } from "@/lib/prefs";
 import { breedingEntry, calfCategories, EVENT_TYPES, PREGNANCY_RESULTS, uuid } from "@/lib/records";
 import { useSession } from "@/lib/session";
+import { supabase } from "@/lib/supabase";
 import { useToast } from "@/lib/toast";
 
 const FEMALE = ["cow", "heifer", "doe", "doeling", "ewe", "ewe_lamb"];
 
 /** Heat, insemination, pregnancy check, birth (with the newborn) or dry off, for one female. */
 export default function BreedingRecord() {
-  const { animal } = useLocalSearchParams<{ animal?: string }>();
+  const { animal, id: eventId } = useLocalSearchParams<{ animal?: string; id?: string }>();
   const { t, locale, date: fmt } = usePrefs();
   const theme = useTheme();
   const farm = useSession().current?.farm;
@@ -48,6 +49,33 @@ export default function BreedingRecord() {
   const [detail, setDetail] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  // Editing a saved event (its type stays; a birth's newborn is edited on its own page).
+  useEffect(() => {
+    if (!eventId) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("breeding_events")
+        .select("cattle_id, event_type, event_date, bull_or_semen, technician, cost, heat_signs, result, notes")
+        .eq("id", eventId)
+        .maybeSingle();
+      if (cancelled || !data) return;
+      const e = data as { cattle_id: string; event_type: string; event_date: string; bull_or_semen: string | null; technician: string | null; cost: number | null; heat_signs: string | null; result: string | null; notes: string | null };
+      setId(e.cattle_id);
+      setType(e.event_type);
+      setDate(e.event_date);
+      setSemen(e.bull_or_semen ?? "");
+      setTechnician(e.technician ?? "");
+      setCost(e.cost !== null ? String(Number(e.cost)) : "");
+      setSigns(e.heat_signs ? e.heat_signs.split(", ").filter(Boolean) : []);
+      setResult(e.result ?? "");
+      setNotes(e.notes ?? "");
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [eventId]);
+
   const calfTypes = calfCategories(species);
   const input = { cattleId: id ?? "", species, type, date, semen, technician, cost, heatSigns: signs, result, notes, calfTag, calfName, calfCategory: calfCategory || calfTypes[0] };
   const preview = breedingEntry(input, farmToday(), rules);
@@ -60,6 +88,18 @@ export default function BreedingRecord() {
     setError(null);
     setDetail(null);
     setBusy(true);
+    if (eventId) {
+      const { calf: _calf, cattle_id: _c, event_type: _t, ...fields } = r.entry;
+      const { error: e } = await supabase.from("breeding_events").update(fields).eq("id", eventId);
+      setBusy(false);
+      if (e) {
+        setError(t("common.error"));
+        setDetail(e.message);
+        return;
+      }
+      toast(t("rec.saved"));
+      return router.back();
+    }
     const text = `${label("breeding_event", r.entry.event_type)} · #${cow?.tag_number ?? ""}`;
     const res = await save({ kind: "breeding", farmId: farm.id, data: { ...r.entry, id: uuid(), calf_id: r.entry.calf ? uuid() : null, label: text } });
     setBusy(false);
@@ -81,7 +121,7 @@ export default function BreedingRecord() {
 
   return (
     <FormScreen
-      title={t("rec.breedingTitle")}
+      title={eventId ? t("rec.editTitle") : t("rec.breedingTitle")}
       testID="breeding-form"
       footer={
         <>
@@ -92,7 +132,7 @@ export default function BreedingRecord() {
         </>
       }
     >
-      {cow && animal ? (
+      {cow && (animal || eventId) ? (
         <Text variant="titleMedium" testID="breeding-animal">{`#${cow.tag_number}${cow.name ? ` · ${cow.name}` : ""} · ${describe(cow)}`}</Text>
       ) : (
         <>
@@ -101,7 +141,12 @@ export default function BreedingRecord() {
         </>
       )}
       <Label>{t("rec.event")}</Label>
-      <ChoiceChips options={EVENT_TYPES.map((v) => ({ value: v, label: label("breeding_event", v) }))} value={type} onChange={setType} testID="event" />
+      <ChoiceChips
+        options={EVENT_TYPES.filter((v) => !eventId || v === type).map((v) => ({ value: v, label: label("breeding_event", v) }))}
+        value={type}
+        onChange={(v) => !eventId && setType(v)}
+        testID="event"
+      />
       <DateField value={date} onChange={setDate} />
 
       {type === "heat" && (
@@ -127,7 +172,7 @@ export default function BreedingRecord() {
           <ChoiceChips options={PREGNANCY_RESULTS.map((v) => ({ value: v, label: label("pregnancy_result", v) }))} value={result} onChange={setResult} testID="result" />
         </>
       )}
-      {type === "calving" && (
+      {type === "calving" && !eventId && (
         <Card mode="outlined" style={{ borderRadius: 16 }}>
           <Card.Title title={t("rec.newborn")} subtitle={t("rec.newbornHint")} subtitleNumberOfLines={2} />
           <Card.Content style={{ gap: 10 }}>

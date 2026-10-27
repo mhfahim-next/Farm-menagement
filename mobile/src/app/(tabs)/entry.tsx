@@ -1,5 +1,5 @@
-import { router } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { Button, Chip, Icon, SegmentedButtons, Snackbar, Text, TextInput, useTheme } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -163,7 +163,13 @@ function MilkSheet({ farmId, day, onDone }: { farmId: string; day: string; onDon
   const { save } = useOutbox();
   const sessions = optionsOf(options, "milk_session");
   const [session, setSession] = useState("morning");
-  const { data: animals, offline } = useAnimals(farmId);
+  const { data: animals, offline, reload: reloadAnimals } = useAnimals(farmId);
+  // New or changed animals show up when the tab is opened again.
+  useFocusEffect(
+    useCallback(() => {
+      reloadAnimals();
+    }, [reloadAnimals]),
+  );
   const milking = useMemo(() => {
     const cats = milkingCategories(options);
     return (animals ?? []).filter((a) => a.status === "active" && (a.species ?? "cattle") === "cattle" && cats.includes(a.category));
@@ -279,7 +285,12 @@ const EMPTY: FlockFields = { eggs: "", broken: "", mortality: "", culled: "", fe
 function BirdSheet({ farmId, day, onDone }: { farmId: string; day: string; onDone: (r: SaveResult) => void }) {
   const { t } = usePrefs();
   const theme = useTheme();
-  const { data: flocks, offline } = useFlocks(farmId);
+  const { data: flocks, offline, reload: reloadFlocks } = useFlocks(farmId);
+  useFocusEffect(
+    useCallback(() => {
+      reloadFlocks();
+    }, [reloadFlocks]),
+  );
   const [chosen, setChosen] = useState<string | null>(null);
   const flock = (flocks ?? []).find((f) => f.id === chosen) ?? flocks?.[0] ?? null;
 
