@@ -350,3 +350,307 @@ export function monthRange(today: string, which: "this" | "last") {
   const to = which === "this" ? today : new Date(Date.UTC(y, m - 1, 0)).toISOString().slice(0, 10);
   return { from, to };
 }
+
+// ---------------------------------------------------------------- animals
+
+/** The species an animal type belongs to (cattle when the type says nothing). */
+export const speciesOfCategory = (meta: Record<string, unknown> | null | undefined) =>
+  meta?.species === "goat" || meta?.species === "sheep" ? (meta.species as "goat" | "sheep") : "cattle";
+
+export type AnimalEntry = {
+  tag_number: string;
+  name: string | null;
+  category: string;
+  breed: string | null;
+  date_of_birth: string | null;
+  purchase_date: string | null;
+  purchase_price: number | null;
+  mother_id: string | null;
+  father: string | null;
+  notes: string | null;
+  status?: string;
+  is_fattening?: boolean;
+  fattening_start?: string | null;
+  target_weight_kg?: number | null;
+};
+
+export type AnimalInput = {
+  id: string | null;
+  tag: string;
+  name: string;
+  category: string;
+  breed: string;
+  dob: string;
+  purchaseDate: string;
+  purchasePrice: string;
+  motherId: string | null;
+  father: string;
+  notes: string;
+  status: string;
+  fattening: boolean;
+  targetKg: string;
+  startKg: string;
+};
+
+export function animalEntry(i: AnimalInput, today: string):
+  | { ok: true; entry: AnimalEntry; startKg: number | null }
+  | Err<"animal.err.tag" | "animal.err.type" | "rec.err.date" | "rec.err.future" | "animal.err.motherSelf" | "entry.err.number"> {
+  const tag = i.tag.trim();
+  if (!tag) return { ok: false, error: "animal.err.tag" };
+  if (!i.category) return { ok: false, error: "animal.err.type" };
+  for (const d of [i.dob, i.purchaseDate]) {
+    if (d && !isDate(d)) return { ok: false, error: "rec.err.date" };
+    if (d && d > today) return { ok: false, error: "rec.err.future" };
+  }
+  if (i.motherId && i.motherId === i.id) return { ok: false, error: "animal.err.motherSelf" };
+  const price = optionalNumber(i.purchasePrice);
+  const target = optionalNumber(i.targetKg);
+  const start = optionalNumber(i.startKg);
+  if (!price.ok || !target.ok || !start.ok) return { ok: false, error: "entry.err.number" };
+  const entry: AnimalEntry = {
+    tag_number: tag,
+    name: i.name.trim() || null,
+    category: i.category,
+    breed: i.breed.trim() || null,
+    date_of_birth: i.dob || null,
+    purchase_date: i.purchaseDate || null,
+    purchase_price: price.v,
+    mother_id: i.motherId,
+    father: i.father.trim() || null,
+    notes: i.notes.trim() || null,
+  };
+  if (i.id) entry.status = i.status || "active";
+  else if (i.fattening) {
+    entry.is_fattening = true;
+    entry.fattening_start = i.purchaseDate || today;
+    entry.target_weight_kg = target.v;
+  }
+  return { ok: true, entry, startKg: !i.id && i.fattening && start.v ? start.v : null };
+}
+
+/** Live weight of cattle from a measuring tape (Schaeffer): girth² × length ÷ 10838, in cm and kg. */
+export const tapeWeight = (girthCm: number, lengthCm: number) => Math.round(((girthCm * girthCm * lengthCm) / 10838) * 10) / 10;
+
+export type WeightEntry = { weigh_date: string; weight_kg: number; method: "scale" | "tape"; heart_girth_cm: number | null; body_length_cm: number | null };
+
+export function weightEntry(i: { date: string; method: string; kg: string; girth: string; length: string }, today: string):
+  | { ok: true; entry: WeightEntry }
+  | Err<"rec.err.date" | "rec.err.future" | "weight.err.kg" | "weight.err.tape"> {
+  if (!isDate(i.date)) return { ok: false, error: "rec.err.date" };
+  if (i.date > today) return { ok: false, error: "rec.err.future" };
+  if (i.method === "tape") {
+    const g = parseNumber(i.girth);
+    const l = parseNumber(i.length);
+    if (!g || !l || !Number.isFinite(g) || !Number.isFinite(l) || g < 30 || g > 300 || l < 30 || l > 300) return { ok: false, error: "weight.err.tape" };
+    return { ok: true, entry: { weigh_date: i.date, weight_kg: tapeWeight(g, l), method: "tape", heart_girth_cm: g, body_length_cm: l } };
+  }
+  const kg = parseNumber(i.kg);
+  if (kg === null || !Number.isFinite(kg) || kg <= 0 || kg > 2000) return { ok: false, error: "weight.err.kg" };
+  return { ok: true, entry: { weigh_date: i.date, weight_kg: Math.round(kg * 10) / 10, method: "scale", heart_girth_cm: null, body_length_cm: null } };
+}
+
+// ---------------------------------------------------------------- birds
+
+export type FlockNew = { name: string; kind: "layer" | "broiler" | "sonali"; breed: string | null; shed: string | null; placed_date: string; initial_count: number; age_at_placement_weeks: number; chick_price: number | null };
+
+export function flockNew(i: { name: string; kind: string; breed: string; shed: string; date: string; count: string; ageWeeks: string; chickPrice: string }, today: string):
+  | { ok: true; entry: FlockNew }
+  | Err<"flock.err.name" | "flock.err.count" | "rec.err.date" | "rec.err.future" | "entry.err.number"> {
+  const name = i.name.trim();
+  if (!name) return { ok: false, error: "flock.err.name" };
+  const count = parseNumber(i.count);
+  if (count === null || !Number.isInteger(count) || count <= 0) return { ok: false, error: "flock.err.count" };
+  if (!isDate(i.date)) return { ok: false, error: "rec.err.date" };
+  if (i.date > today) return { ok: false, error: "rec.err.future" };
+  const kind = i.kind === "broiler" || i.kind === "sonali" ? i.kind : "layer";
+  const meat = kind !== "layer";
+  const age = optionalNumber(i.ageWeeks);
+  const price = optionalNumber(i.chickPrice);
+  if (!age.ok || !price.ok || (age.v !== null && !Number.isInteger(age.v))) return { ok: false, error: "entry.err.number" };
+  return {
+    ok: true,
+    entry: {
+      name,
+      kind,
+      breed: i.breed.trim() || null,
+      shed: i.shed.trim() || null,
+      placed_date: i.date,
+      initial_count: count,
+      age_at_placement_weeks: meat ? 0 : (age.v ?? 0),
+      chick_price: meat ? price.v : null,
+    },
+  };
+}
+
+/** A layer flock's age in weeks today. */
+export const flockWeeks = (placedDate: string, ageAtPlacement: number, today: string) =>
+  Math.max(0, Math.floor((Date.parse(today) - Date.parse(placedDate)) / (7 * 86_400_000))) + Number(ageAtPlacement ?? 0);
+
+/** Layer flock numbers: hen-day % over the last 7 logged days, mortality and feed per dozen eggs. */
+export function layerStats(initial: number, logs: { log_date: string; eggs_collected: number; mortality: number; culled: number; feed_kg: number | null }[]) {
+  const sorted = [...logs].sort((a, b) => a.log_date.localeCompare(b.log_date));
+  let alive = initial;
+  const rows = sorted.map((l) => {
+    const henDay = alive > 0 ? (Number(l.eggs_collected) / alive) * 100 : 0;
+    alive = Math.max(0, alive - Number(l.mortality) - Number(l.culled));
+    return { ...l, henDay, alive };
+  });
+  const last7 = rows.slice(-7);
+  const deaths = sorted.reduce((s, l) => s + Number(l.mortality) + Number(l.culled), 0);
+  const eggs = sorted.reduce((s, l) => s + Number(l.eggs_collected), 0);
+  const feed = sorted.reduce((s, l) => s + Number(l.feed_kg ?? 0), 0);
+  return {
+    alive,
+    henDay7: last7.length ? last7.reduce((s, r) => s + r.henDay, 0) / last7.length : 0,
+    mortalityPct: initial > 0 ? (deaths / initial) * 100 : 0,
+    deaths,
+    eggs,
+    feedPerDozen: eggs > 0 ? feed / (eggs / 12) : null,
+    rows,
+  };
+}
+
+// ---------------------------------------------------------------- stock
+
+export const ITEM_KINDS = ["feed", "medicine", "vaccine", "supplement", "other"] as const;
+export const ITEM_UNITS = ["kg", "bag", "litre", "ml", "dose", "piece", "packet", "bottle"] as const;
+export const STOCK_SECTIONS = ["dairy", "layer", "general"] as const;
+
+export type StockItemEntry = { name: string; kind: string; unit: string; unit_kg: number | null; module: string; low_stock: number | null; notes: string | null };
+
+export function stockItemEntry(i: { name: string; kind: string; unit: string; unitKg: string; module: string; lowStock: string; notes: string }):
+  | { ok: true; entry: StockItemEntry }
+  | Err<"stock.err.name" | "entry.err.number"> {
+  const name = i.name.trim();
+  if (!name) return { ok: false, error: "stock.err.name" };
+  const unitKg = optionalNumber(i.unitKg);
+  const low = optionalNumber(i.lowStock);
+  if (!unitKg.ok || !low.ok) return { ok: false, error: "entry.err.number" };
+  return {
+    ok: true,
+    entry: {
+      name,
+      kind: (ITEM_KINDS as readonly string[]).includes(i.kind) ? i.kind : "feed",
+      unit: (ITEM_UNITS as readonly string[]).includes(i.unit) ? i.unit : "kg",
+      unit_kg: i.unit === "bag" ? unitKg.v : null,
+      module: (STOCK_SECTIONS as readonly string[]).includes(i.module) ? i.module : "general",
+      low_stock: low.v,
+      notes: i.notes.trim() || null,
+    },
+  };
+}
+
+export type StockMoveEntry = {
+  move_date: string;
+  move_type: "purchase" | "use" | "adjust";
+  quantity: number;
+  unit_cost: number | null;
+  total_cost: number | null;
+  module: string | null;
+  flock_id: string | null;
+  supplier: string | null;
+  notes: string | null;
+};
+
+/** A purchase, a use, or a count (the count stores the difference from what the app shows). */
+export function stockMoveEntry(
+  i: { type: string; date: string; qty: string; price: string; amount: string; counted: string; onHand: number; module: string; flockId: string | null; supplier: string; notes: string },
+  today: string,
+):
+  | { ok: true; entry: StockMoveEntry }
+  | { ok: true; entry: null }
+  | Err<"rec.err.date" | "rec.err.future" | "sale.err.qty" | "stock.err.count" | "entry.err.number"> {
+  if (!isDate(i.date)) return { ok: false, error: "rec.err.date" };
+  if (i.date > today) return { ok: false, error: "rec.err.future" };
+  const type = i.type === "use" || i.type === "adjust" ? i.type : "purchase";
+  let quantity: number;
+  if (type === "adjust") {
+    const counted = parseNumber(i.counted);
+    if (counted === null || !Number.isFinite(counted) || counted < 0) return { ok: false, error: "stock.err.count" };
+    quantity = Math.round((counted - i.onHand) * 1000) / 1000;
+    if (quantity === 0) return { ok: true, entry: null };
+  } else {
+    const q = parseNumber(i.qty);
+    if (q === null || !Number.isFinite(q) || q <= 0) return { ok: false, error: "sale.err.qty" };
+    quantity = q;
+  }
+  let unitCost: number | null = null;
+  let totalCost: number | null = null;
+  if (type === "purchase") {
+    const price = optionalNumber(i.price);
+    const amount = optionalNumber(i.amount);
+    if (!price.ok || !amount.ok) return { ok: false, error: "entry.err.number" };
+    unitCost = price.v;
+    totalCost = price.v !== null ? Math.round(quantity * price.v * 100) / 100 : amount.v;
+  }
+  return {
+    ok: true,
+    entry: {
+      move_date: i.date,
+      move_type: type,
+      quantity,
+      unit_cost: unitCost,
+      total_cost: totalCost,
+      module: type === "use" && (STOCK_SECTIONS as readonly string[]).includes(i.module) ? i.module : null,
+      flock_id: type === "use" ? i.flockId : null,
+      supplier: type === "purchase" ? i.supplier.trim() || null : null,
+      notes: i.notes.trim() || null,
+    },
+  };
+}
+
+/** Days of stock left at the last 30 days' rate of use (null when nothing was used). */
+export function daysLeft(onHand: number, used30d: number) {
+  const perDay = Number(used30d) / 30;
+  return perDay > 0 ? Math.max(0, Math.floor(Number(onHand) / perDay)) : null;
+}
+
+// ---------------------------------------------------------------- staff
+
+export const STAFF_SECTIONS = ["dairy", "layer", "both"] as const;
+export const PAY_TYPES = ["salary", "advance", "bonus"] as const;
+export const ATTENDANCE = ["present", "absent", "half_day", "leave"] as const;
+
+export type StaffEntry = { name: string; phone: string | null; position: string | null; module: string; monthly_salary: number; join_date: string; notes: string | null };
+
+export function staffEntry(i: { name: string; phone: string; position: string; module: string; salary: string; joinDate: string; notes: string }, today: string):
+  | { ok: true; entry: StaffEntry }
+  | Err<"staff.err.name" | "entry.err.number" | "rec.err.date" | "rec.err.future"> {
+  const name = i.name.trim();
+  if (!name) return { ok: false, error: "staff.err.name" };
+  const salary = optionalNumber(i.salary);
+  if (!salary.ok) return { ok: false, error: "entry.err.number" };
+  if (i.joinDate && !isDate(i.joinDate)) return { ok: false, error: "rec.err.date" };
+  if (i.joinDate && i.joinDate > today) return { ok: false, error: "rec.err.future" };
+  return {
+    ok: true,
+    entry: {
+      name,
+      phone: i.phone.trim() || null,
+      position: i.position || null,
+      module: (STAFF_SECTIONS as readonly string[]).includes(i.module) ? i.module : "both",
+      monthly_salary: salary.v ?? 0,
+      join_date: i.joinDate || today,
+      notes: i.notes.trim() || null,
+    },
+  };
+}
+
+export type StaffPayEntry = { pay_month: string; pay_type: string; amount: number; paid_on: string; note: string | null };
+
+export function staffPayEntry(i: { month: string; type: string; amount: string; paidOn: string; note: string }, today: string):
+  | { ok: true; entry: StaffPayEntry }
+  | Err<"staff.err.month" | "sale.err.amount" | "rec.err.date" | "rec.err.future"> {
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(i.month)) return { ok: false, error: "staff.err.month" };
+  const amount = parseNumber(i.amount);
+  if (amount === null || !Number.isFinite(amount) || amount <= 0) return { ok: false, error: "sale.err.amount" };
+  if (!isDate(i.paidOn)) return { ok: false, error: "rec.err.date" };
+  if (i.paidOn > today) return { ok: false, error: "rec.err.future" };
+  return { ok: true, entry: { pay_month: `${i.month}-01`, pay_type: (PAY_TYPES as readonly string[]).includes(i.type) ? i.type : "salary", amount, paid_on: i.paidOn, note: i.note.trim() || null } };
+}
+
+/** "2026-10" moved by some months. */
+export function shiftMonth(month: string, by: number) {
+  const [y, m] = month.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1 + by, 1)).toISOString().slice(0, 7);
+}

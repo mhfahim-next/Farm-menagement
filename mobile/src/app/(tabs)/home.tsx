@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { Button, Card, Chip, Icon, Text, useTheme } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { InviteCards } from "@/components/invite-card";
 import { ReminderItem } from "@/components/reminder-item";
 import { SyncBar } from "@/components/sync-bar";
 import { useReminders } from "@/lib/reminders";
@@ -91,6 +92,7 @@ export default function Home() {
 
         <View style={styles.sync}>
           <SyncBar />
+          <InviteCards />
         </View>
 
         {reminders.data && (

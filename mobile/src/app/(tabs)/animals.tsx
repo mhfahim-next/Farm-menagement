@@ -1,23 +1,33 @@
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { FlatList, RefreshControl, StyleSheet, View } from "react-native";
-import { Button, Chip, Icon, List, Searchbar, SegmentedButtons, Text, useTheme } from "react-native-paper";
+import { Avatar, Button, Chip, FAB, Icon, List, Searchbar, SegmentedButtons, Text, useTheme } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { FlocksScreen } from "@/components/flocks-view";
 import { OfflineNote } from "@/components/offline-note";
-import { useAnimals, useOptions, type Animal } from "@/lib/data";
+import { isStaff, useAnimals, useOptions, type Animal } from "@/lib/data";
 import { useDescribe } from "@/lib/describe";
 import { optionLabel } from "@/lib/options";
+import { photoUrl } from "@/lib/photos";
 import { usePrefs } from "@/lib/prefs";
 import { useSession } from "@/lib/session";
 
 const isGoat = (a: Pick<Animal, "species">) => a.species === "goat" || a.species === "sheep";
 
 /** Every animal on the farm, searchable; tap one for its page. */
-export default function Animals() {
+export default function AnimalsTab() {
+  const farm = useSession().current?.farm;
+  if (farm && !farm.has_dairy && !farm.has_fattening && !farm.has_goat) return <FlocksScreen asTab />;
+  return <Animals />;
+}
+
+function Animals() {
   const { t, locale } = usePrefs();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const farm = useSession().current?.farm;
+  const { current } = useSession();
+  const farm = current?.farm;
+  const role = current?.role;
   const options = useOptions();
   const { data, offline, loading, reload } = useAnimals(farm?.id);
   const [q, setQ] = useState("");
@@ -91,6 +101,16 @@ export default function Animals() {
                 {list.length === 1 ? t("animals.count_one") : t("animals.count", { n: list.length })}
               </Text>
             </View>
+            {(farm?.has_layer || farm?.has_broiler) && (
+              <Button mode="outlined" icon="egg-outline" onPress={() => router.push("/flocks")} style={styles.left} testID="open-flocks">
+                {t("flock.title")}
+              </Button>
+            )}
+            {farm?.has_fattening && (
+              <Button mode="outlined" icon="weight-kilogram" onPress={() => router.push("/fattening")} style={styles.left} testID="open-fattening">
+                {t("fatten.title")}
+              </Button>
+            )}
             {offline && <OfflineNote />}
           </View>
         }
@@ -116,7 +136,13 @@ export default function Animals() {
             description={describe(a)}
             onPress={() => router.push({ pathname: "/animal/[id]", params: { id: a.id } })}
             style={[styles.item, { backgroundColor: theme.colors.elevation.level1 }]}
-            left={(p) => <List.Icon {...p} icon={isGoat(a) ? "sheep" : "cow"} />}
+            left={(p) =>
+              a.photo_path ? (
+                <Avatar.Image size={44} source={{ uri: photoUrl("animal-photos", a.photo_path)! }} style={styles.center} />
+              ) : (
+                <List.Icon {...p} icon={isGoat(a) ? "sheep" : "cow"} />
+              )
+            }
             right={(p) =>
               a.status !== "active" ? (
                 <Chip compact style={styles.center}>
@@ -134,14 +160,24 @@ export default function Animals() {
           />
         )}
       />
+      {isStaff(role) && (
+        <FAB
+          icon="plus"
+          label={t("animal.addShort")}
+          style={styles.fab}
+          onPress={() => router.push({ pathname: "/record/animal", params: { group: hasCattle && hasGoats ? group : hasGoats ? "goats" : "cattle" } })}
+          testID="add-animal"
+        />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  content: { paddingHorizontal: 16, paddingBottom: 24, gap: 8, width: "100%", maxWidth: 720, alignSelf: "center" },
+  content: { paddingHorizontal: 16, paddingBottom: 96, gap: 8, width: "100%", maxWidth: 720, alignSelf: "center" },
   header: { gap: 12, marginBottom: 4, paddingHorizontal: 4 },
+  left: { alignSelf: "flex-start" },
   titleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
   row: { flexDirection: "row", alignItems: "center", gap: 8 },
   count: { marginLeft: "auto" },
@@ -149,5 +185,6 @@ const styles = StyleSheet.create({
   title: { fontWeight: "600" },
   center: { alignSelf: "center" },
   empty: { textAlign: "center", marginTop: 32 },
+  fab: { position: "absolute", right: 16, bottom: 16 },
   emptyBox: { alignItems: "center", gap: 8, marginTop: 48, paddingHorizontal: 24 },
 });

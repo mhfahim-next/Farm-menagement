@@ -23,8 +23,8 @@ export const UPCOMING: Upcoming[] = [
     status: "next",
     title: { en: "The Android app on the Play Store, then iPhone", bn: "Play Store-এ Android অ্যাপ, তারপর iPhone" },
     body: {
-      en: "The Android app is being tested now. Next: the Play Store, adding and editing animals in the app, then the App Store.",
-      bn: "Android অ্যাপের পরীক্ষা চলছে। এরপর: Play Store, অ্যাপ থেকেই পশু যোগ ও সম্পাদনা, তারপর App Store।",
+      en: "The Android app is being tested now and does almost everything the website does. Next: the Play Store, then the App Store.",
+      bn: "Android অ্যাপের পরীক্ষা চলছে, ওয়েবসাইটের প্রায় সব কাজই এখন অ্যাপে হয়। এরপর: Play Store, তারপর App Store।",
     },
   },
   {
@@ -70,6 +70,39 @@ export const UPCOMING: Upcoming[] = [
 ];
 
 export const RELEASES: Release[] = [
+  {
+    id: "2026-10-29-app-tools",
+    date: "2026-10-29",
+    title: { en: "Stock, staff, team and reports in the app", bn: "অ্যাপে স্টক, কর্মী, টিম আর রিপোর্ট" },
+    summary: {
+      en: "The app now has the farm tools too: feed and medicine stock, staff attendance and pay, inviting your team, and reports you can share as PDF or Excel.",
+      bn: "অ্যাপে এখন খামারের টুলসও আছে: খাবার ও ওষুধের স্টক, কর্মীর হাজিরা ও বেতন, টিমে আমন্ত্রণ, আর PDF বা এক্সেলে শেয়ার করার মতো রিপোর্ট।",
+    },
+    changes: [
+      { type: "new", en: "App: stock of feed and medicine: purchases, uses and counts, days left and low-stock warnings.", bn: "অ্যাপ: খাবার ও ওষুধের স্টক: কেনা, ব্যবহার ও গণনা, কত দিন চলবে আর কমে গেলে সতর্কতা।" },
+      { type: "new", en: "App: staff attendance (mark only absences) and pay: salary, advance and bonus, with what is still due.", bn: "অ্যাপ: কর্মীর হাজিরা (শুধু অনুপস্থিতি লিখুন) আর বেতন: বেতন, অগ্রিম ও বোনাস, সাথে কত বাকি।" },
+      { type: "new", en: "App: invite managers, workers and vets by email, remove someone or leave a farm. Accept invitations right in the app.", bn: "অ্যাপ: ইমেইলে ম্যানেজার, কর্মী ও ডাক্তারকে আমন্ত্রণ, কাউকে সরানো বা খামার ছেড়ে যাওয়া। আমন্ত্রণ অ্যাপেই গ্রহণ করুন।" },
+      { type: "new", en: "App: milk and egg charts, cost and profit per litre and per egg, and profit per animal.", bn: "অ্যাপ: দুধ ও ডিমের চার্ট, লিটার ও ডিম প্রতি খরচ ও লাভ, আর পশু প্রতি লাভ।" },
+      { type: "new", en: "App: share a report as PDF or CSV (Excel) on WhatsApp, email or Drive (paid plans).", bn: "অ্যাপ: রিপোর্ট PDF বা CSV (এক্সেল) হিসেবে হোয়াটসঅ্যাপ, ইমেইল বা ড্রাইভে শেয়ার করুন (পেইড প্ল্যানে)।" },
+    ],
+  },
+  {
+    id: "2026-10-28-app-manage",
+    date: "2026-10-28",
+    title: { en: "Run the farm from the app", bn: "অ্যাপ থেকেই খামার চালান" },
+    summary: {
+      en: "Add and edit animals with photos, weigh them, follow fattening, start flocks and batches, fix or delete records, and manage your profile and farm, all on the phone.",
+      bn: "ছবিসহ পশু যোগ ও সম্পাদনা, ওজন, মোটাতাজাকরণ, নতুন ফ্লক ও ব্যাচ, ভুল হিসাব ঠিক করা বা মোছা, আর প্রোফাইল ও খামারের সেটিং — সব ফোন থেকেই।",
+    },
+    changes: [
+      { type: "new", en: "App: add, edit and delete animals, with a photo from the camera or gallery.", bn: "অ্যাপ: পশু যোগ, সম্পাদনা ও মোছা, ক্যামেরা বা গ্যালারি থেকে ছবিসহ।" },
+      { type: "new", en: "App: weights from a scale or a measuring tape, and fattening with expected weight on the sale day, break-even and profit.", bn: "অ্যাপ: পাল্লা বা মাপার ফিতা দিয়ে ওজন, আর মোটাতাজাকরণে বিক্রির দিনের সম্ভাব্য ওজন, লাভ-ক্ষতির সীমা ও লাভ।" },
+      { type: "new", en: "App: start layer flocks and broiler or Sonali batches; FCR, mortality, laying rate, vaccines with presets.", bn: "অ্যাপ: লেয়ার ফ্লক আর ব্রয়লার বা সোনালি ব্যাচ খুলুন; FCR, মৃত্যুহার, ডিম পাড়ার হার, দ্রুত বাছাইসহ টিকা।" },
+      { type: "new", en: "App: change or delete a vaccine, breeding event, weight, sale, payment or expense.", bn: "অ্যাপ: টিকা, প্রজনন, ওজন, বিক্রি, জমা বা খরচের হিসাব বদলান বা মুছুন।" },
+      { type: "new", en: "App: profile (name, photo, password), farm settings and a second farm.", bn: "অ্যাপ: প্রোফাইল (নাম, ছবি, পাসওয়ার্ড), খামারের সেটিং আর দ্বিতীয় খামার।" },
+      { type: "new", en: "Delete your account from the app or from Profile on the website.", bn: "অ্যাপ বা ওয়েবসাইটের প্রোফাইল থেকে নিজের অ্যাকাউন্ট মুছতে পারবেন।" },
+    ],
+  },
   {
     id: "2026-10-27-android-app",
     date: "2026-10-27",

@@ -103,10 +103,31 @@ function App({ fontsReady }: { fontsReady: boolean }) {
               <Stack.Screen name="record/sale" />
               <Stack.Screen name="record/payment" />
               <Stack.Screen name="record/buyer" />
+              <Stack.Screen name="record/animal" />
+              <Stack.Screen name="record/weight" />
+              <Stack.Screen name="fattening" options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="flocks" options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="flock/[id]" options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="record/flock" />
+              <Stack.Screen name="record/flock-health" />
+              <Stack.Screen name="profile" />
+              <Stack.Screen name="settings" />
+              <Stack.Screen name="record/farm" />
               <Stack.Screen name="reminders" options={{ animation: "slide_from_right" }} />
               <Stack.Screen name="scan" />
               <Stack.Screen name="record/expense" />
               <Stack.Screen name="profit" options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="stock/index" options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="stock/[id]" options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="record/stock-item" />
+              <Stack.Screen name="record/stock-move" />
+              <Stack.Screen name="staff/index" options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="staff/[id]" options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="staff/attendance" />
+              <Stack.Screen name="record/staff" />
+              <Stack.Screen name="record/staff-pay" />
+              <Stack.Screen name="team" options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="reports" options={{ animation: "slide_from_right" }} />
             </Stack.Protected>
           </Stack>
         </ThemeProvider>

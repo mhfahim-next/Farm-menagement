@@ -9,6 +9,7 @@ import { useNotifySchedule } from "@/lib/use-notify";
 const ICONS: Record<string, [string, string]> = {
   home: ["home", "home-outline"],
   animals: ["cow", "cow"],
+  birds: ["egg-outline", "egg-outline"],
   entry: ["clipboard-edit", "clipboard-edit-outline"],
   sales: ["cash-multiple", "cash-multiple"],
   more: ["dots-horizontal-circle", "dots-horizontal-circle-outline"],
@@ -26,7 +27,7 @@ export default function TabsLayout() {
   useFlocks(farm?.has_layer || farm?.has_broiler ? farm.id : undefined);
   useNotifySchedule();
   const hidden = new Set<string>();
-  if (!farm?.has_dairy && !farm?.has_fattening && !farm?.has_goat) hidden.add("animals");
+  const birdsOnly = Boolean(farm && !farm.has_dairy && !farm.has_fattening && !farm.has_goat);
   if (current?.role === "vet") {
     hidden.add("entry");
     hidden.add("sales");
@@ -49,7 +50,8 @@ export default function TabsLayout() {
             safeAreaInsets={insets}
             onTabPress={({ route }) => navigateToTab(route.key)}
             renderIcon={({ route, focused, color }) => {
-              const name = (route as { name: string }).name;
+              const routeName = (route as { name: string }).name;
+              const name = routeName === "animals" && birdsOnly ? "birds" : routeName;
               return <Icon source={(ICONS[name] ?? ["circle", "circle-outline"])[focused ? 0 : 1]} size={24} color={color} />;
             }}
             getLabelText={({ route }) => {
@@ -63,7 +65,7 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen name="home" options={{ title: t("tabs.home") }} />
-      <Tabs.Screen name="animals" options={{ title: t("tabs.animals") }} />
+      <Tabs.Screen name="animals" options={{ title: birdsOnly ? t("flock.tab") : t("tabs.animals") }} />
       <Tabs.Screen name="entry" options={{ title: t("tabs.entry") }} />
       <Tabs.Screen name="sales" options={{ title: t("tabs.sales") }} />
       <Tabs.Screen name="more" options={{ title: t("tabs.more") }} />

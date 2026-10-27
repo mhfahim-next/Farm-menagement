@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button, HelperText, TextInput } from "react-native-paper";
 import { AnimalPicker, ChoiceChips, DateField, Label, NumberField } from "@/components/fields";
 import { FormError } from "@/components/form-error";
@@ -13,6 +13,7 @@ import { useOutbox } from "@/lib/outbox";
 import { usePrefs } from "@/lib/prefs";
 import { addDays, healthEntry, uuid } from "@/lib/records";
 import { useSession } from "@/lib/session";
+import { supabase } from "@/lib/supabase";
 import { useToast } from "@/lib/toast";
 
 /** Presets meant for goats & sheep (the rest are for cattle). */
@@ -20,7 +21,7 @@ const SMALL_RUMINANT = ["ppr", "goat_pox", "et", "goat_deworm"];
 
 /** A vaccine, dewormer, spray or treatment for one animal or many at once. */
 export default function HealthRecord() {
-  const { animal } = useLocalSearchParams<{ animal?: string }>();
+  const { animal, id } = useLocalSearchParams<{ animal?: string; id?: string }>();
   const { t, locale, date: fmt } = usePrefs();
   const farm = useSession().current?.farm;
   const options = useOptions();
@@ -40,6 +41,27 @@ export default function HealthRecord() {
   const [error, setError] = useState<string | null>(null);
   const [detail, setDetail] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // Editing one saved record: load it.
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.from("health_records").select("cattle_id, record_date, record_type, product, interval_days, cost, description").eq("id", id).maybeSingle();
+      if (cancelled || !data) return;
+      const r = data as { cattle_id: string; record_date: string; record_type: string; product: string | null; interval_days: number | null; cost: number | null; description: string | null };
+      setIds([r.cattle_id]);
+      setDate(r.record_date);
+      setType(r.record_type);
+      setProduct(r.product ?? "");
+      setInterval(r.interval_days ? String(r.interval_days) : "");
+      setCost(r.cost !== null ? String(Number(r.cost)) : "");
+      setNotes(r.description && r.description !== r.product ? r.description : "");
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
 
   const types = optionsOf(options, "health_type");
   const presets = optionsOf(options, "health_preset").filter((p) => (SMALL_RUMINANT.includes(p.value) ? farm?.has_goat : farm?.has_dairy || farm?.has_fattening));
@@ -61,6 +83,29 @@ export default function HealthRecord() {
     setError(null);
     setDetail(null);
     setBusy(true);
+    if (id) {
+      const { error: e } = await supabase
+        .from("health_records")
+        .update({
+          record_date: r.entry.record_date,
+          record_type: r.entry.record_type,
+          product: r.entry.product,
+          medicine: r.entry.product,
+          description: r.entry.notes ?? r.entry.product,
+          interval_days: r.entry.interval_days,
+          next_due_date: r.entry.next_due_date,
+          cost: r.entry.cost,
+        })
+        .eq("id", id);
+      setBusy(false);
+      if (e) {
+        setError(t("common.error"));
+        setDetail(e.message);
+        return;
+      }
+      toast(t("rec.saved"));
+      return router.back();
+    }
     const label = `${optionLabel(options, "health_type", r.entry.record_type, locale)} · ${r.entry.product} · ${t("rec.animalsN", { n: r.entry.cattle_ids.length })}`;
     const res = await save({ kind: "health", farmId: farm.id, data: { ...r.entry, ids: r.entry.cattle_ids.map(() => uuid()), label } });
     setBusy(false);
@@ -75,7 +120,7 @@ export default function HealthRecord() {
 
   return (
     <FormScreen
-      title={t("rec.healthTitle")}
+      title={id ? t("rec.editTitle") : t("rec.healthTitle")}
       testID="health-form"
       footer={
         <>
@@ -100,8 +145,12 @@ export default function HealthRecord() {
         {next ? t("rec.nextDue", { date: fmt(next) }) : t("rec.intervalHint")}
       </HelperText>
       <DateField value={date} onChange={setDate} />
-      <Label>{t("rec.animals")}</Label>
-      <AnimalPicker animals={active} selected={ids} onChange={setIds} multi describe={describe} />
+      {!id && (
+        <>
+          <Label>{t("rec.animals")}</Label>
+          <AnimalPicker animals={active} selected={ids} onChange={setIds} multi describe={describe} />
+        </>
+      )}
       <NumberField label={t("rec.cost")} value={cost} onChange={setCost} icon="cash" testID="health-cost" />
       <TextInput mode="outlined" label={t("rec.notes")} value={notes} onChangeText={setNotes} multiline testID="health-notes" />
     </FormScreen>

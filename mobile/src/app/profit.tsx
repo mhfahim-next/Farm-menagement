@@ -1,10 +1,13 @@
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
-import { Appbar, Button, Card, Divider, SegmentedButtons, Text, useTheme } from "react-native-paper";
+import { Appbar, Button, Card, Divider, List, SegmentedButtons, Text, useTheme } from "react-native-paper";
 import { OfflineNote } from "@/components/offline-note";
 import { useCached } from "@/lib/cache";
-import { fetchLedger } from "@/lib/data";
+import { RecordMenu } from "@/components/record-menu";
+import { deleteRow, fetchLedger, fetchTransactions, isManager, useOptions } from "@/lib/data";
+import { optionLabel } from "@/lib/options";
+import { useToast } from "@/lib/toast";
 import { farmToday } from "@/lib/dates";
 import { usePrefs } from "@/lib/prefs";
 import { monthRange, profitBy } from "@/lib/records";
@@ -12,14 +15,23 @@ import { useSession } from "@/lib/session";
 
 /** This month's (or last month's) money in, costs and profit, for each part of the farm. */
 export default function Profit() {
-  const { t, money, date } = usePrefs();
+  const { t, money, date, locale } = usePrefs();
+  const options = useOptions();
   const theme = useTheme();
   const farm = useSession().current?.farm;
   const currency = farm?.currency ?? "BDT";
   const [which, setWhich] = useState<"this" | "last">("this");
   const range = monthRange(farmToday(), which);
   const ledger = useCached(farm ? `ledger.${farm.id}.${range.from}` : null, () => fetchLedger(farm!.id, range.from, range.to));
-  const { reload } = ledger;
+  const entered = useCached(farm ? `txns.${farm.id}.${range.from}` : null, () => fetchTransactions(farm!.id, range.from, range.to));
+  const { reload: reloadLedger } = ledger;
+  const { reload: reloadEntered } = entered;
+  const reload = useCallback(() => {
+    reloadLedger();
+    reloadEntered();
+  }, [reloadLedger, reloadEntered]);
+  const manager = isManager(useSession().current?.role);
+  const toast = useToast();
   useFocusEffect(
     useCallback(() => {
       reload();
@@ -82,6 +94,35 @@ export default function Profit() {
             </Card>
           )}
           {ledger.data && p.sections.length === 0 && <Text style={{ textAlign: "center", color: theme.colors.onSurfaceVariant }}>{t("profit.empty")}</Text>}
+          {(entered.data ?? []).length > 0 && (
+            <Card mode="outlined" style={styles.card}>
+              <Card.Title title={t("profit.entered")} titleVariant="titleMedium" />
+              {(entered.data ?? []).map((x) => (
+                <List.Item
+                  key={x.id}
+                  title={`${optionLabel(options, "finance_category", x.category, locale)} · ${t(`section.${x.module}` as "section.general")}`}
+                  description={[date(x.txn_date), x.description ?? ""].filter(Boolean).join(" · ")}
+                  right={() => (
+                    <View style={styles.rowCenter}>
+                      <Text variant="titleSmall" style={{ color: x.txn_type === "income" ? theme.colors.primary : theme.colors.onSurface }}>
+                        {`${x.txn_type === "income" ? "" : "−"}${money(Number(x.amount), currency)}`}
+                      </Text>
+                      {manager && (
+                        <RecordMenu
+                          onDelete={async () => {
+                            const err = await deleteRow("transactions", x.id);
+                            toast(err ? `${t("common.error")} ${err}` : t("rec.deleted"));
+                            reload();
+                          }}
+                          testID={`txn-menu-${x.id}`}
+                        />
+                      )}
+                    </View>
+                  )}
+                />
+              ))}
+            </Card>
+          )}
           <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
             {t("profit.note")}
           </Text>
@@ -101,5 +142,6 @@ const styles = StyleSheet.create({
   card: { borderRadius: 20 },
   gap: { gap: 4 },
   row: { flexDirection: "row", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginTop: 4 },
+  rowCenter: { flexDirection: "row", alignItems: "center" },
   line: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingVertical: 12 },
 });

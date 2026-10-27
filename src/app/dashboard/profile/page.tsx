@@ -4,7 +4,7 @@ import { AvatarUploader } from "@/components/avatar-uploader";
 import { Card, Field, Input, PageHeader } from "@/components/ui";
 import { getProfile, requireUser } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
-import { changePassword, updateProfile } from "./actions";
+import { changePassword, deleteAccount, updateProfile } from "./actions";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -51,6 +51,15 @@ export default async function ProfilePage() {
             </Field>
             <Field label={t("profile.confirmPassword")}>
               <Input name="confirm" type="password" autoComplete="new-password" minLength={8} required />
+            </Field>
+          </ActionForm>
+        </Card>
+
+        <Card title={t("profile.deleteTitle")} className="border-red-200 lg:col-span-2">
+          <p className="mb-3 text-sm text-stone-700">{t("profile.deleteBody")}</p>
+          <ActionForm action={deleteAccount} submitLabel={t("profile.deleteButton")} submitVariant="danger">
+            <Field label={t("profile.deleteType", { word: t("profile.deleteWord") })}>
+              <Input name="confirm" autoComplete="off" required />
             </Field>
           </ActionForm>
         </Card>

@@ -1,4 +1,5 @@
 import Constants from "expo-constants";
+import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
@@ -47,7 +48,7 @@ export default function More() {
         </Text>
 
         <View style={[styles.account, { backgroundColor: theme.colors.elevation.level2 }]}>
-          <Avatar.Text size={48} label={initials || "?"} />
+          {s.profile?.avatar_url ? <Avatar.Image size={48} source={{ uri: s.profile.avatar_url }} /> : <Avatar.Text size={48} label={initials || "?"} />}
           <View style={styles.flex}>
             <Text variant="titleMedium" numberOfLines={1}>
               {name}
@@ -57,6 +58,28 @@ export default function More() {
             </Text>
           </View>
         </View>
+
+        <List.Section>
+          <List.Item title={t("profile.title")} description={t("profile.hint")} left={(p) => <List.Icon {...p} icon="account-cog-outline" />} onPress={() => router.push("/profile")} testID="open-profile" />
+          {(s.current?.role === "owner" || s.current?.role === "manager") && (
+            <List.Item title={t("settings.title")} description={s.current.farm.name} left={(p) => <List.Icon {...p} icon="barn" />} onPress={() => router.push("/settings")} testID="open-settings" />
+          )}
+          <List.Item title={t("settings.newFarm")} left={(p) => <List.Icon {...p} icon="plus-circle-outline" />} onPress={() => router.push("/record/farm")} testID="open-new-farm" />
+        </List.Section>
+
+        <List.Section>
+          <List.Subheader>{t("tools.title")}</List.Subheader>
+          {s.current?.role !== "vet" && (
+            <List.Item title={t("tools.stock")} left={(p) => <List.Icon {...p} icon="warehouse" />} onPress={() => router.push("/stock")} testID="open-stock" />
+          )}
+          {(s.current?.role === "owner" || s.current?.role === "manager") && (
+            <List.Item title={t("tools.staff")} left={(p) => <List.Icon {...p} icon="account-hard-hat-outline" />} onPress={() => router.push("/staff")} testID="open-staff" />
+          )}
+          <List.Item title={t("tools.team")} left={(p) => <List.Icon {...p} icon="account-group-outline" />} onPress={() => router.push("/team")} testID="open-team" />
+          {s.current?.role !== "vet" && (
+            <List.Item title={t("tools.reports")} left={(p) => <List.Icon {...p} icon="chart-bar" />} onPress={() => router.push("/reports")} testID="open-reports" />
+          )}
+        </List.Section>
 
         {s.memberships.length > 1 && (
           <List.Section>
