@@ -60,6 +60,9 @@ export default function More() {
         </View>
 
         <List.Section>
+          {s.profile?.account_type === "doctor" && (
+            <List.Item title={t("doc.title")} description={t("doc.menuHint")} left={(p) => <List.Icon {...p} icon="stethoscope" />} onPress={() => router.push("/doctor")} testID="open-doctor" />
+          )}
           <List.Item title={t("profile.title")} description={t("profile.hint")} left={(p) => <List.Icon {...p} icon="account-cog-outline" />} onPress={() => router.push("/profile")} testID="open-profile" />
           {(s.current?.role === "owner" || s.current?.role === "manager") && (
             <List.Item title={t("settings.title")} description={s.current.farm.name} left={(p) => <List.Icon {...p} icon="barn" />} onPress={() => router.push("/settings")} testID="open-settings" />
@@ -74,6 +77,9 @@ export default function More() {
           )}
           {(s.current?.role === "owner" || s.current?.role === "manager") && (
             <List.Item title={t("tools.staff")} left={(p) => <List.Icon {...p} icon="account-hard-hat-outline" />} onPress={() => router.push("/staff")} testID="open-staff" />
+          )}
+          {(s.current?.role === "owner" || s.current?.role === "manager" || s.current?.role === "vet") && (
+            <List.Item title={t("appr.title")} left={(p) => <List.Icon {...p} icon="clipboard-check-outline" />} onPress={() => router.push("/approvals")} testID="open-approvals" />
           )}
           <List.Item title={t("tools.team")} left={(p) => <List.Icon {...p} icon="account-group-outline" />} onPress={() => router.push("/team")} testID="open-team" />
           {s.current?.role !== "vet" && (

@@ -1,400 +1,153 @@
 import { router, useFocusEffect } from "expo-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
-import { Button, Chip, Icon, SegmentedButtons, Snackbar, Text, TextInput, useTheme } from "react-native-paper";
+import { useCallback } from "react";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Card, Icon, Text, useTheme } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { FormError } from "@/components/form-error";
 import { OfflineNote } from "@/components/offline-note";
 import { SyncBar } from "@/components/sync-bar";
-import { useAnimals, useFlocks, useOptions, type Flock } from "@/lib/data";
+import { useCached } from "@/lib/cache";
+import { isManager, isStaff, useFlocks } from "@/lib/data";
 import { farmToday } from "@/lib/dates";
-import { flockEntry, milkEntry, type FlockFields } from "@/lib/entries";
-import { milkingCategories, optionLabel, optionsOf } from "@/lib/options";
-import { useOutbox, type SaveResult } from "@/lib/outbox";
+import { todayStatus } from "@/lib/entry-helpers";
 import { usePrefs } from "@/lib/prefs";
 import { useSession } from "@/lib/session";
 import { supabase } from "@/lib/supabase";
 
-const minusDays = (iso: string, n: number) => new Date(Date.parse(iso) - n * 86_400_000).toISOString().slice(0, 10);
+/** What is already written today: milkings, and flocks with a daily log. */
+async function fetchToday(farmId: string, day: string, dairy: boolean, birds: boolean) {
+  const [milk, logs] = await Promise.all([
+    dairy ? supabase.from("milk_records").select("session").eq("farm_id", farmId).eq("record_date", day) : null,
+    birds ? supabase.from("flock_daily_logs").select("flock_id").eq("farm_id", farmId).eq("log_date", day) : null,
+  ]);
+  const err = milk?.error ?? logs?.error;
+  if (err) throw new Error(err.message);
+  return {
+    sessions: [...new Set(((milk?.data ?? []) as { session: string }[]).map((r) => r.session))],
+    flocks: [...new Set(((logs?.data ?? []) as { flock_id: string }[]).map((r) => r.flock_id))],
+  };
+}
 
-/** Today's milk and bird numbers; kept on the phone when there is no internet. */
+type Tile = { key: string; icon: string; label: string; hint?: string; pending?: boolean; go: () => void; testID: string };
+
+/** "What do you want to write?": one big tile per kind of record, and what is still to do today. */
 export default function Entry() {
-  const { t, date } = usePrefs();
+  const { t } = usePrefs();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { current } = useSession();
   const farm = current?.farm;
-  const canMilk = Boolean(farm?.has_dairy);
-  const canBirds = Boolean(farm?.has_layer || farm?.has_broiler);
-  const [what, setWhat] = useState<"milk" | "birds">(canMilk || !canBirds ? "milk" : "birds");
-  const today = farmToday();
-  const [day, setDay] = useState(today);
-  const [toast, setToast] = useState<string | null>(null);
-
-  const done = (r: SaveResult) => {
-    if (r.status !== "error") setToast(r.status === "saved" ? t("entry.saved") : t("entry.queued"));
-  };
-
+  const dairy = Boolean(farm?.has_dairy);
+  const birds = Boolean(farm?.has_layer || farm?.has_broiler);
+  const animals = Boolean(farm?.has_dairy || farm?.has_fattening || farm?.has_goat);
+  const breeds = Boolean(farm?.has_dairy || farm?.has_goat);
+  const day = farmToday();
+  const { data: flocks } = useFlocks(birds ? farm?.id : undefined);
+  const { data, offline, reload } = useCached(farm ? `today.${farm.id}.${day}` : null, () => fetchToday(farm!.id, day, dairy, birds));
+  useFocusEffect(
+    useCallback(() => {
+      reload();
+    }, [reload]),
+  );
   if (!farm || !current) return null;
-  const staff = current.role !== "vet";
+  const vet = current.role === "vet";
+  const staff = isStaff(current.role);
+  const status = todayStatus(data?.sessions ?? [], data?.flocks ?? [], (flocks ?? []).map((f) => f.id), dairy);
+
+  const tiles: Tile[] = [
+    ...(dairy && staff ? [{ key: "milk", icon: "cup-water", label: t("hub.milk"), hint: t("hub.milkHint"), pending: status.milkPending, go: () => router.push("/entry/milk"), testID: "entry-milk" }] : []),
+    ...(birds && staff ? [{ key: "birds", icon: "egg-outline", label: t("hub.birds"), hint: t("hub.birdsHint"), pending: status.flocksPending, go: () => router.push("/entry/birds"), testID: "entry-birds" }] : []),
+    ...(animals ? [{ key: "health", icon: "needle", label: t("rec.healthTitle"), hint: t("hub.healthHint"), go: () => router.push("/record/health"), testID: "quick-health" }] : []),
+    ...(breeds ? [{ key: "breeding", icon: "heart-pulse", label: t("rec.breedingTitle"), hint: t("hub.breedingHint"), go: () => router.push("/record/breeding"), testID: "quick-breeding" }] : []),
+    ...(birds && staff ? [{ key: "flockHealth", icon: "shield-plus-outline", label: t("hub.flockHealth"), hint: t("hub.flockHealthHint"), go: () => router.push("/record/flock-health"), testID: "quick-flock-health" }] : []),
+    ...(staff ? [{ key: "sale", icon: "cart-outline", label: t("sale.newSale"), hint: t("hub.saleHint"), go: () => router.push("/record/sale"), testID: "quick-sale" }] : []),
+    ...(staff ? [{ key: "expense", icon: "cash-minus", label: t("txn.short"), hint: t("hub.expenseHint"), go: () => router.push("/record/expense"), testID: "quick-expense" }] : []),
+    ...(staff ? [{ key: "stock", icon: "warehouse", label: t("hub.stock"), hint: t("hub.stockHint"), go: () => router.push("/stock"), testID: "quick-stock" }] : []),
+    ...(isManager(current.role) ? [{ key: "attendance", icon: "calendar-check-outline", label: t("staff.attendance"), hint: t("hub.attendanceHint"), go: () => router.push("/staff/attendance"), testID: "quick-attendance" }] : []),
+  ];
 
   return (
     <View style={[styles.flex, { backgroundColor: theme.colors.background }]} testID="entry">
-      <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + 16 }]} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + 16 }]}>
         <View style={styles.inner}>
           <Text variant="headlineSmall" accessibilityRole="header">
-            {t("entry.title")}
-          </Text>
-          <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-            {t("entry.sub")}
+            {t("hub.title")}
           </Text>
           <SyncBar />
-          {!staff ? (
-            <Empty icon="stethoscope" title={t("entry.vetOnly")} />
-          ) : !canMilk && !canBirds ? (
-            <>
-              <QuickActions />
-              <Empty icon="information-outline" title={t("entry.nothingKept")} />
-            </>
+          {offline && <OfflineNote />}
+          {vet && (
+            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+              {t("appr.vetNote")}
+            </Text>
+          )}
+
+          {staff && (status.milk.length > 0 || status.flocks.length > 0) && (
+            <Card mode="contained" style={[styles.card, { backgroundColor: theme.colors.elevation.level2 }]} testID="today-status">
+              <Card.Content style={{ gap: 8 }}>
+                <Text variant="titleSmall">{t("hub.todayTitle")}</Text>
+                <View style={styles.statusRow}>
+                  {status.milk.map((m) => (
+                    <Status key={m.session} done={m.done} icon={m.session === "morning" ? "weather-sunset-up" : "weather-night"} label={t(m.session === "morning" ? "hub.milkMorning" : "hub.milkEvening")} testID={`status-milk-${m.session}`} />
+                  ))}
+                  {status.flocks.map((f) => (
+                    <Status
+                      key={f.id}
+                      done={f.done}
+                      icon="egg-outline"
+                      label={(flocks ?? []).find((x) => x.id === f.id)?.name ?? ""}
+                      testID={`status-flock-${(flocks ?? []).find((x) => x.id === f.id)?.name ?? f.id}`}
+                    />
+                  ))}
+                </View>
+              </Card.Content>
+            </Card>
+          )}
+
+          {tiles.length === 0 ? (
+            <Text style={{ color: theme.colors.onSurfaceVariant, textAlign: "center", marginTop: 24 }}>{t("entry.nothingKept")}</Text>
           ) : (
-            <>
-              {canMilk && canBirds && (
-                <SegmentedButtons
-                  value={what}
-                  onValueChange={(v) => setWhat(v as "milk" | "birds")}
-                  buttons={[
-                    { value: "milk", label: t("entry.milk"), icon: "water-outline", testID: "entry-milk" },
-                    { value: "birds", label: t("entry.birds"), icon: "egg-outline", testID: "entry-birds" },
-                  ]}
-                />
-              )}
-              <SegmentedButtons
-                value={day}
-                onValueChange={setDay}
-                density="small"
-                buttons={[
-                  { value: today, label: t("entry.today"), testID: "day-today" },
-                  { value: minusDays(today, 1), label: t("entry.yesterday"), testID: "day-yesterday" },
-                  { value: minusDays(today, 2), label: date(minusDays(today, 2), true) },
-                ]}
-              />
-              <QuickActions />
-              {what === "milk" ? <MilkSheet key={`milk-${day}`} farmId={farm.id} day={day} onDone={done} /> : <BirdSheet farmId={farm.id} day={day} onDone={done} />}
-            </>
+            <View style={styles.grid}>
+              {tiles.map((tile) => (
+                <Pressable
+                  key={tile.key}
+                  onPress={tile.go}
+                  accessibilityRole="button"
+                  accessibilityLabel={tile.label}
+                  testID={tile.testID}
+                  style={({ pressed }) => [styles.tile, { backgroundColor: pressed ? theme.colors.secondaryContainer : theme.colors.elevation.level1, borderColor: theme.colors.outlineVariant }]}
+                >
+                  <View style={[styles.icon, { backgroundColor: theme.colors.primaryContainer }]}>
+                    <Icon source={tile.icon} size={30} color={theme.colors.onPrimaryContainer} />
+                  </View>
+                  <Text variant="titleMedium" numberOfLines={2}>
+                    {tile.label}
+                  </Text>
+                  {tile.hint ? (
+                    <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }} numberOfLines={2}>
+                      {tile.hint}
+                    </Text>
+                  ) : null}
+                  {tile.pending ? (
+                    <View style={[styles.dot, { backgroundColor: theme.colors.error }]} accessibilityLabel={t("hub.pending")} testID={`${tile.testID}-pending`} />
+                  ) : null}
+                </Pressable>
+              ))}
+            </View>
           )}
         </View>
       </ScrollView>
-      <Snackbar visible={toast !== null} onDismiss={() => setToast(null)} duration={3500} testID="entry-toast">
-        {toast ?? ""}
-      </Snackbar>
     </View>
   );
 }
 
-/** Shortcuts to the other records: vaccine / treatment, breeding, sale. */
-function QuickActions() {
-  const { t } = usePrefs();
-  const farm = useSession().current?.farm;
-  const animals = farm?.has_dairy || farm?.has_fattening || farm?.has_goat;
-  return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quick}>
-      {animals && (
-        <Chip icon="needle" onPress={() => router.push("/record/health")} testID="quick-health">
-          {t("rec.healthTitle")}
-        </Chip>
-      )}
-      {animals && (
-        <Chip icon="heart-pulse" onPress={() => router.push("/record/breeding")} testID="quick-breeding">
-          {t("rec.breedingTitle")}
-        </Chip>
-      )}
-      <Chip icon="cart-outline" onPress={() => router.push("/record/sale")} testID="quick-sale">
-        {t("sale.newSale")}
-      </Chip>
-      <Chip icon="cash-minus" onPress={() => router.push("/record/expense")} testID="quick-expense">
-        {t("txn.short")}
-      </Chip>
-    </ScrollView>
-  );
-}
-
-function Empty({ icon, title, body }: { icon: string; title: string; body?: string }) {
+function Status({ done, icon, label, testID }: { done: boolean; icon: string; label: string; testID: string }) {
   const theme = useTheme();
   return (
-    <View style={styles.empty}>
-      <Icon source={icon} size={40} color={theme.colors.outline} />
-      <Text variant="titleMedium" style={styles.center}>
-        {title}
+    <View style={[styles.status, { backgroundColor: done ? theme.colors.primaryContainer : theme.colors.surface, borderColor: done ? "transparent" : theme.colors.outline }]} testID={testID}>
+      <Icon source={icon} size={18} color={done ? theme.colors.onPrimaryContainer : theme.colors.onSurfaceVariant} />
+      <Text variant="labelLarge" numberOfLines={1} style={{ color: done ? theme.colors.onPrimaryContainer : theme.colors.onSurfaceVariant, maxWidth: 140 }}>
+        {label}
       </Text>
-      {body ? (
-        <Text variant="bodyMedium" style={[styles.center, { color: theme.colors.onSurfaceVariant }]}>
-          {body}
-        </Text>
-      ) : null}
-    </View>
-  );
-}
-
-/** Numbers already saved for a day, so they can be checked and changed. */
-function useExisting<T>(load: (() => PromiseLike<T | null>) | null, deps: unknown[]) {
-  const [value, setValue] = useState<T | null>(null);
-  useEffect(() => {
-    if (!load) return;
-    let cancelled = false;
-    (async () => {
-      const v = await Promise.resolve(load()).then(
-        (x) => x,
-        () => null,
-      );
-      if (!cancelled) setValue(v);
-    })();
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
-  return value;
-}
-
-function MilkSheet({ farmId, day, onDone }: { farmId: string; day: string; onDone: (r: SaveResult) => void }) {
-  const { t, n, locale } = usePrefs();
-  const theme = useTheme();
-  const options = useOptions();
-  const { save } = useOutbox();
-  const sessions = optionsOf(options, "milk_session");
-  const [session, setSession] = useState("morning");
-  const { data: animals, offline, reload: reloadAnimals } = useAnimals(farmId);
-  // New or changed animals show up when the tab is opened again.
-  useFocusEffect(
-    useCallback(() => {
-      reloadAnimals();
-    }, [reloadAnimals]),
-  );
-  const milking = useMemo(() => {
-    const cats = milkingCategories(options);
-    return (animals ?? []).filter((a) => a.status === "active" && (a.species ?? "cattle") === "cattle" && cats.includes(a.category));
-  }, [animals, options]);
-  const [typed, setTyped] = useState<Record<string, Record<string, string>>>({});
-  const [error, setError] = useState<string | null>(null);
-  const [detail, setDetail] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  const existing = useExisting(
-    () =>
-      supabase
-        .from("milk_records")
-        .select("cattle_id, quantity_liters")
-        .eq("farm_id", farmId)
-        .eq("record_date", day)
-        .eq("session", session)
-        .then(({ data, error: e }) => {
-          if (e) throw e;
-          return Object.fromEntries((data ?? []).map((r) => [r.cattle_id as string, String(Number(r.quantity_liters))]));
-        }),
-    [farmId, day, session],
-  );
-  // Only animals on the sheet count (one sold or removed meanwhile drops out).
-  const onSheet = new Set(milking.map((a) => a.id));
-  const litres = Object.fromEntries(Object.entries({ ...(existing ?? {}), ...(typed[session] ?? {}) }).filter(([id]) => onSheet.has(id)));
-  const total = milkEntry(day, session, litres);
-
-  const submit = async () => {
-    const r = milkEntry(day, session, litres);
-    if (!r.ok) return setError(t(r.error));
-    setError(null);
-    setDetail(null);
-    setBusy(true);
-    const res = await save({ kind: "milk", farmId, data: r.entry });
-    setBusy(false);
-    if (res.status === "error") {
-      setError(t("common.error"));
-      setDetail(res.error);
-    } else onDone(res);
-  };
-
-  return (
-    <View style={styles.sheet}>
-      <SegmentedButtons
-        value={session}
-        onValueChange={(v) => {
-          setSession(v);
-          setError(null);
-        }}
-        buttons={(sessions.length ? sessions.map((s) => s.value) : ["morning", "evening"]).map((v) => ({
-          value: v,
-          label: optionLabel(options, "milk_session", v, locale) || v,
-          testID: `session-${v}`,
-        }))}
-      />
-      {offline && <OfflineNote />}
-      {existing && Object.keys(existing).length > 0 && (
-        <Text variant="bodySmall" style={{ color: theme.colors.primary }} testID="milk-existing">
-          {t("entry.existing")}
-        </Text>
-      )}
-      {milking.length === 0 ? (
-        <Empty icon="cow" title={t("entry.noCows")} body={t("entry.noCowsBody")} />
-      ) : (
-        <>
-          {milking.map((a) => (
-            <View key={a.id} style={[styles.cow, { backgroundColor: theme.colors.elevation.level1 }]}>
-              <View style={styles.flex}>
-                <Text variant="titleSmall">#{a.tag_number}</Text>
-                {a.name ? (
-                  <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }} numberOfLines={1}>
-                    {a.name}
-                  </Text>
-                ) : null}
-              </View>
-              <TextInput
-                mode="outlined"
-                dense
-                value={litres[a.id] ?? ""}
-                onChangeText={(v) => {
-                  setError(null);
-                  setTyped((x) => ({ ...x, [session]: { ...(x[session] ?? {}), [a.id]: v } }));
-                }}
-                keyboardType="decimal-pad"
-                placeholder="0"
-                right={<TextInput.Affix text={locale === "bn" ? "লি." : "L"} />}
-                style={styles.litres}
-                accessibilityLabel={`#${a.tag_number}`}
-                testID={`milk-${a.tag_number}`}
-              />
-            </View>
-          ))}
-          <Text variant="titleMedium" style={styles.total} testID="milk-total">
-            {total.ok
-              ? total.entry.rows.length === 1
-                ? t("entry.total_one", { l: n(total.total, 1) })
-                : t("entry.total", { l: n(total.total, 1), n: total.entry.rows.length })
-              : t("entry.total", { l: n(0), n: 0 })}
-          </Text>
-          <FormError message={error} detail={detail} />
-          <Button mode="contained" icon="content-save-outline" onPress={submit} loading={busy} disabled={busy} contentStyle={styles.btn} testID="milk-save">
-            {t("entry.saveMilk")}
-          </Button>
-        </>
-      )}
-    </View>
-  );
-}
-
-const EMPTY: FlockFields = { eggs: "", broken: "", mortality: "", culled: "", feed: "", weight: "" };
-
-function BirdSheet({ farmId, day, onDone }: { farmId: string; day: string; onDone: (r: SaveResult) => void }) {
-  const { t } = usePrefs();
-  const theme = useTheme();
-  const { data: flocks, offline, reload: reloadFlocks } = useFlocks(farmId);
-  useFocusEffect(
-    useCallback(() => {
-      reloadFlocks();
-    }, [reloadFlocks]),
-  );
-  const [chosen, setChosen] = useState<string | null>(null);
-  const flock = (flocks ?? []).find((f) => f.id === chosen) ?? flocks?.[0] ?? null;
-
-  if (!flocks?.length) return offline ? <OfflineNote /> : <Empty icon="egg-outline" title={t("entry.noFlocks")} body={t("entry.noFlocksBody")} />;
-  return (
-    <View style={styles.sheet}>
-      {offline && <OfflineNote />}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-        {flocks.map((f) => (
-          <Chip key={f.id} selected={f.id === flock?.id} showSelectedCheck onPress={() => setChosen(f.id)} testID={`flock-${f.name}`}>
-            {f.name}
-          </Chip>
-        ))}
-      </ScrollView>
-      {flock && (
-        <>
-          <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-            {`${t(`entry.kind.${flock.kind}`)} · ${t("entry.birdsCount", { n: flock.birds })}`}
-          </Text>
-          <FlockForm key={`${flock.id}-${day}`} farmId={farmId} flock={flock} day={day} onDone={onDone} />
-        </>
-      )}
-    </View>
-  );
-}
-
-function FlockForm({ farmId, flock, day, onDone }: { farmId: string; flock: Flock; day: string; onDone: (r: SaveResult) => void }) {
-  const { t } = usePrefs();
-  const theme = useTheme();
-  const { save } = useOutbox();
-  const layer = flock.kind === "layer";
-  const [typed, setTyped] = useState<Partial<FlockFields>>({});
-  const [error, setError] = useState<string | null>(null);
-  const [detail, setDetail] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  const existing = useExisting<FlockFields>(
-    () =>
-      supabase
-        .from("flock_daily_logs")
-        .select("eggs_collected, eggs_broken, mortality, culled, feed_kg, avg_weight_g")
-        .eq("flock_id", flock.id)
-        .eq("log_date", day)
-        .maybeSingle()
-        .then(({ data, error: e }) => {
-          if (e) throw e;
-          if (!data) return null;
-          const s = (v: unknown) => (v === null || v === undefined ? "" : String(Number(v)));
-          return { eggs: s(data.eggs_collected), broken: s(data.eggs_broken), mortality: s(data.mortality), culled: s(data.culled), feed: s(data.feed_kg), weight: s(data.avg_weight_g) };
-        }),
-    [flock.id, day],
-  );
-  const f: FlockFields = { ...EMPTY, ...(existing ?? {}), ...typed };
-  const set = (k: keyof FlockFields) => (v: string) => {
-    setError(null);
-    setTyped((x) => ({ ...x, [k]: v }));
-  };
-
-  const submit = async () => {
-    const r = flockEntry(flock.id, day, layer ? f : { ...f, eggs: "", broken: "" }, !layer);
-    if (!r.ok) return setError(t(r.error));
-    setError(null);
-    setDetail(null);
-    setBusy(true);
-    const res = await save({ kind: "flock", farmId, data: { ...r.entry, flock_name: flock.name } });
-    setBusy(false);
-    if (res.status === "error") {
-      setError(t("common.error"));
-      setDetail(res.error);
-    } else onDone(res);
-  };
-
-  const field = (k: keyof FlockFields, label: string, icon: string) => (
-    <TextInput
-      mode="outlined"
-      label={label}
-      value={f[k] ?? ""}
-      onChangeText={set(k)}
-      keyboardType={k === "feed" || k === "weight" ? "decimal-pad" : "number-pad"}
-      left={<TextInput.Icon icon={icon} />}
-      style={styles.half}
-      testID={`flock-${k}`}
-    />
-  );
-
-  return (
-    <View style={styles.sheet}>
-      {existing && (
-        <Text variant="bodySmall" style={{ color: theme.colors.primary }} testID="flock-existing">
-          {t("entry.existing")}
-        </Text>
-      )}
-      <View style={styles.grid}>
-        {layer && field("eggs", t("entry.eggs"), "egg-outline")}
-        {layer && field("broken", t("entry.broken"), "egg-off-outline")}
-        {field("mortality", t("entry.mortality"), "skull-outline")}
-        {field("culled", t("entry.culled"), "minus-circle-outline")}
-        {field("feed", t("entry.feed"), "sack")}
-        {!layer && field("weight", t("entry.weight"), "scale")}
-      </View>
-      <FormError message={error} detail={detail} />
-      <Button mode="contained" icon="content-save-outline" onPress={submit} loading={busy} disabled={busy} contentStyle={styles.btn} testID="flock-save">
-        {t("entry.saveDay")}
-      </Button>
+      <Icon source={done ? "check-circle" : "clock-outline"} size={18} color={done ? theme.colors.primary : theme.colors.onSurfaceVariant} />
     </View>
   );
 }
@@ -403,15 +156,11 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   content: { paddingHorizontal: 16, paddingBottom: 40 },
   inner: { width: "100%", maxWidth: 720, alignSelf: "center", gap: 12 },
-  sheet: { gap: 10 },
-  cow: { flexDirection: "row", alignItems: "center", gap: 12, paddingLeft: 16, paddingRight: 8, paddingVertical: 6, borderRadius: 16 },
-  litres: { width: 130, textAlign: "right" },
-  total: { textAlign: "right", marginTop: 4, fontVariant: ["tabular-nums"] },
-  btn: { height: 50 },
-  chips: { gap: 8, paddingVertical: 2 },
-  quick: { gap: 8 },
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  half: { flexGrow: 1, flexBasis: "45%" },
-  empty: { alignItems: "center", gap: 8, marginTop: 32, paddingHorizontal: 24 },
-  center: { textAlign: "center" },
+  card: { borderRadius: 20 },
+  statusRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  status: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, borderWidth: 1 },
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
+  tile: { flexGrow: 1, flexBasis: "45%", minHeight: 132, borderRadius: 20, borderWidth: StyleSheet.hairlineWidth, padding: 14, gap: 6 },
+  icon: { width: 52, height: 52, borderRadius: 16, alignItems: "center", justifyContent: "center", marginBottom: 2 },
+  dot: { position: "absolute", top: 14, right: 14, width: 12, height: 12, borderRadius: 6 },
 });

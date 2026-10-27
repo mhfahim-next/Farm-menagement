@@ -38,6 +38,8 @@ export type FlockEntry = {
   culled: number;
   feed_kg: number | null;
   avg_weight_g?: number | null;
+  /** The stock feed its kg come off (the server records the use). */
+  feed_item_id?: string | null;
 };
 
 export type FlockFields = { eggs: string; broken: string; mortality: string; culled: string; feed: string; weight?: string };

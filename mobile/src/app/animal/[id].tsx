@@ -121,6 +121,8 @@ export default function AnimalPage() {
   const { data, offline, error, loading, reload } = useCached(id ? `animal.${id}` : null, () => fetchDetail(id, minusDays(today, 29)));
   const role = useSession().current?.role;
   const staff = isStaff(role);
+  // Doctors add vaccines and breeding too; theirs go to the owner for approval.
+  const vet = role === "vet";
   const manager = isManager(role);
   const { n, money } = usePrefs();
   const currency = useSession().current?.farm.currency ?? "BDT";
@@ -197,7 +199,7 @@ export default function AnimalPage() {
           {a && (
             <>
               {a.photo_path ? <Image source={{ uri: photoUrl("animal-photos", a.photo_path)! }} style={styles.photo} resizeMode="cover" testID="animal-photo" /> : null}
-              {staff && a.status === "active" && (
+              {(staff || vet) && a.status === "active" && (
                 <View style={styles.actions}>
                   <Button mode="contained-tonal" icon="needle" compact onPress={() => router.push({ pathname: "/record/health", params: { animal: a.id } })} testID="act-health">
                     {t("rec.healthTitle")}
@@ -207,9 +209,11 @@ export default function AnimalPage() {
                       {t("rec.breedingTitle")}
                     </Button>
                   )}
-                  <Button mode="contained-tonal" icon="cart-outline" compact onPress={() => router.push({ pathname: "/record/sale", params: { animal: a.id } })} testID="act-sell">
-                    {t("animal.sell")}
-                  </Button>
+                  {staff && (
+                    <Button mode="contained-tonal" icon="cart-outline" compact onPress={() => router.push({ pathname: "/record/sale", params: { animal: a.id } })} testID="act-sell">
+                      {t("animal.sell")}
+                    </Button>
+                  )}
                 </View>
               )}
 

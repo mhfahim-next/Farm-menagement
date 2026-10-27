@@ -10,7 +10,8 @@ import { useDescribe } from "@/lib/describe";
 import { optionLabel, optionsOf } from "@/lib/options";
 import { useOutbox } from "@/lib/outbox";
 import { usePrefs } from "@/lib/prefs";
-import { breedingEntry, calfCategories, EVENT_TYPES, PREGNANCY_RESULTS, uuid } from "@/lib/records";
+import { breedingEntry, breedingFields, calfCategories, EVENT_TYPES, PREGNANCY_RESULTS, uuid } from "@/lib/records";
+import { submitForApproval } from "@/lib/site-api";
 import { useSession } from "@/lib/session";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/lib/toast";
@@ -22,7 +23,9 @@ export default function BreedingRecord() {
   const { animal, id: eventId } = useLocalSearchParams<{ animal?: string; id?: string }>();
   const { t, locale, date: fmt } = usePrefs();
   const theme = useTheme();
-  const farm = useSession().current?.farm;
+  const { current } = useSession();
+  const farm = current?.farm;
+  const vet = current?.role === "vet";
   const options = useOptions();
   const rules = useRules();
   const { data: animals } = useAnimals(farm?.id);
@@ -88,6 +91,20 @@ export default function BreedingRecord() {
     setError(null);
     setDetail(null);
     setBusy(true);
+    // A doctor's entry waits for the owner or a manager to approve it.
+    if (vet) {
+      try {
+        await submitForApproval(farm.id, locale, eventId ? "update_breeding" : "log_breeding", breedingFields(r.entry, eventId));
+        toast(t("appr.sent"));
+        return router.back();
+      } catch (e) {
+        setError(t("common.error"));
+        setDetail(e instanceof Error ? e.message : String(e));
+        return;
+      } finally {
+        setBusy(false);
+      }
+    }
     if (eventId) {
       const { calf: _calf, cattle_id: _c, event_type: _t, ...fields } = r.entry;
       const { error: e } = await supabase.from("breeding_events").update(fields).eq("id", eventId);

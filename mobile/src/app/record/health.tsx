@@ -11,7 +11,8 @@ import { parseNumber } from "@/lib/entries";
 import { optionLabel, optionsOf } from "@/lib/options";
 import { useOutbox } from "@/lib/outbox";
 import { usePrefs } from "@/lib/prefs";
-import { addDays, healthEntry, uuid } from "@/lib/records";
+import { addDays, healthEntry, healthFields, uuid } from "@/lib/records";
+import { submitForApproval } from "@/lib/site-api";
 import { useSession } from "@/lib/session";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/lib/toast";
@@ -23,7 +24,9 @@ const SMALL_RUMINANT = ["ppr", "goat_pox", "et", "goat_deworm"];
 export default function HealthRecord() {
   const { animal, id } = useLocalSearchParams<{ animal?: string; id?: string }>();
   const { t, locale, date: fmt } = usePrefs();
-  const farm = useSession().current?.farm;
+  const { current } = useSession();
+  const farm = current?.farm;
+  const vet = current?.role === "vet";
   const options = useOptions();
   const { data: animals } = useAnimals(farm?.id);
   const describe = useDescribe(options);
@@ -83,6 +86,20 @@ export default function HealthRecord() {
     setError(null);
     setDetail(null);
     setBusy(true);
+    // A doctor's entry waits for the owner or a manager to approve it.
+    if (vet) {
+      try {
+        await submitForApproval(farm.id, locale, id ? "update_health" : "record_health", healthFields(r.entry, id));
+        toast(t("appr.sent"));
+        return router.back();
+      } catch (e) {
+        setError(t("common.error"));
+        setDetail(e instanceof Error ? e.message : String(e));
+        return;
+      } finally {
+        setBusy(false);
+      }
+    }
     if (id) {
       const { error: e } = await supabase
         .from("health_records")

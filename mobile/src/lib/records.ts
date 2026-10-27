@@ -654,3 +654,60 @@ export function shiftMonth(month: string, by: number) {
   const [y, m] = month.split("-").map(Number);
   return new Date(Date.UTC(y, m - 1 + by, 1)).toISOString().slice(0, 7);
 }
+
+// ---------------------------------------------------------------- doctors' entries
+
+const pairs = (o: Record<string, string | number | null | undefined>) =>
+  Object.entries(o).filter((e): e is [string, string | number] => e[1] !== null && e[1] !== undefined && e[1] !== "").map(([k, v]) => [k, String(v)] as [string, string]);
+
+/** A health entry as the website's form fields (a doctor's entry goes to approval through them). */
+export function healthFields(e: HealthEntry, id?: string): [string, string][] {
+  return [
+    ...(id ? [["id", id] as [string, string]] : e.cattle_ids.map((c) => ["cattle_id", c] as [string, string])),
+    ...pairs({ record_type: e.record_type, product: e.product, record_date: e.record_date, interval_days: e.interval_days, cost: e.cost, description: e.notes }),
+  ];
+}
+
+/** A breeding entry as the website's form fields. */
+export function breedingFields(e: BreedingEntry, id?: string): [string, string][] {
+  return [
+    ...(id ? [["id", id] as [string, string]] : [["cattle_id", e.cattle_id] as [string, string]]),
+    ...pairs({
+      event_type: id ? null : e.event_type,
+      event_date: e.event_date,
+      bull_or_semen: e.bull_or_semen,
+      technician: e.technician,
+      cost: e.cost,
+      result: e.result,
+      expected_calving_date: e.expected_calving_date,
+      notes: e.notes,
+      calf_tag: e.calf?.tag_number,
+      calf_name: e.calf?.name,
+      calf_category: e.calf?.category,
+    }),
+    ...(e.heat_signs ? e.heat_signs.split(", ").map((s) => ["heat_sign", s] as [string, string]) : []),
+  ];
+}
+
+// ---------------------------------------------------------------- doctors' console
+
+const TRACKED = ["vaccination", "parasite_control", "deworming"];
+
+/**
+ * Overdue vaccines / dewormings, as on the website's health board: only the
+ * newest record per animal + type + product counts (renewing clears it).
+ */
+export function overdueCount(
+  records: { cattle_id: string; record_type: string; product: string | null; description: string | null; record_date: string; next_due_date: string | null }[],
+  activeIds: Set<string>,
+  today: string,
+) {
+  const newest = new Map<string, (typeof records)[number]>();
+  for (const r of records) {
+    if (!TRACKED.includes(r.record_type)) continue;
+    const key = [r.cattle_id, r.record_type, (r.product ?? r.description ?? "").trim().toLowerCase()].join("|");
+    const cur = newest.get(key);
+    if (!cur || r.record_date > cur.record_date) newest.set(key, r);
+  }
+  return [...newest.values()].filter((r) => r.next_due_date && r.next_due_date < today && activeIds.has(r.cattle_id)).length;
+}

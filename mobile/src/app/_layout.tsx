@@ -134,6 +134,10 @@ function App({ fontsReady }: { fontsReady: boolean }) {
               <Stack.Screen name="record/staff-pay" />
               <Stack.Screen name="team" options={{ animation: "slide_from_right" }} />
               <Stack.Screen name="reports" options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="approvals" options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="doctor" options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="entry/milk" />
+              <Stack.Screen name="entry/birds" />
             </Stack.Protected>
           </Stack>
         </ThemeProvider>

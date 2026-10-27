@@ -35,9 +35,19 @@ The Android app comes first. The same code can later build the iPhone app.
   - Every cow, heifer, bull, goat and sheep, with type, breed and age.
   - Search by tag or name. Active or All (sold and dead too). Cattle and goats & sheep are kept apart.
   - Tap an animal for its page: details and mother, milk over the last 7 and 30 days, the latest vaccines and treatments with the next due date, and breeding with the expected calving date.
-- **Entry** tab (owners, managers and workers):
-  - **Milk:** pick the day (today, yesterday or the day before) and the milking. Then type litres for each milking animal and watch the total. Numbers already saved for that day are filled in, so they can be checked and changed.
-  - **Birds:** pick a flock or batch and enter the day's eggs, broken eggs, deaths, culls and feed. Broiler and Sonali batches also have average weight.
+- **Write** tab: "What do you want to write?"
+  - A big tile for each kind of record the farm keeps: milk, eggs & birds, vaccine / treatment, breeding, flock vaccine, sale, expense, stock and (owners and managers) attendance.
+  - **Today's work** above the tiles: morning and evening milk and each flock, ticked once written. A red dot marks the milk or eggs still to write.
+  - **Milk** sheet:
+    - Day and milking at the top. The milking is picked from the clock (morning until 2 pm).
+    - **Same as yesterday** copies yesterday's litres into the cows still empty.
+    - **− / +** change half a litre at a time; typing works too. A cow with a number turns green, and "4 of 6 cows written" shows what is left.
+    - The total and **Save** stay at the bottom of the screen.
+    - After saving, it says what was saved and offers the next step: *Write the evening milk* or *Write eggs & birds*.
+  - **Eggs & birds**:
+    - Each box shows yesterday's number underneath. "Birds taken out" (culled) is explained.
+    - The feed can be **taken from stock**: pick a poultry feed and its kg come off that item.
+    - After saving, it offers the next flock or the milk.
   - Bangla digits (১২.৫) and a decimal comma work in every number box.
 - **Works without internet.**
   - The animal and flock lists are kept on the phone, so they still open offline.
@@ -65,7 +75,17 @@ The Android app comes first. The same code can later build the iPhone app.
 - **Every record works offline.**
   - Records get their id on the phone, so sending one twice (when the connection drops just after the server saved it) never makes a copy.
   - A buyer added offline can be sold to straight away. The buyer reaches the server first.
-- Vets don't see the Entry and Sales tabs. Their changes go through the farm's approval on the website.
+- **Doctors (vets)**
+  - A doctor's account opens the **Doctor console** instead of farm setup:
+    - farms served, with animals and overdue vaccines;
+    - invitations, with Accept / Decline;
+    - Open farm, or leave it;
+    - doctor details (registration number, specialty) and the verified badge.
+  - On a farm, a doctor writes vaccines, treatments and breeding (Write tab or an animal's page). These are **sent to the owner for approval**, as on the website; nothing is saved until then. Doctors don't see sales.
+  - **Approvals** (More → Approvals; a card on Home when something waits):
+    - Owners and managers approve or reject (with a reason).
+    - A doctor sees what they sent, the decision and the reason, and can withdraw an entry still waiting.
+    - These go through the website's own approval code (`/api/app/approvals`, `/api/app/submit`) with the person's own session, so the rules stay exactly the same.
 
 - **Today's work** on Home, and a **Reminders** screen:
   - Vaccines due, heats, pregnancy checks, births, low stock, buyer dues, broiler weighing, the Qurbani countdown and more.
