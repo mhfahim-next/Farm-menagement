@@ -17,7 +17,7 @@ import { loadAnimalProfits } from "@/lib/animal-profit-data";
 import { loadFattening } from "@/lib/fattening-data";
 import { fattens } from "@/lib/modules";
 import { heatSignsText, reproStatus } from "@/lib/breeding";
-import { getBreedingRules } from "@/lib/breeding-data";
+import { getAllBreedingRules } from "@/lib/breeding-data";
 import { ageInMonths, today } from "@/lib/format";
 import { dueItems, dueLabel } from "@/lib/health";
 import { getI18n } from "@/lib/i18n/server";
@@ -35,13 +35,14 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function CattleDetailPage({ params }: PageProps<"/dashboard/cattle/[id]">) {
   const { id } = await params;
-  const { supabase, farm, role } = await requireFarm();
+  const [{ supabase, farm, role }, i18n] = await Promise.all([requireFarm(), getI18n()]);
   const canWrite = role !== "vet";
   const canDelete = MANAGERS.includes(role);
-  const i18n = await getI18n();
   const { t, f, o, options } = i18n;
+  const showProfit = role !== "vet" && farm.show_animal_profit !== false;
 
-  const [cowRes, milkRes, healthRes, breedingRes, femalesRes, calvesRes, weightsRes] = await Promise.all([
+  // One round trip: the animal and its records, breeding rules, fattening numbers and profit.
+  const [cowRes, milkRes, healthRes, breedingRes, femalesRes, calvesRes, weightsRes, rulesFor, fatRows, profits] = await Promise.all([
     supabase.from("cattle").select("*").eq("id", id).eq("farm_id", farm.id).maybeSingle(),
     supabase
       .from("milk_records")
@@ -66,6 +67,10 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
       .is("deleted_at", null)
       .order("date_of_birth", { ascending: false }),
     supabase.from("cattle_weights").select("*").eq("cattle_id", id).order("weigh_date", { ascending: false }).order("created_at", { ascending: false }),
+    getAllBreedingRules({ supabase }),
+    fattens(farm) ? loadFattening(supabase, farm.id, id).catch(() => null) : null,
+    // Profit over the last 12 months (owners, managers, workers; the farm can turn it off).
+    showProfit ? loadAnimalProfits({ supabase, farm }, "12m").catch(() => null) : null,
   ]);
   const weights = (weightsRes.data ?? []) as WeightRecord[];
   const ws = weightSummary(weights);
@@ -87,20 +92,15 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
   const milkTotal = milk.reduce((s, m) => s + Number(m.quantity_liters), 0);
   const milkDays = new Set(milk.map((m) => m.record_date)).size;
   const withdrawal = health.find((h) => h.withdrawal_until && h.withdrawal_until >= today());
-  const rules = await getBreedingRules({ supabase }, cow.species);
+  const rules = rulesFor(cow.species);
   const group = groupOf(cow.species);
   const backHref = listHref(cow.species);
-  const fat = fattens(farm) && cow.is_fattening ? (await loadFattening(supabase, farm.id, cow.id)).rows[0] : null;
+  const fat = cow.is_fattening ? (fatRows?.rows[0] ?? null) : null;
   const money = (n: number) => f.money(n, farm.currency);
-  // Profit over the last 12 months (owners, managers, workers; the farm can turn it off).
+  const profitIndex = profits ? profits.rows.findIndex((x) => x.id === cow.id) : -1;
   const profit =
-    role !== "vet" && farm.show_animal_profit !== false
-      ? await loadAnimalProfits({ supabase, farm }, "12m")
-          .then((r) => {
-            const i = r.rows.findIndex((x) => x.id === cow.id);
-            return i < 0 ? null : { row: r.rows[i], rank: i + 1, of: r.rows.length, milkPriceMissing: r.milkPriceMissing };
-          })
-          .catch(() => null)
+    profits && profitIndex >= 0
+      ? { row: profits.rows[profitIndex], rank: profitIndex + 1, of: profits.rows.length, milkPriceMissing: profits.milkPriceMissing }
       : null;
   const checkDays = rules.pregnancyCheckDays;
   const repro = reproStatus(breeding, today(), rules);

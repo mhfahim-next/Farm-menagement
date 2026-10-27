@@ -1,12 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import {
-  useInView,
-  useMotionValue,
-  useReducedMotion,
-  useSpring,
-} from "motion/react";
 
 import { cn } from "@/lib/utils";
 
@@ -22,6 +16,7 @@ interface NumberTickerProps extends React.HTMLAttributes<HTMLSpanElement> {
   locale?: string;
 }
 
+/** Counts up to `value` once it scrolls into view (plain requestAnimationFrame, ease-out). */
 export function NumberTicker({
   value,
   startValue = 0,
@@ -34,51 +29,54 @@ export function NumberTicker({
   ...props
 }: NumberTickerProps) {
   const ref = useRef<HTMLSpanElement>(null);
-  const motionValue = useMotionValue(startValue);
-  const springValue = useSpring(motionValue, {
-    damping: 60,
-    stiffness: 100,
-  });
-  const isInView = useInView(ref, { once: true, margin: "0px 0px -10% 0px" });
-  const reducedMotion = useReducedMotion();
-
-  const format = (n: number) =>
-    `${prefix}${Intl.NumberFormat(locale, {
-      minimumFractionDigits: decimalPlaces,
-      maximumFractionDigits: decimalPlaces,
-    }).format(n)}${suffix}`;
 
   useEffect(() => {
-    if (!isInView) return;
-    if (reducedMotion) {
-      // jump() on the source alone still makes the spring follow it,
-      // so jump the spring too to skip the count-up entirely
-      motionValue.jump(value);
-      springValue.jump(value);
+    const el = ref.current;
+    if (!el) return;
+    const fmt = new Intl.NumberFormat(locale, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces });
+    const show = (n: number) => {
+      el.textContent = `${prefix}${fmt.format(n)}${suffix}`;
+    };
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) {
+      show(value);
       return;
     }
-    const timeout = setTimeout(() => motionValue.set(value), delay * 1000);
-    return () => clearTimeout(timeout);
-  }, [isInView, reducedMotion, motionValue, springValue, value, delay]);
+    let frame = 0;
+    let timer = 0;
+    const run = () => {
+      const start = performance.now();
+      const duration = 1400;
+      const step = (now: number) => {
+        const p = Math.min(1, (now - start) / duration);
+        const eased = 1 - Math.pow(1 - p, 3);
+        show(startValue + (value - startValue) * eased);
+        if (p < 1) frame = requestAnimationFrame(step);
+      };
+      frame = requestAnimationFrame(step);
+    };
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return;
+        io.disconnect();
+        timer = window.setTimeout(run, delay * 1000);
+      },
+      { rootMargin: "0px 0px -10% 0px" },
+    );
+    io.observe(el);
+    return () => {
+      io.disconnect();
+      window.clearTimeout(timer);
+      cancelAnimationFrame(frame);
+    };
+  }, [value, startValue, delay, decimalPlaces, prefix, suffix, locale]);
 
-  useEffect(
-    () =>
-      springValue.on("change", (latest) => {
-        if (ref.current) ref.current.textContent = format(latest);
-      }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [springValue, prefix, suffix, decimalPlaces, locale]
-  );
-
+  const initial = `${prefix}${new Intl.NumberFormat(locale, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces }).format(startValue)}${suffix}`;
+  const final = `${prefix}${new Intl.NumberFormat(locale, { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces }).format(value)}${suffix}`;
   return (
-    <span
-      data-slot="number-ticker"
-      className={cn("inline-block tabular-nums", className)}
-      {...props}
-    >
-      <span className="sr-only">{format(value)}</span>
+    <span data-slot="number-ticker" className={cn("inline-block tabular-nums", className)} {...props}>
+      <span className="sr-only">{final}</span>
       <span ref={ref} aria-hidden>
-        {format(startValue)}
+        {initial}
       </span>
     </span>
   );

@@ -3,15 +3,19 @@ import { AppShell } from "@/components/app-shell";
 import type { NavItem } from "@/components/dashboard-nav";
 import { requireSuperAdmin } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
+import { createClient } from "@/lib/supabase/server";
 
 /** Private app area: keep it out of search results. */
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
-  const { user, profile, supabase } = await requireSuperAdmin();
-  const { t } = await getI18n();
-  // Things waiting for an admin: open requests and unread messages (shown as menu badges).
-  const { data: inbox } = await supabase.rpc("admin_inbox_counts");
+  // Things waiting for an admin (menu badges) are read while the admin check runs;
+  // the function checks super admin itself, and nothing is shown unless requireSuperAdmin passes.
+  const [{ user, profile }, { t }, { data: inbox }] = await Promise.all([
+    requireSuperAdmin(),
+    getI18n(),
+    createClient().then((supabase) => supabase.rpc("admin_inbox_counts")),
+  ]);
   const counts = (inbox ?? {}) as { requests?: number; messages?: number; payments?: number };
 
   const nav: NavItem[] = [

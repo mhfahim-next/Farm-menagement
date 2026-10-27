@@ -1,13 +1,6 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import {
-  motion,
-  useMotionTemplate,
-  useMotionValue,
-  useReducedMotion,
-  useSpring,
-} from "motion/react";
 
 import { cn } from "@/lib/utils";
 
@@ -42,16 +35,22 @@ export function TextHoverEffect({
 }: TextHoverEffectProps) {
   const id = useId();
   const outlineRef = useRef<SVGTextElement>(null);
-  const reducedMotion = useReducedMotion();
+  const spotRef = useRef<SVGRadialGradientElement>(null);
   // A rough first guess so the server render has sensible proportions; the
   // real glyph box is measured once the font has loaded.
   const [box, setBox] = useState({ w: text.length * 64 + PAD * 2, h: 80, x: PAD, y: 76 });
 
-  const px = useMotionValue(50);
-  const py = useMotionValue(50);
-  const spring = { stiffness: 260, damping: 32, mass: 0.6 };
-  const cx = useMotionTemplate`${useSpring(px, spring)}%`;
-  const cy = useMotionTemplate`${useSpring(py, spring)}%`;
+  // The spotlight eases toward the pointer (a small requestAnimationFrame loop).
+  const spot = useRef({ x: 50, y: 50, tx: 50, ty: 50, frame: 0 });
+  useEffect(() => () => cancelAnimationFrame(spot.current.frame), []);
+  const follow = () => {
+    const s = spot.current;
+    s.x += (s.tx - s.x) * 0.22;
+    s.y += (s.ty - s.y) * 0.22;
+    spotRef.current?.setAttribute("cx", `${s.x}%`);
+    spotRef.current?.setAttribute("cy", `${s.y}%`);
+    s.frame = Math.abs(s.tx - s.x) + Math.abs(s.ty - s.y) > 0.1 ? requestAnimationFrame(follow) : 0;
+  };
 
   useEffect(() => {
     let live = true;
@@ -103,10 +102,11 @@ export function TextHoverEffect({
       className={cn("group/text-hover h-auto w-full select-none font-bold", className)}
       onPointerMove={(event) => {
         onPointerMove?.(event);
-        if (reducedMotion) return;
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
         const rect = event.currentTarget.getBoundingClientRect();
-        px.set(((event.clientX - rect.left) / rect.width) * 100);
-        py.set(((event.clientY - rect.top) / rect.height) * 100);
+        spot.current.tx = ((event.clientX - rect.left) / rect.width) * 100;
+        spot.current.ty = ((event.clientY - rect.top) / rect.height) * 100;
+        if (!spot.current.frame) spot.current.frame = requestAnimationFrame(follow);
       }}
       {...props}
     >
@@ -116,17 +116,11 @@ export function TextHoverEffect({
           <stop offset="50%" style={{ stopColor: "var(--brand-via)" }} />
           <stop offset="100%" style={{ stopColor: "var(--brand-to)" }} />
         </linearGradient>
-        <motion.radialGradient
-          id={`${id}-spot`}
-          gradientUnits="userSpaceOnUse"
-          cx={cx}
-          cy={cy}
-          r={`${revealRadius}%`}
-        >
+        <radialGradient ref={spotRef} id={`${id}-spot`} gradientUnits="userSpaceOnUse" cx="50%" cy="50%" r={`${revealRadius}%`}>
           <stop offset="0%" stopColor="white" />
           <stop offset="55%" stopColor="white" stopOpacity={0.55} />
           <stop offset="100%" stopColor="white" stopOpacity={0} />
-        </motion.radialGradient>
+        </radialGradient>
         <mask id={`${id}-spot-mask`} {...frame}>
           <rect width="100%" height="100%" fill={`url(#${id}-spot)`} />
         </mask>

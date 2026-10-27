@@ -258,3 +258,63 @@ main .flex > * {
   .dark .text-sky-800 { color: #075985; }
   html, body { background: #ffffff !important; }
 }
+
+/*
+ * Light-weight reveal effects (no animation library):
+ *  - .ff-blur-fade: fades and un-blurs a block as it scrolls into view;
+ *  - .ff-scroll-progress: the bar at the top that fills as the page scrolls;
+ *  - .ff-word-in: the rotating word in the home page headline.
+ * The first two are scroll-driven animations; browsers without them, and
+ * anyone who prefers reduced motion, simply see the content.
+ */
+@keyframes ff-blur-fade {
+  from {
+    opacity: 0;
+    filter: blur(6px);
+    translate: var(--bf-move, 0 16px);
+  }
+  to {
+    opacity: 1;
+    filter: none;
+    translate: 0 0;
+  }
+}
+@keyframes ff-grow-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes ff-word-in {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.ff-scroll-progress {
+  display: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .ff-blur-fade {
+      animation: ff-blur-fade linear both;
+      animation-timeline: view();
+      animation-range: entry var(--bf-start, 0%) entry calc(var(--bf-start, 0%) + 40%);
+    }
+    .ff-scroll-progress {
+      display: block;
+      transform: scaleX(0);
+      animation: ff-grow-x linear both;
+      animation-timeline: scroll(root);
+    }
+  }
+  .ff-word-in {
+    animation: ff-word-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}

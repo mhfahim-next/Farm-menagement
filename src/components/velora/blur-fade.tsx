@@ -1,73 +1,46 @@
-"use client";
-
-import { motion, useReducedMotion } from "motion/react";
+import type { CSSProperties } from "react";
 
 import { cn } from "@/lib/utils";
 
 interface BlurFadeProps {
   children: React.ReactNode;
   className?: string;
-  /** Seconds before the animation starts */
+  /** Seconds of stagger (moves the start of the reveal a little further into the scroll) */
   delay?: number;
+  /** Kept for compatibility; the reveal length is set by the scroll position. */
   duration?: number;
   /** Direction the element enters from */
   direction?: "up" | "down" | "left" | "right" | "none";
   /** Distance travelled in px */
   offset?: number;
-  /** Animate only the first time it enters the viewport */
+  /** Kept for compatibility (the reveal always plays once per scroll into view). */
   once?: boolean;
-  /** Start animating immediately instead of waiting to scroll into view */
   inView?: boolean;
 }
 
-const axis = { up: "y", down: "y", left: "x", right: "x" } as const;
-const sign = { up: 1, down: -1, left: 1, right: -1 } as const;
+const MOVE = {
+  up: (o: number) => `0 ${o}px`,
+  down: (o: number) => `0 ${-o}px`,
+  left: (o: number) => `${o}px 0`,
+  right: (o: number) => `${-o}px 0`,
+  none: () => "0 0",
+};
 
 /**
  * Fades and un-blurs its children in as they scroll into view.
  *
- * Content starts invisible until JavaScript runs, so don't wrap your page's
- * largest above-the-fold element (usually the hero headline or intro): it
- * delays Largest Contentful Paint. Fade the badges, buttons and visuals
- * around it instead.
+ * Pure CSS (a scroll-driven animation, see globals.css): no JavaScript, and
+ * content is never hidden waiting for scripts. Browsers without scroll-driven
+ * animations (and people who prefer reduced motion) just see the content.
  */
-export function BlurFade({
-  children,
-  className,
-  delay = 0,
-  duration = 0.5,
-  direction = "up",
-  offset = 16,
-  once = true,
-}: BlurFadeProps) {
-  const reducedMotion = useReducedMotion();
-
-  const hidden =
-    direction === "none"
-      ? { opacity: 0, filter: "blur(6px)" }
-      : {
-          opacity: 0,
-          filter: "blur(6px)",
-          [axis[direction]]: sign[direction] * offset,
-        };
-
-  // Keep `initial` identical on server and client (the server can't know the
-  // motion preference — branching it mismatches on hydration). Under reduced
-  // motion the reveal still happens, just instantly.
+export function BlurFade({ children, className, delay = 0, direction = "up", offset = 16 }: BlurFadeProps) {
+  const style = {
+    "--bf-move": MOVE[direction](offset),
+    "--bf-start": `${Math.min(30, Math.round(delay * 100))}%`,
+  } as CSSProperties;
   return (
-    <motion.div
-      data-slot="blur-fade"
-      className={cn(className)}
-      initial={hidden}
-      whileInView={{ opacity: 1, filter: "blur(0px)", x: 0, y: 0 }}
-      viewport={{ once, margin: "0px 0px -10% 0px" }}
-      transition={
-        reducedMotion
-          ? { duration: 0 }
-          : { delay, duration, ease: [0.21, 0.47, 0.32, 0.98] }
-      }
-    >
+    <div data-slot="blur-fade" className={cn("ff-blur-fade", className)} style={style}>
       {children}
-    </motion.div>
+    </div>
   );
 }

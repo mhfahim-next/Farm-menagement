@@ -313,7 +313,18 @@ Locally, set `enabled = true` under `[auth.external.google]` in `supabase/config
 
 ### Speed
 
-Dropdown options and plans (read on every page) are cached across visitors and refreshed the moment a super admin edits them; the AI chat and the globe load only after the page; fonts are self-hosted; logos/icons are cached by the browser; motion code is tree-shaken.
+- **Region:** the server functions run in Mumbai (`"regions": ["bom1"]` in `vercel.json`), the same region as the Supabase database and close to farmers in Bangladesh. Keep the two together: every database call crosses the distance between them.
+- **Few round trips:** a dashboard page needs about three waits on the database before it can start sending:
+  1. The session check runs at the same time as the farm and profile reads. `requireFarm` / `getProfile` start with the user id from the session cookie, which `getUser()` then confirms; nothing renders unless they match.
+  2. The dashboard layout and overview read everything in one parallel batch: plan usage, approvals, AI quota, dues, stock, herd, flocks, money and reminders.
+  3. The reminders bell streams in afterwards.
+
+  The animal page reads breeding rules, fattening numbers and profit together with the animal's records. `/admin` works the same way.
+- **Light pages:**
+  - There is no animation library. Reveal-on-scroll and the reading-progress bar are CSS scroll-driven animations with no JavaScript. Browsers without them just show the content.
+  - Dropdown options and plans are cached across visitors and refreshed the moment a super admin edits them.
+  - The AI chat and the globe load only after the page.
+  - Fonts are self-hosted, and logos and icons are cached by the browser.
 
 ## Roadmap
 

@@ -17,24 +17,15 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function OverviewPage() {
-  const { supabase, farm, role } = await requireFarm();
+  const [{ supabase, farm, role }, { t, f, o, rows }] = await Promise.all([requireFarm(), getI18n()]);
   if (role === "vet") redirect("/dashboard/health");
-  const { t, f, o, rows } = await getI18n();
   const day = today();
   const weekAgo = today(-6);
 
-  // Money to collect and stock running low.
-  const [{ data: owingRows }, { data: stockRows }] = await Promise.all([
+  // Everything on the page in one round trip: money to collect, stock running low, herd, flocks, money, reminders.
+  const [{ data: owingRows }, { data: stockRows }, cattleRes, milkRes, flocksRes, statsRes, eggsRes, txnRes, scheduleRes, board] = await Promise.all([
     supabase.from("buyer_balances").select("id, name, due").eq("farm_id", farm.id).gt("due", 0).order("due", { ascending: false }),
     supabase.from("inventory_stock").select("id, name, unit, on_hand, low_stock").eq("farm_id", farm.id).eq("archived", false).not("low_stock", "is", null),
-  ]);
-  const owing = (owingRows ?? []) as { id: string; name: string; due: number }[];
-  const dueTotal = owing.reduce((s, b) => s + Number(b.due), 0);
-  const lowStock = ((stockRows ?? []) as { id: string; name: string; unit: string; on_hand: number; low_stock: number }[]).filter(
-    (i) => Number(i.on_hand) <= Number(i.low_stock),
-  );
-
-  const [cattleRes, milkRes, flocksRes, statsRes, eggsRes, txnRes, scheduleRes, board] = await Promise.all([
     keepsAnimals(farm)
       ? supabase
           .from("cattle")
@@ -82,6 +73,11 @@ export default async function OverviewPage() {
       : null,
     breedsAnimals(farm) ? loadBreedingBoard({ supabase, farm }) : null,
   ]);
+  const owing = (owingRows ?? []) as { id: string; name: string; due: number }[];
+  const dueTotal = owing.reduce((s, b) => s + Number(b.due), 0);
+  const lowStock = ((stockRows ?? []) as { id: string; name: string; unit: string; on_hand: number; low_stock: number }[]).filter(
+    (i) => Number(i.on_hand) <= Number(i.low_stock),
+  );
 
   const animals = cattleRes?.data ?? [];
   const cattle = animals.filter((c) => (c.species ?? "cattle") === "cattle");
