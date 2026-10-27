@@ -2,10 +2,12 @@ import Constants from "expo-constants";
 import * as WebBrowser from "expo-web-browser";
 import { useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
-import { Avatar, Button, Dialog, Divider, List, Portal, RadioButton, SegmentedButtons, Text, useTheme } from "react-native-paper";
+import { Avatar, Button, Dialog, Divider, List, Portal, RadioButton, SegmentedButtons, Switch, Text, useTheme } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LanguageToggle } from "@/components/language-toggle";
 import { siteLink } from "@/lib/env";
+import { disableNotifications, enableNotifications, notifyOn, notifySupported } from "@/lib/notify";
+import { useToast } from "@/lib/toast";
 import { usePrefs, type ThemeMode } from "@/lib/prefs";
 import { useSession } from "@/lib/session";
 
@@ -16,6 +18,17 @@ export default function More() {
   const insets = useSafeAreaInsets();
   const s = useSession();
   const [confirm, setConfirm] = useState(false);
+  const [notify, setNotify] = useState(notifyOn);
+  const toast = useToast();
+  const toggleNotify = async (on: boolean) => {
+    if (!on) {
+      await disableNotifications();
+      return setNotify(false);
+    }
+    const ok = await enableNotifications(t("notify.channel"));
+    setNotify(ok);
+    if (!ok) toast(t("notify.denied"));
+  };
   const email = s.session?.user.email ?? "";
   const name = s.profile?.full_name || email;
   const initials = name
@@ -53,6 +66,19 @@ export default function More() {
                 <RadioButton.Item key={m.farm.id} value={m.farm.id} label={`${m.farm.name} · ${t(`role.${m.role}`)}`} position="leading" labelStyle={styles.left} />
               ))}
             </RadioButton.Group>
+          </List.Section>
+        )}
+
+        {notifySupported && (
+          <List.Section>
+            <List.Subheader>{t("notify.section")}</List.Subheader>
+            <List.Item
+              title={t("notify.toggle")}
+              description={t("notify.toggleHint")}
+              descriptionNumberOfLines={3}
+              left={(p) => <List.Icon {...p} icon="bell-ring-outline" />}
+              right={() => <Switch value={notify} onValueChange={toggleNotify} testID="notify-toggle" />}
+            />
           </List.Section>
         )}
 

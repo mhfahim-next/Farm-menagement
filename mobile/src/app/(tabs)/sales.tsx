@@ -73,6 +73,15 @@ export default function Sales() {
           </Button>
         </View>
 
+        <View style={styles.actions}>
+          <Button mode="outlined" icon="cash-minus" onPress={() => router.push("/record/expense")} style={styles.flex} contentStyle={styles.btn} testID="new-expense">
+            {t("txn.short")}
+          </Button>
+          <Button mode="outlined" icon="chart-line" onPress={() => router.push("/profit")} style={styles.flex} contentStyle={styles.btn} testID="open-profit">
+            {t("profit.short")}
+          </Button>
+        </View>
+
         <Text variant="titleMedium" style={styles.section}>
           {t("sale.buyers")}
         </Text>

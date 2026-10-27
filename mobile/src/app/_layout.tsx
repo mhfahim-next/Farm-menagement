@@ -6,12 +6,13 @@ import {
   NotoSansBengali_700Bold,
 } from "@expo-google-fonts/noto-sans-bengali";
 import { useFonts } from "expo-font";
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
+import { DarkTheme, DefaultTheme, router, Stack, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useMemo } from "react";
 import { PaperProvider } from "react-native-paper";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { onNotificationTap } from "@/lib/notify";
 import { OutboxProvider } from "@/lib/outbox";
 import { PrefsProvider, usePrefs } from "@/lib/prefs";
 import { ToastProvider } from "@/lib/toast";
@@ -67,6 +68,8 @@ function App({ fontsReady }: { fontsReady: boolean }) {
   useEffect(() => {
     if (ready) SplashScreen.hideAsync().catch(() => {});
   }, [ready]);
+  // A tapped reminder notification opens its screen.
+  useEffect(() => onNotificationTap((url) => router.push(url as never)), []);
   if (!ready) return null;
 
   const signedIn = Boolean(s.session);
@@ -100,6 +103,10 @@ function App({ fontsReady }: { fontsReady: boolean }) {
               <Stack.Screen name="record/sale" />
               <Stack.Screen name="record/payment" />
               <Stack.Screen name="record/buyer" />
+              <Stack.Screen name="reminders" options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="scan" />
+              <Stack.Screen name="record/expense" />
+              <Stack.Screen name="profit" options={{ animation: "slide_from_right" }} />
             </Stack.Protected>
           </Stack>
         </ThemeProvider>

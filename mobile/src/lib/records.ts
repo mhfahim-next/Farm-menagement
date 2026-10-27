@@ -283,3 +283,70 @@ export function uuid(rand: () => number = Math.random) {
   const s = h.join("");
   return `${s.slice(0, 8)}-${s.slice(8, 12)}-${s.slice(12, 16)}-${s.slice(16, 20)}-${s.slice(20)}`;
 }
+
+// ---------------------------------------------------------------- money in / out
+
+export const SECTIONS = ["dairy", "fattening", "goat", "layer", "broiler", "general"] as const;
+export type Section = (typeof SECTIONS)[number];
+
+/** The farm's sections (what it keeps) plus "whole farm". */
+export function farmSections(f: { has_dairy: boolean; has_fattening: boolean; has_goat: boolean; has_layer: boolean; has_broiler: boolean }): Section[] {
+  return SECTIONS.filter((s) => s === "general" || f[`has_${s}` as const]);
+}
+
+export type TxnEntry = { txn_date: string; txn_type: "expense" | "income"; module: string; category: string; amount: number; quantity: number | null; unit_price: number | null; description: string | null };
+
+export function txnEntry(i: { date: string; type: string; module: string; category: string; amount: string; quantity: string; rate: string; description: string }, today: string):
+  | { ok: true; entry: TxnEntry }
+  | Err<"rec.err.date" | "rec.err.future" | "txn.err.category" | "sale.err.amount" | "entry.err.number"> {
+  if (!isDate(i.date)) return { ok: false, error: "rec.err.date" };
+  if (i.date > today) return { ok: false, error: "rec.err.future" };
+  if (!i.category) return { ok: false, error: "txn.err.category" };
+  const qty = optionalNumber(i.quantity);
+  const rate = optionalNumber(i.rate);
+  if (!qty.ok || !rate.ok || qty.v === 0) return { ok: false, error: "entry.err.number" };
+  // With both a quantity and a rate, the total is always quantity × rate (as on the website).
+  const amount = qty.v !== null && rate.v !== null ? Math.round(qty.v * rate.v * 100) / 100 : parseNumber(i.amount);
+  if (amount === null || !Number.isFinite(amount) || amount <= 0) return { ok: false, error: "sale.err.amount" };
+  return {
+    ok: true,
+    entry: {
+      txn_date: i.date,
+      txn_type: i.type === "income" ? "income" : "expense",
+      module: (SECTIONS as readonly string[]).includes(i.module) ? i.module : "general",
+      category: i.category,
+      amount,
+      quantity: qty.v,
+      unit_price: rate.v,
+      description: i.description.trim() || null,
+    },
+  };
+}
+
+export type LedgerRow = { txn_type: string; module: string | null; amount: number };
+
+/** Money in and out per section, and the farm's total. */
+export function profitBy(rows: LedgerRow[]) {
+  const by = new Map<string, { income: number; cost: number }>();
+  for (const r of rows) {
+    const key = r.module ?? "general";
+    const x = by.get(key) ?? { income: 0, cost: 0 };
+    if (r.txn_type === "income") x.income += Number(r.amount);
+    else x.cost += Number(r.amount);
+    by.set(key, x);
+  }
+  const sections = [...by.entries()]
+    .map(([module, x]) => ({ module, ...x, profit: x.income - x.cost }))
+    .sort((a, b) => SECTIONS.indexOf(a.module as Section) - SECTIONS.indexOf(b.module as Section));
+  const total = sections.reduce((s, x) => ({ income: s.income + x.income, cost: s.cost + x.cost, profit: s.profit + x.profit }), { income: 0, cost: 0, profit: 0 });
+  return { sections, total };
+}
+
+/** First and last day of this month, or of last month. */
+export function monthRange(today: string, which: "this" | "last") {
+  const [y, m] = today.split("-").map(Number);
+  const d = which === "this" ? new Date(Date.UTC(y, m - 1, 1)) : new Date(Date.UTC(y, m - 2, 1));
+  const from = d.toISOString().slice(0, 10);
+  const to = which === "this" ? today : new Date(Date.UTC(y, m - 1, 0)).toISOString().slice(0, 10);
+  return { from, to };
+}

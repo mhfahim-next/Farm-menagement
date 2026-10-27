@@ -4,6 +4,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AppState } from "react-native";
 import { isNetworkError } from "./entries";
+import { farmToday } from "./dates";
+import { cancelEvening } from "./notify";
 import { ADULT_AFTER_BIRTH } from "./records";
 import { add, flush as flushAll, mine, remove, type NewEntry, type OutboxEntry, type Sender, type Store } from "./outbox-core";
 import { useSession } from "./session";
@@ -94,6 +96,10 @@ async function write(e: OutboxEntry): Promise<{ error: { message: string; name?:
       const { label: _l, ...row } = e.data;
       return once("buyers", { farm_id, ...row });
     }
+    case "txn": {
+      const { label: _l, ...row } = e.data;
+      return once("transactions", { farm_id, ...row });
+    }
   }
 }
 
@@ -170,6 +176,9 @@ export function OutboxProvider({ children }: { children: ReactNode }) {
         // Older waiting entries go first, so a newer save isn't overwritten by them later.
         const pending = mine(store, userId).some((x) => !x.error);
         const r = pending ? { error: "waiting", network: true } : await send(entry).catch((err: Error) => ({ error: err.message, network: true }));
+        // Today's milk or eggs are in: no "not entered yet" note tonight.
+        const today = farmToday();
+        if ((!r || r.network) && ((e.kind === "milk" && e.data.record_date === today) || (e.kind === "flock" && e.data.log_date === today))) cancelEvening();
         if (!r) return { status: "saved" };
         if (!r.network) return { status: "error", error: r.error };
         add(store, { ...e, userId } as NewEntry, entry.id);

@@ -111,6 +111,9 @@ function QuickActions() {
       <Chip icon="cart-outline" onPress={() => router.push("/record/sale")} testID="quick-sale">
         {t("sale.newSale")}
       </Chip>
+      <Chip icon="cash-minus" onPress={() => router.push("/record/expense")} testID="quick-expense">
+        {t("txn.short")}
+      </Chip>
     </ScrollView>
   );
 }

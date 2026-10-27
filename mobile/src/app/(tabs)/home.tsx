@@ -1,10 +1,12 @@
 import * as WebBrowser from "expo-web-browser";
-import { useFocusEffect } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { Button, Card, Chip, Icon, Text, useTheme } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ReminderItem } from "@/components/reminder-item";
 import { SyncBar } from "@/components/sync-bar";
+import { useReminders } from "@/lib/reminders";
 import { farmToday } from "@/lib/dates";
 import type { Farm } from "@/lib/farm";
 import { siteLink } from "@/lib/env";
@@ -16,12 +18,14 @@ type Summary = { cattle: number; goats: number; birds: number; milk: number; egg
 
 /** Today on the farm at a glance. */
 export default function Home() {
-  const { t, n } = usePrefs();
+  const { t, n, locale } = usePrefs();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { current, profile } = useSession();
   const farm = current?.farm;
   const [summary, setSummary] = useState<Summary | null>(null);
+  const reminders = useReminders(farm?.id, locale);
+  const { reload: reloadReminders } = reminders;
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
@@ -42,12 +46,13 @@ export default function Home() {
   useFocusEffect(
     useCallback(() => {
       load().catch(() => {});
-    }, [load]),
+      reloadReminders();
+    }, [load, reloadReminders]),
   );
 
   const refresh = async () => {
     setRefreshing(true);
-    await load().catch(() => {});
+    await Promise.all([load().catch(() => {}), reloadReminders()]);
     setRefreshing(false);
   };
 
@@ -87,6 +92,26 @@ export default function Home() {
         <View style={styles.sync}>
           <SyncBar />
         </View>
+
+        {reminders.data && (
+          <Card mode="outlined" style={styles.coming} testID="today-work">
+            <Card.Title
+              title={reminders.data.open.length ? t("home.work", { n: reminders.data.open.length }) : t("rem.allClear")}
+              titleVariant="titleMedium"
+              left={(p) => <Icon {...p} source={reminders.data?.open.length ? "bell-ring-outline" : "check-decagram-outline"} color={theme.colors.primary} />}
+            />
+            {reminders.data.open.slice(0, 3).map((r) => (
+              <ReminderItem key={r.key} r={r} />
+            ))}
+            {reminders.data.open.length > 0 && (
+              <Card.Actions>
+                <Button mode="text" onPress={() => router.push("/reminders")} testID="see-all-reminders">
+                  {t("home.seeAll")}
+                </Button>
+              </Card.Actions>
+            )}
+          </Card>
+        )}
 
         <View style={styles.grid}>
           {stats
