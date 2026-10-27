@@ -12,6 +12,7 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect, useMemo } from "react";
 import { PaperProvider } from "react-native-paper";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { OutboxProvider } from "@/lib/outbox";
 import { PrefsProvider, usePrefs } from "@/lib/prefs";
 import { SessionProvider, useSession } from "@/lib/session";
 import { makeTheme } from "@/lib/theme";
@@ -33,7 +34,9 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <PrefsProvider>
         <SessionProvider>
-          <App fontsReady={fontsLoaded || Boolean(fontError)} />
+          <OutboxProvider>
+            <App fontsReady={fontsLoaded || Boolean(fontError)} />
+          </OutboxProvider>
         </SessionProvider>
       </PrefsProvider>
     </SafeAreaProvider>
@@ -79,6 +82,7 @@ function App({ fontsReady }: { fontsReady: boolean }) {
           </Stack.Protected>
           <Stack.Protected guard={signedIn && hasFarm && !s.planPending}>
             <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="animal/[id]" options={{ animation: "slide_from_right" }} />
           </Stack.Protected>
         </Stack>
       </ThemeProvider>

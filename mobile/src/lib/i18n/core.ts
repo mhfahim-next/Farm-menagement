@@ -37,3 +37,16 @@ export function translate(locale: Locale, key: MessageKey, vars?: Record<string,
     return typeof v === "number" ? formatNumber(v, locale) : v;
   });
 }
+
+const MONTHS: Record<Locale, string[]> = {
+  en: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+  bn: ["জানু", "ফেব্রু", "মার্চ", "এপ্রি", "মে", "জুন", "জুলাই", "আগ", "সেপ্টে", "অক্টো", "নভে", "ডিসে"],
+};
+
+/** "27 Oct 2026" / "২৭ অক্টো ২০২৬" from YYYY-MM-DD (the year is left out when `short`). */
+export function formatDate(iso: string | null | undefined, locale: Locale, short = false) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso ?? "");
+  if (!m) return "";
+  const text = `${Number(m[3])} ${MONTHS[locale][Number(m[2]) - 1]}${short ? "" : ` ${m[1]}`}`;
+  return localDigits(text, locale);
+}

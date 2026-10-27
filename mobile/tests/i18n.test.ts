@@ -1,5 +1,5 @@
 import { bn } from "@/lib/i18n/bn";
-import { formatMoney, formatNumber, localDigits, translate } from "@/lib/i18n/core";
+import { formatDate, formatMoney, formatNumber, localDigits, translate } from "@/lib/i18n/core";
 import { en } from "@/lib/i18n/en";
 
 test("every English text has a Bangla one, with the same {placeholders}", () => {
@@ -27,4 +27,10 @@ test("singular forms: 1 farm, 2 farms", () => {
   expect(translate("en", "plan.farms", { n: 1 })).toBe("1 farm");
   expect(translate("en", "plan.farms", { n: 3 })).toBe("3 farms");
   expect(translate("bn", "plan.farms", { n: 1 })).toBe("১টি খামার");
+});
+
+test("dates read naturally in both languages", () => {
+  expect(formatDate("2026-10-27", "en")).toBe("27 Oct 2026");
+  expect(formatDate("2026-10-07", "bn", true)).toBe("৭ অক্টো");
+  expect(formatDate(null, "en")).toBe("");
 });
