@@ -12,6 +12,8 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect, useMemo } from "react";
 import { PaperProvider } from "react-native-paper";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { ScreenError } from "@/components/screen-error";
+import { dropOldCache } from "@/lib/cache";
 import { onNotificationTap } from "@/lib/notify";
 import { OutboxProvider } from "@/lib/outbox";
 import { PrefsProvider, usePrefs } from "@/lib/prefs";
@@ -20,6 +22,10 @@ import { SessionProvider, useSession } from "@/lib/session";
 import { makeTheme } from "@/lib/theme";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
+dropOldCache();
+
+// A screen that fails shows a "try again" page instead of closing the app.
+export const ErrorBoundary = ScreenError;
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
