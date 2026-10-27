@@ -509,3 +509,148 @@ export function layerStats(initial: number, logs: { log_date: string; eggs_colle
     rows,
   };
 }
+
+// ---------------------------------------------------------------- stock
+
+export const ITEM_KINDS = ["feed", "medicine", "vaccine", "supplement", "other"] as const;
+export const ITEM_UNITS = ["kg", "bag", "litre", "ml", "dose", "piece", "packet", "bottle"] as const;
+export const STOCK_SECTIONS = ["dairy", "layer", "general"] as const;
+
+export type StockItemEntry = { name: string; kind: string; unit: string; unit_kg: number | null; module: string; low_stock: number | null; notes: string | null };
+
+export function stockItemEntry(i: { name: string; kind: string; unit: string; unitKg: string; module: string; lowStock: string; notes: string }):
+  | { ok: true; entry: StockItemEntry }
+  | Err<"stock.err.name" | "entry.err.number"> {
+  const name = i.name.trim();
+  if (!name) return { ok: false, error: "stock.err.name" };
+  const unitKg = optionalNumber(i.unitKg);
+  const low = optionalNumber(i.lowStock);
+  if (!unitKg.ok || !low.ok) return { ok: false, error: "entry.err.number" };
+  return {
+    ok: true,
+    entry: {
+      name,
+      kind: (ITEM_KINDS as readonly string[]).includes(i.kind) ? i.kind : "feed",
+      unit: (ITEM_UNITS as readonly string[]).includes(i.unit) ? i.unit : "kg",
+      unit_kg: i.unit === "bag" ? unitKg.v : null,
+      module: (STOCK_SECTIONS as readonly string[]).includes(i.module) ? i.module : "general",
+      low_stock: low.v,
+      notes: i.notes.trim() || null,
+    },
+  };
+}
+
+export type StockMoveEntry = {
+  move_date: string;
+  move_type: "purchase" | "use" | "adjust";
+  quantity: number;
+  unit_cost: number | null;
+  total_cost: number | null;
+  module: string | null;
+  flock_id: string | null;
+  supplier: string | null;
+  notes: string | null;
+};
+
+/** A purchase, a use, or a count (the count stores the difference from what the app shows). */
+export function stockMoveEntry(
+  i: { type: string; date: string; qty: string; price: string; amount: string; counted: string; onHand: number; module: string; flockId: string | null; supplier: string; notes: string },
+  today: string,
+):
+  | { ok: true; entry: StockMoveEntry }
+  | { ok: true; entry: null }
+  | Err<"rec.err.date" | "rec.err.future" | "sale.err.qty" | "stock.err.count" | "entry.err.number"> {
+  if (!isDate(i.date)) return { ok: false, error: "rec.err.date" };
+  if (i.date > today) return { ok: false, error: "rec.err.future" };
+  const type = i.type === "use" || i.type === "adjust" ? i.type : "purchase";
+  let quantity: number;
+  if (type === "adjust") {
+    const counted = parseNumber(i.counted);
+    if (counted === null || !Number.isFinite(counted) || counted < 0) return { ok: false, error: "stock.err.count" };
+    quantity = Math.round((counted - i.onHand) * 1000) / 1000;
+    if (quantity === 0) return { ok: true, entry: null };
+  } else {
+    const q = parseNumber(i.qty);
+    if (q === null || !Number.isFinite(q) || q <= 0) return { ok: false, error: "sale.err.qty" };
+    quantity = q;
+  }
+  let unitCost: number | null = null;
+  let totalCost: number | null = null;
+  if (type === "purchase") {
+    const price = optionalNumber(i.price);
+    const amount = optionalNumber(i.amount);
+    if (!price.ok || !amount.ok) return { ok: false, error: "entry.err.number" };
+    unitCost = price.v;
+    totalCost = price.v !== null ? Math.round(quantity * price.v * 100) / 100 : amount.v;
+  }
+  return {
+    ok: true,
+    entry: {
+      move_date: i.date,
+      move_type: type,
+      quantity,
+      unit_cost: unitCost,
+      total_cost: totalCost,
+      module: type === "use" && (STOCK_SECTIONS as readonly string[]).includes(i.module) ? i.module : null,
+      flock_id: type === "use" ? i.flockId : null,
+      supplier: type === "purchase" ? i.supplier.trim() || null : null,
+      notes: i.notes.trim() || null,
+    },
+  };
+}
+
+/** Days of stock left at the last 30 days' rate of use (null when nothing was used). */
+export function daysLeft(onHand: number, used30d: number) {
+  const perDay = Number(used30d) / 30;
+  return perDay > 0 ? Math.max(0, Math.floor(Number(onHand) / perDay)) : null;
+}
+
+// ---------------------------------------------------------------- staff
+
+export const STAFF_SECTIONS = ["dairy", "layer", "both"] as const;
+export const PAY_TYPES = ["salary", "advance", "bonus"] as const;
+export const ATTENDANCE = ["present", "absent", "half_day", "leave"] as const;
+
+export type StaffEntry = { name: string; phone: string | null; position: string | null; module: string; monthly_salary: number; join_date: string; notes: string | null };
+
+export function staffEntry(i: { name: string; phone: string; position: string; module: string; salary: string; joinDate: string; notes: string }, today: string):
+  | { ok: true; entry: StaffEntry }
+  | Err<"staff.err.name" | "entry.err.number" | "rec.err.date" | "rec.err.future"> {
+  const name = i.name.trim();
+  if (!name) return { ok: false, error: "staff.err.name" };
+  const salary = optionalNumber(i.salary);
+  if (!salary.ok) return { ok: false, error: "entry.err.number" };
+  if (i.joinDate && !isDate(i.joinDate)) return { ok: false, error: "rec.err.date" };
+  if (i.joinDate && i.joinDate > today) return { ok: false, error: "rec.err.future" };
+  return {
+    ok: true,
+    entry: {
+      name,
+      phone: i.phone.trim() || null,
+      position: i.position || null,
+      module: (STAFF_SECTIONS as readonly string[]).includes(i.module) ? i.module : "both",
+      monthly_salary: salary.v ?? 0,
+      join_date: i.joinDate || today,
+      notes: i.notes.trim() || null,
+    },
+  };
+}
+
+export type StaffPayEntry = { pay_month: string; pay_type: string; amount: number; paid_on: string; note: string | null };
+
+export function staffPayEntry(i: { month: string; type: string; amount: string; paidOn: string; note: string }, today: string):
+  | { ok: true; entry: StaffPayEntry }
+  | Err<"staff.err.month" | "sale.err.amount" | "rec.err.date" | "rec.err.future"> {
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(i.month)) return { ok: false, error: "staff.err.month" };
+  const amount = parseNumber(i.amount);
+  if (amount === null || !Number.isFinite(amount) || amount <= 0) return { ok: false, error: "sale.err.amount" };
+  if (!isDate(i.paidOn)) return { ok: false, error: "rec.err.date" };
+  if (i.paidOn > today) return { ok: false, error: "rec.err.future" };
+  return { ok: true, entry: { pay_month: `${i.month}-01`, pay_type: (PAY_TYPES as readonly string[]).includes(i.type) ? i.type : "salary", amount, paid_on: i.paidOn, note: i.note.trim() || null } };
+}
+
+/** "2026-10" moved by some months. */
+export function shiftMonth(month: string, by: number) {
+  const [y, m] = month.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1 + by, 1)).toISOString().slice(0, 7);
+}

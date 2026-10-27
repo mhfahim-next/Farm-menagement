@@ -109,7 +109,26 @@ The Android app comes first. The same code can later build the iPhone app.
   - A farm shared with others has to be handed over first.
 - **Farm settings** (owners and managers): name, area, what the farm keeps, currency, and the profit-per-animal switch. **Add another farm**, within the plan's limit.
 
-**Next steps:** stock (feed and medicine), staff attendance and pay, the team (invite managers, workers and vets), milk and egg charts, profit per litre or egg and per animal, and sharing reports as PDF or Excel.
+- **Farm tools** (More → Farm tools):
+  - **Stock: feed and medicine.** Items counted in kg, bags (with the bag's weight), litres, doses and so on.
+    - Record purchases (with a price, they go into expenses), uses (for cattle, poultry or one flock) and counts. A count stores the difference from what the app shows.
+    - Each item shows what is in stock, its average cost, about how many days it lasts at the last 30 days' rate, and a warning when it falls to the level you set.
+    - Owners and managers can delete an entry. Uses that come from a flock's daily log are changed there.
+  - **Staff and pay** (owners and managers):
+    - Add workers with a monthly salary. Mark only who was absent, on half day or on leave; everyone else counts as present.
+    - Each worker's month shows days, the cut for absences, what is paid and what is still due. Pay salary, an advance or a bonus (prefilled with what is due).
+    - Uses the website's own salary maths (`src/lib/staff.ts` is copied).
+  - **Team:** see who is on the farm.
+    - Owners and managers invite by email as manager (owner only), worker or vet, and can cancel an invitation. The owner can remove someone.
+    - Anyone else can leave the farm.
+    - **Invitations to you** show on the home screen and on the first farm-setup screen, with Accept / Decline.
+  - **Reports:**
+    - Milk and eggs for the last 30 days as bar charts.
+    - Cost, income and profit per litre and per egg for any month, plus the last 6 months (same numbers as the website's `farm_monthly_summary` and `src/lib/profit.ts`).
+    - Profit per animal for the last 12 months, this year or all time, unless the farm turned it off (`animal_profit_data`, `src/lib/animal-profit.ts`).
+    - **Share as PDF or CSV** (Excel) through WhatsApp, email or Drive. Like the website's downloads, this needs a paid plan.
+
+`tests/copies.test.ts` fails when a copied website file changes on one side only.
 
 For the Play Console's account-deletion question, give: in the app, More → Profile → Delete account; on the web, https://www.farmflows.app/dashboard/profile (sign in, then Delete account).
 
@@ -139,7 +158,7 @@ The app keeps only the project address from `EXPO_PUBLIC_SUPABASE_URL`, so `http
 ```bash
 npm run lint
 npm run typecheck
-npm test                      # Jest (jest-expo): translations, plans, sign-in messages, entries, the offline outbox
+npm test                      # Jest (jest-expo): translations, plans, sign-in messages, entries, the offline outbox, records, reports, website copies
 npx expo export --platform android   # bundle check (CI runs this too)
 npx expo export --platform web       # a web build, used for click-through tests in a phone-sized browser
 ```

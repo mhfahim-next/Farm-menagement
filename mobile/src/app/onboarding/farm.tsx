@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { Button, Icon, SegmentedButtons, Text, TextInput, useTheme } from "react-native-paper";
 import { FormError } from "@/components/form-error";
+import { InviteCards } from "@/components/invite-card";
 import { Screen } from "@/components/screen";
 import { Steps } from "@/components/steps";
 import { FARM_KINDS, KIND_ICON, type FarmKind } from "@/lib/farm";
@@ -82,6 +83,9 @@ export default function FarmSetup() {
       <Text variant="bodyLarge" style={[styles.sub, { color: theme.colors.onSurfaceVariant }]}>
         {t("onb.farmSub")}
       </Text>
+      <View style={styles.invites}>
+        <InviteCards />
+      </View>
       <View style={styles.form}>
         <TextInput mode="outlined" label={t("onb.farmName")} value={name} onChangeText={setName} left={<TextInput.Icon icon="barn" />} testID="farm-name" />
         <TextInput mode="outlined" label={t("onb.location")} value={location} onChangeText={setLocation} left={<TextInput.Icon icon="map-marker-outline" />} />
@@ -145,6 +149,7 @@ export default function FarmSetup() {
 const styles = StyleSheet.create({
   mt: { marginTop: 16 },
   sub: { marginTop: 6 },
+  invites: { gap: 8, marginTop: 12 },
   form: { gap: 12, marginTop: 20 },
   label: { marginTop: 8 },
   kinds: { gap: 10 },

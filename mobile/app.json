@@ -68,7 +68,8 @@
           "photosPermission": "FarmFlows uses your photos to add a picture of an animal or your profile.",
           "cameraPermission": "FarmFlows uses the camera to take a picture of an animal or scan an ear tag."
         }
-      ]
+      ],
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true

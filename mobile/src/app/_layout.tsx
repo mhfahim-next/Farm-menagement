@@ -117,6 +117,17 @@ function App({ fontsReady }: { fontsReady: boolean }) {
               <Stack.Screen name="scan" />
               <Stack.Screen name="record/expense" />
               <Stack.Screen name="profit" options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="stock/index" options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="stock/[id]" options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="record/stock-item" />
+              <Stack.Screen name="record/stock-move" />
+              <Stack.Screen name="staff/index" options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="staff/[id]" options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="staff/attendance" />
+              <Stack.Screen name="record/staff" />
+              <Stack.Screen name="record/staff-pay" />
+              <Stack.Screen name="team" options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="reports" options={{ animation: "slide_from_right" }} />
             </Stack.Protected>
           </Stack>
         </ThemeProvider>

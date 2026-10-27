@@ -67,6 +67,20 @@ export default function More() {
           <List.Item title={t("settings.newFarm")} left={(p) => <List.Icon {...p} icon="plus-circle-outline" />} onPress={() => router.push("/record/farm")} testID="open-new-farm" />
         </List.Section>
 
+        <List.Section>
+          <List.Subheader>{t("tools.title")}</List.Subheader>
+          {s.current?.role !== "vet" && (
+            <List.Item title={t("tools.stock")} left={(p) => <List.Icon {...p} icon="warehouse" />} onPress={() => router.push("/stock")} testID="open-stock" />
+          )}
+          {(s.current?.role === "owner" || s.current?.role === "manager") && (
+            <List.Item title={t("tools.staff")} left={(p) => <List.Icon {...p} icon="account-hard-hat-outline" />} onPress={() => router.push("/staff")} testID="open-staff" />
+          )}
+          <List.Item title={t("tools.team")} left={(p) => <List.Icon {...p} icon="account-group-outline" />} onPress={() => router.push("/team")} testID="open-team" />
+          {s.current?.role !== "vet" && (
+            <List.Item title={t("tools.reports")} left={(p) => <List.Icon {...p} icon="chart-bar" />} onPress={() => router.push("/reports")} testID="open-reports" />
+          )}
+        </List.Section>
+
         {s.memberships.length > 1 && (
           <List.Section>
             <List.Subheader>{t("more.switchFarm")}</List.Subheader>

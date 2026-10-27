@@ -50,3 +50,10 @@ export function formatDate(iso: string | null | undefined, locale: Locale, short
   const text = `${Number(m[3])} ${MONTHS[locale][Number(m[2]) - 1]}${short ? "" : ` ${m[1]}`}`;
   return localDigits(text, locale);
 }
+
+/** "October 2026" from "2026-10" or "2026-10-01". */
+export function formatMonth(iso: string | null | undefined, locale: Locale) {
+  const m = /^(\d{4})-(\d{2})/.exec(iso ?? "");
+  if (!m) return "";
+  return localDigits(`${MONTHS[locale][Number(m[2]) - 1]} ${m[1]}`, locale);
+}
