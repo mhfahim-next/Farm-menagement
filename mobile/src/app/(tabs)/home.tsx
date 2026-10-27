@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { Button, Card, Chip, Icon, Text, useTheme } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SyncBar } from "@/components/sync-bar";
 import { farmToday } from "@/lib/dates";
 import type { Farm } from "@/lib/farm";
 import { siteLink } from "@/lib/env";
@@ -76,6 +77,10 @@ export default function Home() {
           </Chip>
         </View>
 
+        <View style={styles.sync}>
+          <SyncBar />
+        </View>
+
         <View style={styles.grid}>
           {stats
             .filter((s) => s.show)
@@ -139,6 +144,7 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: 20, paddingBottom: 32 },
   inner: { width: "100%", maxWidth: 720, alignSelf: "center" },
   chips: { flexDirection: "row", gap: 8, marginTop: 12, flexWrap: "wrap" },
+  sync: { marginTop: 16 },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 20 },
   stat: { flexGrow: 1, flexBasis: "46%", borderRadius: 20 },
   statBody: { gap: 6 },

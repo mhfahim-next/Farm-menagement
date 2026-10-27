@@ -6,7 +6,7 @@ import { Brand } from "@/components/brand";
 import { FormError } from "@/components/form-error";
 import { LanguageToggle } from "@/components/language-toggle";
 import { Screen } from "@/components/screen";
-import { authErrorKey, isEmail, signInWithGoogle } from "@/lib/auth";
+import { authErrorKey, errorDetail, isEmail, signInWithGoogle } from "@/lib/auth";
 import { usePrefs } from "@/lib/prefs";
 import { configured, supabase } from "@/lib/supabase";
 
@@ -18,24 +18,33 @@ export default function Login() {
   const [show, setShow] = useState(false);
   const [busy, setBusy] = useState<"email" | "google" | null>(null);
   const [error, setError] = useState<string | null>(configured ? null : t("common.notConfigured"));
+  const [detail, setDetail] = useState<string | null>(null);
 
   const submit = async () => {
     if (!isEmail(email)) return setError(t("auth.err.email"));
     if (!password) return setError(t("auth.err.invalid"));
     setError(null);
+    setDetail(null);
     setBusy("email");
     const { error: e } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     setBusy(null);
     // On success the session changes and the app moves on by itself.
-    if (e) setError(t(authErrorKey(e)));
+    if (e) {
+      setError(t(authErrorKey(e)));
+      setDetail(errorDetail(e));
+    }
   };
 
   const google = async () => {
     setError(null);
+    setDetail(null);
     setBusy("google");
-    const r = await signInWithGoogle().catch(() => "error" as const);
+    const r = await signInWithGoogle().catch((e: unknown) => ({ status: "error" as const, detail: e instanceof Error ? e.message : undefined }));
     setBusy(null);
-    if (r === "error") setError(t("auth.err.google"));
+    if (r.status === "error") {
+      setError(t("auth.err.google"));
+      setDetail(r.detail ?? null);
+    }
   };
 
   return (
@@ -77,7 +86,7 @@ export default function Login() {
           right={<TextInput.Icon icon={show ? "eye-off-outline" : "eye-outline"} onPress={() => setShow(!show)} accessibilityLabel={show ? t("auth.hidePassword") : t("auth.showPassword")} />}
           testID="password"
         />
-        <FormError message={error} />
+        <FormError message={error} detail={detail} />
         <Button mode="contained" onPress={submit} loading={busy === "email"} disabled={busy !== null} contentStyle={styles.btn} testID="login-submit">
           {t("auth.login")}
         </Button>

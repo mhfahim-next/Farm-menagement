@@ -6,7 +6,7 @@ import { Button, Dialog, Portal, Text, TextInput, useTheme } from "react-native-
 import { Brand } from "@/components/brand";
 import { FormError } from "@/components/form-error";
 import { Screen } from "@/components/screen";
-import { authErrorKey, isEmail } from "@/lib/auth";
+import { authErrorKey, errorDetail, isEmail } from "@/lib/auth";
 import { siteLink } from "@/lib/env";
 import { usePrefs } from "@/lib/prefs";
 import { supabase } from "@/lib/supabase";
@@ -21,6 +21,7 @@ export default function Signup() {
   const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [detail, setDetail] = useState<string | null>(null);
   const [confirmFor, setConfirmFor] = useState<string | null>(null);
 
   const submit = async () => {
@@ -28,6 +29,7 @@ export default function Signup() {
     if (!isEmail(email)) return setError(t("auth.err.email"));
     if (password.length < 8) return setError(t("auth.err.weak"));
     setError(null);
+    setDetail(null);
     setBusy(true);
     const { data, error: e } = await supabase.auth.signUp({
       email: email.trim(),
@@ -35,7 +37,10 @@ export default function Signup() {
       options: { data: { full_name: name.trim() } },
     });
     setBusy(false);
-    if (e) return setError(t(authErrorKey(e)));
+    if (e) {
+      setDetail(errorDetail(e));
+      return setError(t(authErrorKey(e)));
+    }
     // With email confirmation on, Supabase returns no session (and no identities for an existing address).
     if (!data.session) {
       if (data.user && data.user.identities?.length === 0) return setError(t("auth.err.taken"));
@@ -82,7 +87,7 @@ export default function Signup() {
           right={<TextInput.Icon icon={show ? "eye-off-outline" : "eye-outline"} onPress={() => setShow(!show)} accessibilityLabel={show ? t("auth.hidePassword") : t("auth.showPassword")} />}
           testID="password"
         />
-        <FormError message={error} />
+        <FormError message={error} detail={detail} />
         <Button mode="contained" onPress={submit} loading={busy} disabled={busy} contentStyle={styles.btn} testID="signup-submit">
           {t("auth.signup")}
         </Button>

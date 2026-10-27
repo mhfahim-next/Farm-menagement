@@ -31,7 +31,22 @@ The Android app comes first. The same code can later build the iPhone app.
   - Sign out.
 - **Bangla everywhere.** Bangla text uses the Noto Sans Bengali font and Bangla digits; English uses Inter. The app chooses Bangla when the phone is set to Bangla or Bangladesh.
 
-**Next steps:** animals, daily entries (milk, eggs, flock logs) that work offline, vaccines and breeding, sales and dues, profit, phone notifications for reminders, and QR tag scanning.
+- **Animals** tab:
+  - Every cow, heifer, bull, goat and sheep, with type, breed and age.
+  - Search by tag or name. Active or All (sold and dead too). Cattle and goats & sheep are kept apart.
+  - Tap an animal for its page: details and mother, milk over the last 7 and 30 days, the latest vaccines and treatments with the next due date, and breeding with the expected calving date.
+- **Entry** tab (owners, managers and workers):
+  - **Milk:** pick the day (today, yesterday or the day before) and the milking. Then type litres for each milking animal and watch the total. Numbers already saved for that day are filled in, so they can be checked and changed.
+  - **Birds:** pick a flock or batch and enter the day's eggs, broken eggs, deaths, culls and feed. Broiler and Sonali batches also have average weight.
+  - Bangla digits (১২.৫) and a decimal comma work in every number box.
+- **Works without internet.**
+  - The animal and flock lists are kept on the phone, so they still open offline.
+  - An entry saved without internet waits on the phone. A bar shows how many are waiting, and the Entry tab shows a badge.
+  - Waiting entries are sent in order: when the app comes back to the front, every half minute, or with *Send now*.
+  - If the server refuses one (for example, the animal was deleted meanwhile), it shows why and can be discarded. It doesn't hold up the others.
+  - Entries use the same tables and security rules as the website. A second sheet for the same day and milking replaces the first, as on the website.
+
+**Next steps:** vaccines and breeding entry, sales and dues, profit, phone notifications for reminders, and QR tag scanning.
 
 ## Setup
 
@@ -50,6 +65,8 @@ npx expo start               # press a for Android, or scan the QR code with a d
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | The anon / publishable key (public). **Never** the service-role key. |
 | `EXPO_PUBLIC_SITE_URL` | `https://www.farmflows.app` |
 
+The app keeps only the project address from `EXPO_PUBLIC_SUPABASE_URL`, so `https://xxx.supabase.co/rest/v1/` works as well. Stray spaces or quotes around the values are removed too. When sign-in fails for a reason the app doesn't explain, the server's own message is shown in small text under the error.
+
 **Google sign-in:** in Supabase, go to *Authentication → URL Configuration → Redirect URLs* and add `farmflows://auth/callback`.
 
 ## Checks
@@ -57,7 +74,7 @@ npx expo start               # press a for Android, or scan the QR code with a d
 ```bash
 npm run lint
 npm run typecheck
-npm test                      # Jest (jest-expo): translations, plans, sign-in messages
+npm test                      # Jest (jest-expo): translations, plans, sign-in messages, entries, the offline outbox
 npx expo export --platform android   # bundle check (CI runs this too)
 npx expo export --platform web       # a web build, used for click-through tests in a phone-sized browser
 ```

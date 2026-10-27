@@ -2,7 +2,7 @@
 import { getLocales } from "expo-localization";
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import { useColorScheme } from "react-native";
-import { formatMoney, formatNumber, isLocale, translate, type Locale } from "./i18n/core";
+import { formatDate, formatMoney, formatNumber, isLocale, translate, type Locale } from "./i18n/core";
 import type { MessageKey } from "./i18n/en";
 import { getItem, KEYS, setItem } from "./storage";
 
@@ -17,6 +17,7 @@ type Prefs = {
   t: (key: MessageKey, vars?: Record<string, string | number>) => string;
   n: (v: number, digits?: number) => string;
   money: (v: number, currency: string) => string;
+  date: (iso: string | null | undefined, short?: boolean) => string;
 };
 
 const Ctx = createContext<Prefs | null>(null);
@@ -57,6 +58,7 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
       t: (key, vars) => translate(locale, key, vars),
       n: (v, digits = 0) => formatNumber(v, locale, digits),
       money: (v, currency) => formatMoney(v, currency, locale),
+      date: (iso, short) => formatDate(iso, locale, short),
     }),
     [locale, setLocale, themeMode, setThemeMode, dark],
   );
