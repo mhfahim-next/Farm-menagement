@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
+import { appRequest, tokenUserId } from "@/lib/app-request";
 import { createClient } from "@/lib/supabase/server";
 import type { Farm, Role } from "@/lib/types";
 
@@ -9,7 +10,7 @@ export const getUser = cache(async () => {
   const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await supabase.auth.getUser(appRequest()?.token);
   return user;
 });
 
@@ -20,6 +21,8 @@ export const getUser = cache(async () => {
  * differ. Row-level security applies to those queries either way.
  */
 const sessionUserId = cache(async (): Promise<string | null> => {
+  const app = appRequest();
+  if (app) return tokenUserId(app.token);
   const supabase = await createClient();
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
@@ -147,7 +150,8 @@ export const requireFarm = cache(async (): Promise<FarmContext> => {
     redirect("/onboarding");
   }
 
-  const wanted = (await cookies()).get(FARM_COOKIE)?.value;
+  const app = appRequest();
+  const wanted = app ? app.farmId : (await cookies()).get(FARM_COOKIE)?.value;
   const usable = memberships.filter((m) => !m.farm.suspended);
   const current = usable.find((m) => m.farm.id === wanted) ?? usable[0];
   if (!current) redirect("/suspended");

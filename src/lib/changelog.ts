@@ -71,6 +71,22 @@ export const UPCOMING: Upcoming[] = [
 
 export const RELEASES: Release[] = [
   {
+    id: "2026-10-30-app-entry-doctors",
+    date: "2026-10-30",
+    title: { en: "An easier Write tab, and doctors in the app", bn: "আরও সহজ লেখার পাতা, আর অ্যাপে ডাক্তার" },
+    summary: {
+      en: "The app's daily entry is now big tiles with today's to-do. The milk sheet has “Same as yesterday” and ± buttons. Doctors and their approvals work in the app too.",
+      bn: "অ্যাপের দৈনিক হিসাব এখন বড় টাইলে, সাথে আজ কী বাকি। দুধের শিটে “গতকালের মতো” আর ± বোতাম। ডাক্তার আর তাদের অনুমোদনও এখন অ্যাপে।",
+    },
+    changes: [
+      { type: "improved", en: "App: the Write tab starts with “What do you want to write?”, one tile per record, and today's milk and eggs ticked off.", bn: "অ্যাপ: “কী লিখবেন?” দিয়ে লেখার পাতা শুরু, প্রতিটি হিসাবের আলাদা টাইল, আর আজকের দুধ-ডিম লেখা হলো কিনা টিক চিহ্নে।" },
+      { type: "improved", en: "App: milk sheet with Same as yesterday, ± half a litre, the total and Save always at the bottom, and the next step after saving.", bn: "অ্যাপ: দুধের শিটে “গতকালের মতো”, আধা লিটার করে ± বোতাম, নিচে সবসময় মোট আর সংরক্ষণ, আর সংরক্ষণের পর পরের কাজ।" },
+      { type: "improved", en: "App: eggs & birds show yesterday's numbers, and the feed can come off a stock item.", bn: "অ্যাপ: ডিম ও মুরগির পাতায় গতকালের সংখ্যা দেখায়, আর খাবার স্টক থেকে কাটা যায়।" },
+      { type: "new", en: "App: doctor console (farms, overdue vaccines, invitations, doctor details) for doctors' accounts.", bn: "অ্যাপ: ডাক্তার অ্যাকাউন্টের জন্য ডাক্তার কনসোল (খামার, বকেয়া টিকা, আমন্ত্রণ, ডাক্তারের তথ্য)।" },
+      { type: "new", en: "App: doctors' vaccines and breeding go to the owner for approval; owners approve or reject in the app.", bn: "অ্যাপ: ডাক্তারের টিকা ও প্রজনন মালিকের অনুমোদনের জন্য যায়; মালিক অ্যাপেই অনুমোদন বা প্রত্যাখ্যান করেন।" },
+    ],
+  },
+  {
     id: "2026-10-29-app-tools",
     date: "2026-10-29",
     title: { en: "Stock, staff, team and reports in the app", bn: "অ্যাপে স্টক, কর্মী, টিম আর রিপোর্ট" },

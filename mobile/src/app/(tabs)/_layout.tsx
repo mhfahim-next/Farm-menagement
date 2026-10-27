@@ -10,7 +10,7 @@ const ICONS: Record<string, [string, string]> = {
   home: ["home", "home-outline"],
   animals: ["cow", "cow"],
   birds: ["egg-outline", "egg-outline"],
-  entry: ["clipboard-edit", "clipboard-edit-outline"],
+  entry: ["plus-circle", "plus-circle-outline"],
   sales: ["cash-multiple", "cash-multiple"],
   more: ["dots-horizontal-circle", "dots-horizontal-circle-outline"],
 };
@@ -28,10 +28,8 @@ export default function TabsLayout() {
   useNotifySchedule();
   const hidden = new Set<string>();
   const birdsOnly = Boolean(farm && !farm.has_dairy && !farm.has_fattening && !farm.has_goat);
-  if (current?.role === "vet") {
-    hidden.add("entry");
-    hidden.add("sales");
-  }
+  // Doctors write only vaccines and breeding (sent for approval): no sales.
+  if (current?.role === "vet") hidden.add("sales");
   return (
     <Tabs
       screenOptions={{ headerShown: false }}

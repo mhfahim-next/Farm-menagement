@@ -2,6 +2,7 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { Button, Icon, SegmentedButtons, Text, TextInput, useTheme } from "react-native-paper";
+import { DoctorConsole } from "@/components/doctor-console";
 import { FormError } from "@/components/form-error";
 import { InviteCards } from "@/components/invite-card";
 import { Screen } from "@/components/screen";
@@ -24,20 +25,12 @@ export default function FarmSetup() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // A doctor's account has no farm of its own: farms invite the doctor.
   if (s.profile?.account_type === "doctor") {
     return (
-      <Screen testID="doctor-note">
-        <Icon source="stethoscope" size={56} color={theme.colors.primary} />
-        <Text variant="headlineSmall" style={styles.mt}>
-          {t("onb.doctorTitle")}
-        </Text>
-        <Text variant="bodyLarge" style={[styles.mt, { color: theme.colors.onSurfaceVariant }]}>
-          {t("onb.doctorBody")}
-        </Text>
-        <Button mode="outlined" style={styles.mt} onPress={s.signOut}>
-          {t("more.logout")}
-        </Button>
-      </Screen>
+      <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        <DoctorConsole standalone />
+      </View>
     );
   }
 

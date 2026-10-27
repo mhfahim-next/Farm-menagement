@@ -1,5 +1,6 @@
 import "server-only";
 import { cache } from "react";
+import { appRequest } from "@/lib/app-request";
 import { getCachedOptionRows } from "@/lib/public-data";
 import { createClient } from "@/lib/supabase/server";
 import type { OptionRow } from "../options";
@@ -16,6 +17,8 @@ export function messagesFor(locale: Locale): Messages {
 
 /** Locale from the cookie; on a first visit, from the browser's Accept-Language. */
 export const getLocale = cache(async (): Promise<Locale> => {
+  const app = appRequest();
+  if (app) return app.locale;
   // ?lang=bn|en in the URL (set by the proxy) wins, so each language has its own address.
   const forced = (await headers()).get("x-ff-locale");
   if (isLocale(forced)) return forced;

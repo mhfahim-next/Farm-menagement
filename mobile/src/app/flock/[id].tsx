@@ -126,7 +126,7 @@ export default function FlockPage() {
               </Card>
               {staff && f.status === "active" && (
                 <View style={styles.actions}>
-                  <Button mode="contained-tonal" icon="clipboard-edit-outline" compact onPress={() => router.push("/entry")}>
+                  <Button mode="contained-tonal" icon="clipboard-edit-outline" compact onPress={() => router.push("/entry/birds")}>
                     {t("flock.dayEntry")}
                   </Button>
                   <Button mode="contained-tonal" icon="needle" compact onPress={() => router.push({ pathname: "/record/flock-health", params: { flock: f.id } })} testID="flock-add-health">
