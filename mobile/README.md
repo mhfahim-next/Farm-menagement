@@ -50,6 +50,8 @@ npx expo start               # press a for Android, or scan the QR code with a d
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | The anon / publishable key (public). **Never** the service-role key. |
 | `EXPO_PUBLIC_SITE_URL` | `https://www.farmflows.app` |
 
+The app keeps only the project address from `EXPO_PUBLIC_SUPABASE_URL`, so `https://xxx.supabase.co/rest/v1/` works as well. Stray spaces or quotes around the values are removed too. When sign-in fails for a reason the app doesn't explain, the server's own message is shown in small text under the error.
+
 **Google sign-in:** in Supabase, go to *Authentication → URL Configuration → Redirect URLs* and add `farmflows://auth/callback`.
 
 ## Checks

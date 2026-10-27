@@ -13,3 +13,10 @@ export function authErrorKey(e: { message?: string; code?: string; name?: string
   if (msg.includes("fetch") || msg.includes("network") || e?.name === "AuthRetryableFetchError") return "common.network";
   return "common.error";
 }
+
+/** The raw error text, for causes `authErrorKey` doesn't explain (helps support find the problem). */
+export function errorDetail(e: { message?: string; code?: string; status?: number } | null | undefined): string | null {
+  if (!e || authErrorKey(e) !== "common.error") return null;
+  const parts = [e.status ? String(e.status) : "", e.code ?? "", e.message ?? ""].filter(Boolean);
+  return parts.length ? parts.join(" · ").slice(0, 200) : null;
+}
