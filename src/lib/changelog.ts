@@ -23,8 +23,8 @@ export const UPCOMING: Upcoming[] = [
     status: "next",
     title: { en: "The Android app on the Play Store, then iPhone", bn: "Play Store-এ Android অ্যাপ, তারপর iPhone" },
     body: {
-      en: "The Android app is being tested now. Next: phone notifications, QR tag scanning and expenses in the app, then the Play Store and the App Store.",
-      bn: "Android অ্যাপের পরীক্ষা চলছে। এরপর: অ্যাপে ফোন নোটিফিকেশন, QR ট্যাগ স্ক্যান আর খরচের হিসাব, তারপর Play Store আর App Store।",
+      en: "The Android app is being tested now. Next: the Play Store, adding and editing animals in the app, then the App Store.",
+      bn: "Android অ্যাপের পরীক্ষা চলছে। এরপর: Play Store, অ্যাপ থেকেই পশু যোগ ও সম্পাদনা, তারপর App Store।",
     },
   },
   {
@@ -75,8 +75,8 @@ export const RELEASES: Release[] = [
     date: "2026-10-27",
     title: { en: "FarmFlows for Android (testing)", bn: "Android-এর জন্য FarmFlows (পরীক্ষামূলক)" },
     summary: {
-      en: "A real Android app, not the website in a frame: your animals, the day's milk and eggs, vaccines, breeding, sales and dues, even without internet.",
-      bn: "ওয়েবসাইট মোড়ানো নয়, আসল Android অ্যাপ: পশুর তালিকা, দিনের দুধ ও ডিম, টিকা, প্রজনন, বিক্রি ও বাকি — ইন্টারনেট ছাড়াও।",
+      en: "A real Android app, not the website in a frame: your animals, the day's milk and eggs, vaccines, breeding, sales and dues, expenses and reminders, even without internet.",
+      bn: "ওয়েবসাইট মোড়ানো নয়, আসল Android অ্যাপ: পশুর তালিকা, দিনের দুধ ও ডিম, টিকা, প্রজনন, বিক্রি ও বাকি, খরচ আর রিমাইন্ডার — ইন্টারনেট ছাড়াও।",
     },
     changes: [
       { type: "new", en: "A short guide on first launch, then sign in with email or Google. New accounts set up the farm and choose a plan in the app.", bn: "প্রথমবার খুললে ছোট একটি গাইড, তারপর ইমেইল বা Google দিয়ে লগইন। নতুন অ্যাকাউন্ট অ্যাপেই খামার সাজিয়ে প্ল্যান বেছে নিতে পারে।" },
@@ -86,6 +86,9 @@ export const RELEASES: Release[] = [
       { type: "new", en: "Vaccines and treatments for one animal or the whole herd, with quick choices (FMD, LSD, deworming, PPR…) and the next due date.", bn: "একটি পশু বা পুরো খামারের টিকা ও চিকিৎসা, দ্রুত বাছাইসহ (খুরা রোগ, লাম্পি স্কিন, কৃমিনাশক, পিপিআর…) আর পরের তারিখ।" },
       { type: "new", en: "Breeding: heat, insemination with the expected birth date, pregnancy check, dry off, and births that add the calf or kid to your animals.", bn: "প্রজনন: গরম আসা, সম্ভাব্য প্রসবের তারিখসহ কৃত্রিম প্রজনন, গর্ভ পরীক্ষা, দুধ বন্ধ, আর প্রসব — বাছুর বা ছানা নিজে থেকেই পশুর তালিকায় যোগ হয়।" },
       { type: "new", en: "Sales & dues: sell milk, eggs, animals or birds for cash or on credit, see what each buyer owes and record their payments (bKash, Nagad…).", bn: "বিক্রি ও বাকি: দুধ, ডিম, পশু বা মুরগি নগদে বা বাকিতে বিক্রি করুন, কোন ক্রেতার কত বাকি দেখুন আর তাদের জমা লিখুন (বিকাশ, নগদ…)।" },
+      { type: "new", en: "Today's work on the home screen, with a phone notification at 7 am, and at 8 pm if today's milk or eggs aren't entered.", bn: "হোম স্ক্রিনে আজকের কাজ, সকাল ৭টায় ফোনে নোটিফিকেশন, আর রাত ৮টায় যদি আজকের দুধ বা ডিম লেখা না হয়।" },
+      { type: "new", en: "Scan the QR code on an ear tag to open the animal, or type its tag number.", bn: "কানের ট্যাগের QR কোড স্ক্যান করে পশুর পাতা খুলুন, অথবা ট্যাগ নম্বর লিখুন।" },
+      { type: "new", en: "Expenses and this month's profit for each part of the farm.", bn: "খরচের হিসাব আর খামারের প্রতিটি অংশের এই মাসের লাভ-লোকসান।" },
       { type: "new", en: "No internet? Everything you enter waits on the phone and is sent by itself when the connection is back, without making copies.", bn: "ইন্টারনেট নেই? যা লিখবেন সব ফোনে জমা থাকে, নেট ফিরলে নিজে থেকেই পাঠানো হয়, দুবার জমা হয় না।" },
       { type: "improved", en: "Material design, Bangla and English, light and dark theme. Same account and records as the website.", bn: "Material ডিজাইন, বাংলা ও ইংরেজি, লাইট ও ডার্ক থিম। ওয়েবসাইটের একই অ্যাকাউন্ট আর হিসাব।" },
       { type: "fixed", en: "Signing in with Google in the app no longer ends on a “page not found” screen.", bn: "অ্যাপে Google দিয়ে লগইন করলে আর “পাতা পাওয়া যায়নি” দেখায় না।" },

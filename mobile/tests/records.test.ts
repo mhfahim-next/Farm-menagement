@@ -1,4 +1,4 @@
-import { addDays, breedingEntry, buyerEntry, calfCategories, healthEntry, isDate, paymentEntry, saleEntry, saleModule, uuid, type BreedingInput, type SaleInput } from "@/lib/records";
+import { addDays, breedingEntry, farmSections, monthRange, profitBy, txnEntry, buyerEntry, calfCategories, healthEntry, isDate, paymentEntry, saleEntry, saleModule, uuid, type BreedingInput, type SaleInput } from "@/lib/records";
 
 const today = "2026-10-27";
 
@@ -82,4 +82,33 @@ test("ids look like uuids (v4)", () => {
   const id = uuid();
   expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
   expect(uuid()).not.toBe(id);
+});
+
+
+test("expenses: quantity × rate or a plain amount; a category is needed", () => {
+  const base = { date: today, type: "expense", module: "dairy", category: "Feed", amount: "", quantity: "10", rate: "1,250", description: " Bran " };
+  // "1,250" reads the comma as a decimal point (Bangla keyboards); a whole rate works as typed.
+  const r = txnEntry({ ...base, rate: "1250" }, today);
+  expect(r.ok && r.entry).toEqual({ txn_date: today, txn_type: "expense", module: "dairy", category: "Feed", amount: 12500, quantity: 10, unit_price: 1250, description: "Bran" });
+  const plain = txnEntry({ ...base, quantity: "", rate: "", amount: "৮০০", module: "moon" }, today);
+  expect(plain.ok && [plain.entry.amount, plain.entry.module]).toEqual([800, "general"]);
+  expect(txnEntry({ ...base, category: "" }, today)).toEqual({ ok: false, error: "txn.err.category" });
+  expect(txnEntry({ ...base, quantity: "", rate: "", amount: "0" }, today)).toEqual({ ok: false, error: "sale.err.amount" });
+});
+
+test("profit per section and in total", () => {
+  const p = profitBy([
+    { txn_type: "income", module: "dairy", amount: 5000 },
+    { txn_type: "expense", module: "dairy", amount: 3000 },
+    { txn_type: "expense", module: "general", amount: 500 },
+    { txn_type: "income", module: "layer", amount: 1200 },
+  ]);
+  expect(p.sections.map((s) => [s.module, s.profit])).toEqual([["dairy", 2000], ["layer", 1200], ["general", -500]]);
+  expect(p.total).toEqual({ income: 6200, cost: 3500, profit: 2700 });
+  expect(farmSections({ has_dairy: true, has_fattening: false, has_goat: true, has_layer: false, has_broiler: false })).toEqual(["dairy", "goat", "general"]);
+});
+
+test("months", () => {
+  expect(monthRange("2026-10-27", "this")).toEqual({ from: "2026-10-01", to: "2026-10-27" });
+  expect(monthRange("2026-01-15", "last")).toEqual({ from: "2025-12-01", to: "2025-12-31" });
 });

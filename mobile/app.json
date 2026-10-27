@@ -39,11 +39,28 @@
           "image": "./assets/splash-icon.png",
           "imageWidth": 120,
           "backgroundColor": "#ffffff",
-          "dark": { "image": "./assets/splash-icon.png", "backgroundColor": "#101413" }
+          "dark": {
+            "image": "./assets/splash-icon.png",
+            "backgroundColor": "#101413"
+          }
         }
       ],
       "expo-web-browser",
-      "expo-localization"
+      "expo-localization",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "FarmFlows uses the camera to scan the QR code on an animal's ear tag.",
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/android-icon-monochrome.png",
+          "color": "#047857"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

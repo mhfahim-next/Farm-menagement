@@ -67,7 +67,24 @@ The Android app comes first. The same code can later build the iPhone app.
   - A buyer added offline can be sold to straight away. The buyer reaches the server first.
 - Vets don't see the Entry and Sales tabs. Their changes go through the farm's approval on the website.
 
-**Next steps:** phone notifications for reminders, QR tag scanning, expenses and profit.
+- **Today's work** on Home, and a **Reminders** screen:
+  - Vaccines due, heats, pregnancy checks, births, low stock, buyer dues, broiler weighing, the Qurbani countdown and more.
+  - It is the same list as the bell on the website. The app reads it from `/api/app/reminders` on the website, using the person's own session, so the database security rules apply.
+  - Tick one off with *Mark done*.
+- **Phone notifications** (More → Notifications):
+  - At 7 am, today's work. At 8 pm, a note if today's milk or eggs aren't entered yet.
+  - They are scheduled on the phone itself, so no push server or Firebase setup is needed.
+  - The plan is renewed every time the app opens. If the app isn't opened for a few days, a short daily nudge keeps coming for up to a week.
+  - Tapping a notification opens the right screen.
+- **Scan a tag** (Animals → Scan):
+  - Point the camera at the QR code on an ear tag printed from the website, and the animal opens.
+  - Or type the tag number.
+- **Expenses** (Sales tab → Expense, or Entry):
+  - Feed, medicine, labour, electricity and so on, for one part of the farm or the whole farm.
+  - Enter either an amount or quantity × price. Works offline.
+- **Profit** (Sales tab → Profit): this month or last month, money in, money out and profit per part of the farm. It uses the same ledger as the website: sales, costs, medicine, breeding and staff pay.
+
+**Next steps:** Play Store release, adding and editing animals in the app, and staff attendance.
 
 ## Setup
 
@@ -84,7 +101,7 @@ npx expo start               # press a for Android, or scan the QR code with a d
 | --- | --- |
 | `EXPO_PUBLIC_SUPABASE_URL` | Same as the website's `NEXT_PUBLIC_SUPABASE_URL` |
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | The anon / publishable key (public). **Never** the service-role key. |
-| `EXPO_PUBLIC_SITE_URL` | `https://www.farmflows.app` |
+| `EXPO_PUBLIC_SITE_URL` | `https://www.farmflows.app`: links, and the reminders the app reads from the website |
 
 The app keeps only the project address from `EXPO_PUBLIC_SUPABASE_URL`, so `https://xxx.supabase.co/rest/v1/` works as well. Stray spaces or quotes around the values are removed too. When sign-in fails for a reason the app doesn't explain, the server's own message is shown in small text under the error.
 

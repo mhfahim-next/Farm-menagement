@@ -4,6 +4,7 @@ import { useAnimals, useFlocks, useOptions } from "@/lib/data";
 import { useOutbox } from "@/lib/outbox";
 import { usePrefs } from "@/lib/prefs";
 import { useSession } from "@/lib/session";
+import { useNotifySchedule } from "@/lib/use-notify";
 
 const ICONS: Record<string, [string, string]> = {
   home: ["home", "home-outline"],
@@ -23,6 +24,7 @@ export default function TabsLayout() {
   useOptions();
   useAnimals(farm?.has_dairy || farm?.has_fattening || farm?.has_goat ? farm.id : undefined);
   useFlocks(farm?.has_layer || farm?.has_broiler ? farm.id : undefined);
+  useNotifySchedule();
   const hidden = new Set<string>();
   if (!farm?.has_dairy && !farm?.has_fattening && !farm?.has_goat) hidden.add("animals");
   if (current?.role === "vet") {

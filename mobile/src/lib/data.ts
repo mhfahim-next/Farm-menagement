@@ -98,3 +98,9 @@ export async function fetchSales(farmId: string, buyerId?: string) {
   ]);
   return { sales: s, payments: p };
 }
+
+/** Money in and out (the website's ledger: sales, costs, medicine, salaries…) between two dates. */
+export const fetchLedger = (farmId: string, from: string, to: string) =>
+  rows<{ txn_type: string; module: string | null; amount: number; category: string | null }>(
+    supabase.from("finance_ledger").select("txn_type, module, amount, category").eq("farm_id", farmId).gte("txn_date", from).lte("txn_date", to),
+  );

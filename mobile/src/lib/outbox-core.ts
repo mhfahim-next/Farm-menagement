@@ -3,7 +3,7 @@
 // storage, so they survive closing the app. Pure (storage and sending are
 // passed in) so the rules are unit-tested.
 import type { FlockEntry, MilkEntry } from "./entries";
-import type { BreedingEntry, BuyerEntry, HealthEntry, PaymentEntry, SaleEntry } from "./records";
+import type { BreedingEntry, BuyerEntry, HealthEntry, PaymentEntry, SaleEntry, TxnEntry } from "./records";
 
 /** A short description saved with the entry ("Vaccination · FMD · 3 animals"), shown while it waits. */
 type Labelled = { label: string };
@@ -25,6 +25,7 @@ export type OutboxEntry = {
   | { kind: "sale"; data: SaleEntry & Labelled & { id: string } }
   | { kind: "payment"; data: PaymentEntry & Labelled & { id: string } }
   | { kind: "buyer"; data: BuyerEntry & Labelled }
+  | { kind: "txn"; data: TxnEntry & Labelled & { id: string } }
 );
 
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;

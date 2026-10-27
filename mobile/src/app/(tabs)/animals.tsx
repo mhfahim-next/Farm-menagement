@@ -1,7 +1,7 @@
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { FlatList, RefreshControl, StyleSheet, View } from "react-native";
-import { Chip, Icon, List, Searchbar, SegmentedButtons, Text, useTheme } from "react-native-paper";
+import { Button, Chip, Icon, List, Searchbar, SegmentedButtons, Text, useTheme } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { OfflineNote } from "@/components/offline-note";
 import { useAnimals, useOptions, type Animal } from "@/lib/data";
@@ -61,9 +61,14 @@ export default function Animals() {
         keyboardShouldPersistTaps="handled"
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text variant="headlineSmall" accessibilityRole="header">
-              {t("animals.title")}
-            </Text>
+            <View style={styles.titleRow}>
+              <Text variant="headlineSmall" accessibilityRole="header">
+                {t("animals.title")}
+              </Text>
+              <Button mode="contained-tonal" icon="qrcode-scan" compact onPress={() => router.push("/scan")} testID="open-scan">
+                {t("scan.button")}
+              </Button>
+            </View>
             <Searchbar placeholder={t("animals.search")} value={q} onChangeText={setQ} mode="bar" testID="animal-search" />
             {hasCattle && hasGoats && (
               <SegmentedButtons
@@ -137,6 +142,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   content: { paddingHorizontal: 16, paddingBottom: 24, gap: 8, width: "100%", maxWidth: 720, alignSelf: "center" },
   header: { gap: 12, marginBottom: 4, paddingHorizontal: 4 },
+  titleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
   row: { flexDirection: "row", alignItems: "center", gap: 8 },
   count: { marginLeft: "auto" },
   item: { borderRadius: 16, paddingVertical: 6 },
