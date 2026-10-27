@@ -69,6 +69,8 @@ function App({ fontsReady }: { fontsReady: boolean }) {
         <StatusBar style={dark ? "light" : "dark"} />
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.colors.background }, animation: "fade_from_bottom" }}>
           <Stack.Screen name="index" />
+          {/* Google sign-in comes back here, signed in or not. */}
+          <Stack.Screen name="auth/callback" />
           {/* First launch: a short guide, then sign in. */}
           <Stack.Protected guard={!s.introSeen}>
             <Stack.Screen name="intro" />

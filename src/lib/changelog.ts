@@ -21,10 +21,10 @@ export type Upcoming = { status: UpcomingStatus; title: Bilingual; body: Bilingu
 export const UPCOMING: Upcoming[] = [
   {
     status: "next",
-    title: { en: "Mobile app for Android and iPhone", bn: "Android ও iPhone-এর মোবাইল অ্যাপ" },
+    title: { en: "The Android app on the Play Store, then iPhone", bn: "Play Store-এ Android অ্যাপ, তারপর iPhone" },
     body: {
-      en: "FarmFlows from the Play Store (then the App Store), with the same account and records, offline entry and reminders.",
-      bn: "Play Store (পরে App Store) থেকে FarmFlows, একই অ্যাকাউন্ট আর হিসাবসহ, অফলাইন এন্ট্রি আর রিমাইন্ডার।",
+      en: "The Android app is being tested now. Next: vaccines, breeding, sales and dues in the app, phone notifications, QR tag scanning, then the Play Store and the App Store.",
+      bn: "Android অ্যাপের পরীক্ষা চলছে। এরপর: অ্যাপে টিকা, প্রজনন, বিক্রি ও বাকি, ফোনে নোটিফিকেশন, QR ট্যাগ স্ক্যান, তারপর Play Store আর App Store।",
     },
   },
   {
@@ -70,6 +70,24 @@ export const UPCOMING: Upcoming[] = [
 ];
 
 export const RELEASES: Release[] = [
+  {
+    id: "2026-10-27-android-app",
+    date: "2026-10-27",
+    title: { en: "FarmFlows for Android (testing)", bn: "Android-এর জন্য FarmFlows (পরীক্ষামূলক)" },
+    summary: {
+      en: "A real Android app, not the website in a frame: sign in, see your animals and enter the day's milk and eggs, even without internet.",
+      bn: "ওয়েবসাইট মোড়ানো নয়, আসল Android অ্যাপ: লগইন করুন, পশুর তালিকা দেখুন আর দিনের দুধ ও ডিমের হিসাব লিখুন, ইন্টারনেট ছাড়াও।",
+    },
+    changes: [
+      { type: "new", en: "A short guide on first launch, then sign in with email or Google. New accounts set up the farm and choose a plan in the app.", bn: "প্রথমবার খুললে ছোট একটি গাইড, তারপর ইমেইল বা Google দিয়ে লগইন। নতুন অ্যাকাউন্ট অ্যাপেই খামার সাজিয়ে প্ল্যান বেছে নিতে পারে।" },
+      { type: "new", en: "Home: today's milk and eggs, and how many cattle, goats and birds you have.", bn: "হোম: আজকের দুধ ও ডিম, আর কতগুলো গরু, ছাগল ও মুরগি আছে।" },
+      { type: "new", en: "Animals: search by tag or name; each animal's page shows its mother, milk, latest vaccines with the next date, and breeding with the expected calving.", bn: "পশু: ট্যাগ বা নাম দিয়ে খুঁজুন; প্রতিটি পশুর পাতায় মা, দুধ, শেষ টিকা ও পরের তারিখ, আর প্রজনন ও সম্ভাব্য প্রসবের তারিখ।" },
+      { type: "new", en: "Daily entry: the milking sheet (litres for each cow) and each flock's eggs, deaths and feed. Bangla digits work.", bn: "দৈনিক হিসাব: দুধের শিট (প্রতিটি গাভীর লিটার) আর প্রতিটি ফ্লকের ডিম, মৃত্যু ও খাবার। বাংলা সংখ্যায়ও লেখা যায়।" },
+      { type: "new", en: "No internet? Entries wait on the phone and are sent by themselves when the connection is back.", bn: "ইন্টারনেট নেই? হিসাব ফোনে জমা থাকে, নেট ফিরলে নিজে থেকেই পাঠানো হয়।" },
+      { type: "improved", en: "Material design, Bangla and English, light and dark theme. Same account and records as the website.", bn: "Material ডিজাইন, বাংলা ও ইংরেজি, লাইট ও ডার্ক থিম। ওয়েবসাইটের একই অ্যাকাউন্ট আর হিসাব।" },
+      { type: "fixed", en: "Signing in with Google in the app no longer ends on a “page not found” screen.", bn: "অ্যাপে Google দিয়ে লগইন করলে আর “পাতা পাওয়া যায়নি” দেখায় না।" },
+    ],
+  },
   {
     id: "2026-10-27-speed",
     date: "2026-10-27",
