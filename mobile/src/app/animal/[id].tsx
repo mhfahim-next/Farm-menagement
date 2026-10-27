@@ -1,11 +1,13 @@
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { useCallback } from "react";
 import * as WebBrowser from "expo-web-browser";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { Appbar, Button, Card, Divider, List, Text, useTheme } from "react-native-paper";
 import { FormError } from "@/components/form-error";
 import { OfflineNote } from "@/components/offline-note";
 import { useCached } from "@/lib/cache";
-import { useOptions } from "@/lib/data";
+import { isStaff, useOptions } from "@/lib/data";
+import { useSession } from "@/lib/session";
 import { farmToday } from "@/lib/dates";
 import { siteLink } from "@/lib/env";
 import { ageParts, optionLabel } from "@/lib/options";
@@ -76,7 +78,14 @@ export default function AnimalPage() {
   const theme = useTheme();
   const options = useOptions();
   const today = farmToday();
-  const { data, offline, error, loading } = useCached(id ? `animal.${id}` : null, () => fetchDetail(id, minusDays(today, 29)));
+  const { data, offline, error, loading, reload } = useCached(id ? `animal.${id}` : null, () => fetchDetail(id, minusDays(today, 29)));
+  const staff = isStaff(useSession().current?.role);
+  // Fresh records when coming back from adding one.
+  useFocusEffect(
+    useCallback(() => {
+      reload();
+    }, [reload]),
+  );
   const a = data?.animal;
 
   const back = () => (router.canGoBack() ? router.back() : router.replace("/animals"));
@@ -114,6 +123,22 @@ export default function AnimalPage() {
           {!loading && !error && !a && <Text variant="titleMedium">{t("animal.notFound")}</Text>}
           {a && (
             <>
+              {staff && a.status === "active" && (
+                <View style={styles.actions}>
+                  <Button mode="contained-tonal" icon="needle" compact onPress={() => router.push({ pathname: "/record/health", params: { animal: a.id } })} testID="act-health">
+                    {t("rec.healthTitle")}
+                  </Button>
+                  {["cow", "heifer", "doe", "doeling", "ewe", "ewe_lamb"].includes(a.category) && (
+                    <Button mode="contained-tonal" icon="heart-pulse" compact onPress={() => router.push({ pathname: "/record/breeding", params: { animal: a.id } })} testID="act-breeding">
+                      {t("rec.breedingTitle")}
+                    </Button>
+                  )}
+                  <Button mode="contained-tonal" icon="cart-outline" compact onPress={() => router.push({ pathname: "/record/sale", params: { animal: a.id } })} testID="act-sell">
+                    {t("animal.sell")}
+                  </Button>
+                </View>
+              )}
+
               <Card mode="contained" style={[styles.card, { backgroundColor: theme.colors.elevation.level1 }]}>
                 <Card.Content>
                   {facts
@@ -217,4 +242,5 @@ const styles = StyleSheet.create({
   factValue: { flexShrink: 1, textAlign: "right", fontWeight: "500" },
   milk: { flexDirection: "row", gap: 12 },
   milkBox: { flex: 1, gap: 2 },
+  actions: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
 });

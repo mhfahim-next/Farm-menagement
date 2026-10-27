@@ -1,6 +1,7 @@
 // What the app reads from the server, with the person's own session (row-level security applies).
 import { useCached } from "./cache";
 import type { OptionRow } from "./options";
+import { DEFAULT_RULES, type BreedingRules } from "./records";
 import { supabase } from "./supabase";
 
 export type Animal = {
@@ -50,3 +51,50 @@ export async function fetchFlocks(farmId: string): Promise<Flock[]> {
 export const useOptions = () => useCached("options", fetchOptions).data;
 export const useAnimals = (farmId: string | undefined) => useCached(farmId ? `animals.${farmId}` : null, () => fetchAnimals(farmId!));
 export const useFlocks = (farmId: string | undefined) => useCached(farmId ? `flocks.${farmId}` : null, () => fetchFlocks(farmId!));
+
+export type Buyer = { id: string; name: string; phone: string | null; milk_rate: number | null; egg_rate: number | null; due: number; last_sale: string | null };
+
+export const fetchBuyers = (farmId: string) =>
+  rows<Buyer>(
+    supabase.from("buyer_balances").select("id, name, phone, milk_rate, egg_rate, due, last_sale").eq("farm_id", farmId).eq("archived", false).order("name"),
+  );
+
+export const fetchRules = async (): Promise<BreedingRules> => {
+  const { data, error } = await supabase
+    .from("system_settings")
+    .select("gestation_days, heat_cycle_days, goat_gestation_days, sheep_gestation_days")
+    .eq("id", 1)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return { ...DEFAULT_RULES, ...Object.fromEntries(Object.entries(data ?? {}).filter(([, v]) => v !== null)) } as BreedingRules;
+};
+
+export const useBuyers = (farmId: string | undefined) => useCached(farmId ? `buyers.${farmId}` : null, () => fetchBuyers(farmId!));
+export const useRules = () => useCached("breedingRules", fetchRules).data;
+
+/** Owners, managers and workers enter records; vets see them (their changes go through the farm's approval on the website). */
+export const isStaff = (role: string | undefined) => role === "owner" || role === "manager" || role === "worker";
+
+export type SaleRow = { id: string; sale_date: string; product: string; quantity: number; unit: string; amount: number; paid_amount: number; buyer_id: string | null; cattle_id: string | null };
+export type PaymentRow = { id: string; pay_date: string; amount: number; method: string; buyer_id: string };
+
+/** The latest sales (and payments, for one buyer). */
+export async function fetchSales(farmId: string, buyerId?: string) {
+  let sales = supabase
+    .from("sales")
+    .select("id, sale_date, product, quantity, unit, amount, paid_amount, buyer_id, cattle_id")
+    .eq("farm_id", farmId)
+    .order("sale_date", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(30);
+  if (buyerId) sales = sales.eq("buyer_id", buyerId);
+  const [s, p] = await Promise.all([
+    rows<SaleRow>(sales),
+    buyerId
+      ? rows<PaymentRow>(
+          supabase.from("buyer_payments").select("id, pay_date, amount, method, buyer_id").eq("farm_id", farmId).eq("buyer_id", buyerId).order("pay_date", { ascending: false }).limit(30),
+        )
+      : Promise.resolve([] as PaymentRow[]),
+  ]);
+  return { sales: s, payments: p };
+}

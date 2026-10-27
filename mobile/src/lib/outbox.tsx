@@ -4,6 +4,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AppState } from "react-native";
 import { isNetworkError } from "./entries";
+import { ADULT_AFTER_BIRTH } from "./records";
 import { add, flush as flushAll, mine, remove, type NewEntry, type OutboxEntry, type Sender, type Store } from "./outbox-core";
 import { useSession } from "./session";
 import { getItem, setItem } from "./storage";
@@ -16,18 +17,85 @@ const KEY = "ff.outbox";
 const store: Store = { get: () => getItem(KEY), set: (v) => setItem(KEY, v) };
 
 const send: Sender = async (e) => {
-  const { error } =
-    e.kind === "milk"
-      ? await supabase.from("milk_records").upsert(
-          e.data.rows.map((r) => ({ farm_id: e.farmId, record_date: e.data.record_date, session: e.data.session, ...r })),
-          { onConflict: "cattle_id,record_date,session" },
-        )
-      : await supabase.from("flock_daily_logs").upsert(
-          (({ flock_name: _name, ...row }) => ({ farm_id: e.farmId, ...row }))(e.data),
-          { onConflict: "flock_id,log_date" },
-        );
+  const { error } = await write(e);
   return error ? { error: error.message, network: isNetworkError(error) } : null;
 };
+
+type Result = PromiseLike<{ error: { message: string; name?: string } | null }>;
+/** Insert, or nothing when a row with this id is already there (an earlier send that did arrive). */
+const once = (table: string, rows: object | object[]) => supabase.from(table).upsert(rows, { onConflict: "id", ignoreDuplicates: true }) as unknown as Result;
+const ok = { error: null };
+
+async function write(e: OutboxEntry): Promise<{ error: { message: string; name?: string } | null }> {
+  const farm_id = e.farmId;
+  switch (e.kind) {
+    case "milk":
+      return supabase.from("milk_records").upsert(
+        e.data.rows.map((r) => ({ farm_id, record_date: e.data.record_date, session: e.data.session, ...r })),
+        { onConflict: "cattle_id,record_date,session" },
+      );
+    case "flock": {
+      const { flock_name: _name, ...row } = e.data;
+      return supabase.from("flock_daily_logs").upsert({ farm_id, ...row }, { onConflict: "flock_id,log_date" });
+    }
+    case "health": {
+      const { ids, cattle_ids, label: _l, notes, ...rest } = e.data;
+      return once(
+        "health_records",
+        cattle_ids.map((cattle_id, i) => ({ id: ids[i], farm_id, cattle_id, ...rest, medicine: rest.product, description: notes ?? rest.product })),
+      );
+    }
+    case "breeding": {
+      const { id, calf_id, calf, label: _l, ...event } = e.data;
+      if (calf && calf_id) {
+        // The newborn first: if its tag is taken, nothing is saved and the reason is shown.
+        const [dam, lastAi] = await Promise.all([
+          supabase.from("cattle").select("breed, species").eq("id", event.cattle_id).maybeSingle(),
+          supabase
+            .from("breeding_events")
+            .select("bull_or_semen")
+            .eq("cattle_id", event.cattle_id)
+            .eq("event_type", "insemination")
+            .lte("event_date", event.event_date)
+            .order("event_date", { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+        ]);
+        if (dam.error) return dam;
+        const r = await once("cattle", {
+          id: calf_id,
+          farm_id,
+          ...calf,
+          species: (dam.data as { species: string | null } | null)?.species ?? "cattle",
+          breed: (dam.data as { breed: string | null } | null)?.breed ?? null,
+          date_of_birth: event.event_date,
+          mother_id: event.cattle_id,
+          father: (lastAi.data as { bull_or_semen: string | null } | null)?.bull_or_semen ?? null,
+        });
+        if (r.error) return r;
+      }
+      const r = await once("breeding_events", { id, farm_id, ...event });
+      if (r.error || event.event_type !== "calving") return r;
+      // A heifer (young doe, ewe lamb) counts as an adult once she has given birth.
+      const { data } = await supabase.from("cattle").select("category").eq("id", event.cattle_id).maybeSingle();
+      const adult = data ? ADULT_AFTER_BIRTH[(data as { category: string }).category] : undefined;
+      if (adult) await supabase.from("cattle").update({ category: adult }).eq("id", event.cattle_id).eq("farm_id", farm_id);
+      return ok;
+    }
+    case "sale": {
+      const { label: _l, ...row } = e.data;
+      return once("sales", { farm_id, ...row });
+    }
+    case "payment": {
+      const { label: _l, ...row } = e.data;
+      return once("buyer_payments", { farm_id, ...row });
+    }
+    case "buyer": {
+      const { label: _l, ...row } = e.data;
+      return once("buyers", { farm_id, ...row });
+    }
+  }
+}
 
 export type SaveResult = { status: "saved" } | { status: "queued" } | { status: "error"; error: string };
 

@@ -3,6 +3,10 @@
 // storage, so they survive closing the app. Pure (storage and sending are
 // passed in) so the rules are unit-tested.
 import type { FlockEntry, MilkEntry } from "./entries";
+import type { BreedingEntry, BuyerEntry, HealthEntry, PaymentEntry, SaleEntry } from "./records";
+
+/** A short description saved with the entry ("Vaccination · FMD · 3 animals"), shown while it waits. */
+type Labelled = { label: string };
 
 export type OutboxEntry = {
   id: string;
@@ -11,7 +15,17 @@ export type OutboxEntry = {
   createdAt: number;
   /** Why the server refused it; such entries wait for the person to discard them. */
   error?: string | null;
-} & ({ kind: "milk"; data: MilkEntry } | { kind: "flock"; data: FlockEntry & { flock_name: string } });
+} & (
+  | { kind: "milk"; data: MilkEntry }
+  | { kind: "flock"; data: FlockEntry & { flock_name: string } }
+  // Rows get their ids on the phone, so sending twice (connection lost after
+  // the server saved) never makes a second copy.
+  | { kind: "health"; data: HealthEntry & Labelled & { ids: string[] } }
+  | { kind: "breeding"; data: BreedingEntry & Labelled & { id: string; calf_id: string | null } }
+  | { kind: "sale"; data: SaleEntry & Labelled & { id: string } }
+  | { kind: "payment"; data: PaymentEntry & Labelled & { id: string } }
+  | { kind: "buyer"; data: BuyerEntry & Labelled }
+);
 
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
 export type NewEntry = DistributiveOmit<OutboxEntry, "id" | "createdAt" | "error">;

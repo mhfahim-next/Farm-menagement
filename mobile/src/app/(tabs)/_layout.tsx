@@ -9,6 +9,7 @@ const ICONS: Record<string, [string, string]> = {
   home: ["home", "home-outline"],
   animals: ["cow", "cow"],
   entry: ["clipboard-edit", "clipboard-edit-outline"],
+  sales: ["cash-multiple", "cash-multiple"],
   more: ["dots-horizontal-circle", "dots-horizontal-circle-outline"],
 };
 
@@ -24,7 +25,10 @@ export default function TabsLayout() {
   useFlocks(farm?.has_layer || farm?.has_broiler ? farm.id : undefined);
   const hidden = new Set<string>();
   if (!farm?.has_dairy && !farm?.has_fattening && !farm?.has_goat) hidden.add("animals");
-  if (current?.role === "vet" || (!farm?.has_dairy && !farm?.has_layer && !farm?.has_broiler)) hidden.add("entry");
+  if (current?.role === "vet") {
+    hidden.add("entry");
+    hidden.add("sales");
+  }
   return (
     <Tabs
       screenOptions={{ headerShown: false }}
@@ -59,6 +63,7 @@ export default function TabsLayout() {
       <Tabs.Screen name="home" options={{ title: t("tabs.home") }} />
       <Tabs.Screen name="animals" options={{ title: t("tabs.animals") }} />
       <Tabs.Screen name="entry" options={{ title: t("tabs.entry") }} />
+      <Tabs.Screen name="sales" options={{ title: t("tabs.sales") }} />
       <Tabs.Screen name="more" options={{ title: t("tabs.more") }} />
     </Tabs>
   );

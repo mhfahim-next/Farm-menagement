@@ -46,7 +46,28 @@ The Android app comes first. The same code can later build the iPhone app.
   - If the server refuses one (for example, the animal was deleted meanwhile), it shows why and can be discarded. It doesn't hold up the others.
   - Entries use the same tables and security rules as the website. A second sheet for the same day and milking replaces the first, as on the website.
 
-**Next steps:** vaccines and breeding entry, sales and dues, profit, phone notifications for reminders, and QR tag scanning.
+- **Vaccine / treatment** (from the Entry tab or an animal's page):
+  - Quick choices fill in the vaccine, the type and how often to repeat it: FMD, HS, BQ, LSD, deworming, tick spray, and for goats PPR, goat pox and ET.
+  - Choose one animal or many, or *Select all*. Each animal gets its own record with the next due date, which then shows in Reminders.
+- **Breeding** (only for females):
+  - Heat, with the signs seen. The next heat date is shown.
+  - Insemination, with the bull or semen. The expected birth date comes from the admin's gestation days for that species.
+  - Pregnancy check, with its result. Dry off.
+  - Birth: give the newborn a tag and it joins your animals with its mother, breed and sire. A heifer (young doe, ewe lamb) becomes a cow (doe, ewe).
+- **Sales** tab:
+  - What all buyers owe, the buyers with their dues, and the latest sales.
+  - **New sale:** milk, eggs, an animal, broiler birds, manure or other.
+    - Sell for cash, or on credit to a buyer. The buyer's usual milk or egg rate fills in the price.
+    - The total and the remaining due are shown before saving.
+    - An animal sold this way is marked sold.
+  - **Buyer page:** what they owe, their sales and payments, a call button, and *Payment* (cash, bKash, Nagad, Rocket, bank).
+  - **New buyer:** name, phone, usual rates.
+- **Every record works offline.**
+  - Records get their id on the phone, so sending one twice (when the connection drops just after the server saved it) never makes a copy.
+  - A buyer added offline can be sold to straight away. The buyer reaches the server first.
+- Vets don't see the Entry and Sales tabs. Their changes go through the farm's approval on the website.
+
+**Next steps:** phone notifications for reminders, QR tag scanning, expenses and profit.
 
 ## Setup
 
