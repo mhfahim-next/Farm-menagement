@@ -84,6 +84,7 @@ export const RELEASES: Release[] = [
       { type: "new", en: "App: invite managers, workers and vets by email, remove someone or leave a farm. Accept invitations right in the app.", bn: "অ্যাপ: ইমেইলে ম্যানেজার, কর্মী ও ডাক্তারকে আমন্ত্রণ, কাউকে সরানো বা খামার ছেড়ে যাওয়া। আমন্ত্রণ অ্যাপেই গ্রহণ করুন।" },
       { type: "new", en: "App: milk and egg charts, cost and profit per litre and per egg, and profit per animal.", bn: "অ্যাপ: দুধ ও ডিমের চার্ট, লিটার ও ডিম প্রতি খরচ ও লাভ, আর পশু প্রতি লাভ।" },
       { type: "new", en: "App: share a report as PDF or CSV (Excel) on WhatsApp, email or Drive (paid plans).", bn: "অ্যাপ: রিপোর্ট PDF বা CSV (এক্সেল) হিসেবে হোয়াটসঅ্যাপ, ইমেইল বা ড্রাইভে শেয়ার করুন (পেইড প্ল্যানে)।" },
+      { type: "fixed", en: "App: opening an animal after updating the app no longer closes the app. If a screen ever fails, you now see a “Try again” page instead.", bn: "অ্যাপ: অ্যাপ আপডেটের পর কোনো পশুর পাতা খুললে অ্যাপ আর বন্ধ হয়ে যায় না। কোনো পাতা না খুললে এখন “আবার চেষ্টা করুন” পাতা দেখায়।" },
     ],
   },
   {

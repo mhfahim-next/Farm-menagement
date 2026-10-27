@@ -4,7 +4,27 @@ import { useCallback, useEffect, useState } from "react";
 import { isNetworkError } from "./entries";
 import { getItem, setItem } from "./storage";
 
-const PREFIX = "ff.cache.";
+// Bump the version when the shape of saved data changes, so a copy saved by
+// an older app version is never read by a newer screen (that crashed the
+// animal page after an update).
+const VERSION = 2;
+const PREFIX = `ff.cache.v${VERSION}.`;
+
+/** Drops copies saved by older versions of the app (they can't be read any more). */
+export function dropOldCache() {
+  try {
+    const store = globalThis.localStorage;
+    if (!store) return;
+    const old: string[] = [];
+    for (let i = 0; i < store.length; i++) {
+      const k = store.key(i);
+      if (k?.startsWith("ff.cache.") && !k.startsWith(PREFIX)) old.push(k);
+    }
+    old.forEach((k) => store.removeItem(k));
+  } catch {
+    // storage unavailable: nothing to clean
+  }
+}
 
 export function readCache<T>(key: string): T | null {
   try {

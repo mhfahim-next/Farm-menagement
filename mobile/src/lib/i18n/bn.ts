@@ -113,6 +113,8 @@ export const bn: Record<MessageKey, string> = {
 
   "tabs.home": "হোম",
   "tabs.more": "আরও",
+  "crash.title": "কিছু একটা সমস্যা হয়েছে",
+  "crash.body": "এই পাতাটি খোলা যায়নি। আপনার হিসাব নিরাপদ আছে। আবার চেষ্টা করুন, অথবা পেছনে যান।",
   "rep.title": "রিপোর্ট",
   "rep.share": "রিপোর্ট শেয়ার করুন",
   "rep.sharePdf": "PDF হিসেবে শেয়ার",

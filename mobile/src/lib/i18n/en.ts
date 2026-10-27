@@ -111,6 +111,8 @@ export const en = {
 
   "tabs.home": "Home",
   "tabs.more": "More",
+  "crash.title": "Something went wrong",
+  "crash.body": "This screen couldn't open. Your records are safe. Try again, or go back.",
   "rep.title": "Reports",
   "rep.share": "Share report",
   "rep.sharePdf": "Share as PDF",
