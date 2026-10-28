@@ -75,6 +75,16 @@ The Android app comes first. The same code can later build the iPhone app.
 - **Every record works offline.**
   - Records get their id on the phone, so sending one twice (when the connection drops just after the server saved it) never makes a copy.
   - A buyer added offline can be sold to straight away. The buyer reaches the server first.
+- **Farm tools** (More → Farm tools, or the Write tab): nine calculators, the same as the website's Tools menu (`src/lib/tools.ts` is copied):
+  - **Cattle & goat weight** from a measuring tape (cm or inch), shown in kg with a ±10 % range. *Save to an animal* opens the weight form already filled in.
+  - **Feed ration** for a milking cow (weight, milk, fat) or fattening (weight, gain wanted): concentrate, green grass, straw, water, salt and minerals a day. Also a home-made concentrate mix with its cost per kg from your prices.
+  - **Poultry feed & water** by age for layers, broilers and Sonali, with bags and cost.
+  - **Calving & kidding date**: next heat, pregnancy check, drying off and the expected birth.
+  - **Qurbani & animal price**: meat and bone from live weight, price per kg, profit.
+  - **Unit converter**: maund, seer, kg · hali, dozen, tray · inch, cm, haat · decimal, katha, bigha, acre.
+  - **Medicine dose by weight** (ml or tablets), with a "follow the label and your vet" warning.
+  - **Grass land & silage**: decimals of Napier and the silage a herd needs.
+  - **Milk price from fat & SNF.**
 - **Doctors (vets)**
   - A doctor's account opens the **Doctor console** instead of farm setup:
     - farms served, with animals and overdue vaccines;

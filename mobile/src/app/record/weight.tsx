@@ -16,17 +16,18 @@ import { useToast } from "@/lib/toast";
 
 /** A weight from the scale, or worked out from a measuring tape (cattle). */
 export default function WeightRecord() {
-  const { animal } = useLocalSearchParams<{ animal: string }>();
+  // From the tape tool: the measurements (cm), or the worked-out kg for goats and sheep.
+  const { animal, girth: g0, length: l0, kg: kg0 } = useLocalSearchParams<{ animal: string; girth?: string; length?: string; kg?: string }>();
   const { t, n } = usePrefs();
   const farm = useSession().current?.farm;
   const { data: animals } = useAnimals(farm?.id);
   const a = (animals ?? []).find((x) => x.id === animal);
   const cattle = (a?.species ?? "cattle") === "cattle";
   const toast = useToast();
-  const [method, setMethod] = useState("scale");
-  const [kg, setKg] = useState("");
-  const [girth, setGirth] = useState("");
-  const [length, setLength] = useState("");
+  const [method, setMethod] = useState(g0 && l0 ? "tape" : "scale");
+  const [kg, setKg] = useState(kg0 ?? "");
+  const [girth, setGirth] = useState(g0 ?? "");
+  const [length, setLength] = useState(l0 ?? "");
   const [date, setDate] = useState(farmToday());
   const [error, setError] = useState<string | null>(null);
   const [detail, setDetail] = useState<string | null>(null);

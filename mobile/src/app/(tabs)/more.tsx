@@ -72,6 +72,7 @@ export default function More() {
 
         <List.Section>
           <List.Subheader>{t("tools.title")}</List.Subheader>
+          <List.Item title={t("tools.title")} description={t("tools.menuHint")} left={(p) => <List.Icon {...p} icon="calculator-variant-outline" />} onPress={() => router.push("/tools")} testID="open-tools" />
           {s.current?.role !== "vet" && (
             <List.Item title={t("tools.stock")} left={(p) => <List.Icon {...p} icon="warehouse" />} onPress={() => router.push("/stock")} testID="open-stock" />
           )}

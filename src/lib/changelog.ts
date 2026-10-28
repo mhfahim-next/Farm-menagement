@@ -71,6 +71,21 @@ export const UPCOMING: Upcoming[] = [
 
 export const RELEASES: Release[] = [
   {
+    id: "2026-10-31-farm-tools",
+    date: "2026-10-31",
+    title: { en: "Farm tools: weight by tape, feed ration and more", bn: "খামারের টুলস: ফিতায় ওজন, খাদ্য রেশন আরও অনেক কিছু" },
+    summary: {
+      en: "Nine free calculators on the website (Tools menu, and open to everyone at farmflows.app/tools) and in the app.",
+      bn: "ওয়েবসাইটে (টুলস মেনু, আর সবার জন্য খোলা farmflows.app/tools) ও অ্যাপে বিনামূল্যের ৯টি ক্যালকুলেটর।",
+    },
+    changes: [
+      { type: "new", en: "Cattle and goat weight from a measuring tape, in kg; save it to the animal in one tap.", bn: "মাপার ফিতা দিয়ে গরু ও ছাগলের ওজন কেজিতে; এক চাপে পশুর রেকর্ডে সংরক্ষণ।" },
+      { type: "new", en: "Feed ration for milking cows and fattening, with a home-made concentrate mix and its cost.", bn: "দুধের গাভী ও মোটাতাজাকরণের খাদ্য রেশন, সাথে ঘরে তৈরি দানাদার মিশ্রণ আর তার খরচ।" },
+      { type: "new", en: "Poultry feed and water by age, calving and kidding dates, Qurbani price and profit.", bn: "বয়স অনুযায়ী মুরগির খাবার ও পানি, প্রসবের তারিখ, কোরবানির দাম ও লাভ।" },
+      { type: "new", en: "Unit converter (maund, seer, hali, tray, decimal, bigha…), medicine dose by weight, grass land and silage, milk price from fat and SNF.", bn: "একক রূপান্তর (মণ, সের, হালি, ট্রে, শতক, বিঘা…), ওজন অনুযায়ী ওষুধের মাত্রা, ঘাসের জমি ও সাইলেজ, ফ্যাট ও এসএনএফ থেকে দুধের দাম।" },
+    ],
+  },
+  {
     id: "2026-10-30-app-entry-doctors",
     date: "2026-10-30",
     title: { en: "An easier Write tab, and doctors in the app", bn: "আরও সহজ লেখার পাতা, আর অ্যাপে ডাক্তার" },

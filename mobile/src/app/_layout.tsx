@@ -136,6 +136,8 @@ function App({ fontsReady }: { fontsReady: boolean }) {
               <Stack.Screen name="reports" options={{ animation: "slide_from_right" }} />
               <Stack.Screen name="approvals" options={{ animation: "slide_from_right" }} />
               <Stack.Screen name="doctor" options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="tools/index" options={{ animation: "slide_from_right" }} />
+              <Stack.Screen name="tools/[slug]" options={{ animation: "slide_from_right" }} />
               <Stack.Screen name="entry/milk" />
               <Stack.Screen name="entry/birds" />
             </Stack.Protected>
