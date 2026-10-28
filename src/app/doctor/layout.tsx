@@ -15,9 +15,9 @@ export default async function DoctorLayout({ children }: LayoutProps<"/doctor">)
   const count = invites?.length ?? 0;
 
   const nav: NavItem[] = [
-    { href: "/doctor", label: t("doctor.consoleNav") },
-    { href: "/doctor/profile", label: t("menu.profile") },
-    { href: "/community", label: t("community.nav") },
+    { href: "/doctor", label: t("doctor.consoleNav"), icon: "doctor" },
+    { href: "/doctor/profile", label: t("menu.profile"), icon: "profile" },
+    { href: "/community", label: t("community.nav"), icon: "community" },
   ];
 
   return (

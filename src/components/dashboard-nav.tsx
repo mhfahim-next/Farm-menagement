@@ -1,6 +1,7 @@
 "use client";
 
 import Link, { useLinkStatus } from "next/link";
+import { NAV_ICONS, type NavIconName } from "./nav-icons";
 import { Spinner } from "./ui";
 import { usePathname } from "next/navigation";
 
@@ -11,6 +12,8 @@ export type NavItem = {
   group?: string;
   /** A count shown as a small pill (things waiting for the person); hidden when 0. */
   badge?: number;
+  /** Small icon before the label. */
+  icon?: NavIconName;
 };
 
 /** Fixed-size slot so the spinner never shifts the label. */
@@ -39,12 +42,21 @@ export function DashboardNav({ items }: { items: NavItem[] }) {
             key={item.href}
             href={item.href}
             aria-current={active ? "page" : undefined}
-            className={`flex items-center whitespace-nowrap rounded-lg px-3 py-2.5 text-sm font-medium transition-colors md:py-2 ${
+            className={`group flex items-center gap-2.5 whitespace-nowrap rounded-lg px-3 py-2.5 text-sm font-medium transition-colors md:py-2 ${
               active
                 ? "bg-emerald-50 text-emerald-800"
                 : "text-stone-600 hover:bg-stone-100 hover:text-stone-900"
             }`}
           >
+            {item.icon && (
+              <svg
+                viewBox="0 0 24 24"
+                aria-hidden
+                className={`h-5 w-5 shrink-0 fill-current transition-colors ${active ? "text-emerald-700" : "text-stone-400 group-hover:text-stone-600"}`}
+              >
+                <path d={NAV_ICONS[item.icon]} />
+              </svg>
+            )}
             {item.label}
             {item.badge ? (
               <span

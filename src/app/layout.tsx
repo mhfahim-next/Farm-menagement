@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Noto_Sans_Bengali } from "next/font/google";
+import { Anek_Bangla, Geist_Mono, Inter } from "next/font/google";
 import { I18nProvider } from "@/components/i18n-provider";
 import { Analytics } from "@/components/analytics";
 import { Analytics as VercelAnalytics } from "@vercel/analytics/next";
@@ -12,8 +12,10 @@ import { getI18n, getOptionRows, messagesFor } from "@/lib/i18n/server";
 import { SITE_NAME, SITE_URL, verificationToken } from "@/lib/site";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// English and numbers: Inter. Bangla: Anek Bangla. Both are variable fonts, so the
+// in-between weights set in globals.css (450, 560, 650…) render exactly.
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
@@ -22,7 +24,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const notoBengali = Noto_Sans_Bengali({
+const anekBangla = Anek_Bangla({
   variable: "--font-bengali",
   subsets: ["bengali"],
 });
@@ -91,7 +93,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang={locale}
-      className={`${geistSans.variable} ${geistMono.variable} ${notoBengali.variable} h-full antialiased`}
+      className={`${inter.variable} ${geistMono.variable} ${anekBangla.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
