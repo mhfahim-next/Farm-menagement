@@ -14,6 +14,7 @@ export async function PublicHeader() {
   const viewer = await getViewer();
   const sections: PublicLink[] = [
     { href: "/#features", label: t("footer.features") },
+    { href: "/tools", label: t("tools.navFree") },
     { href: "/#pricing", label: t("footer.pricing") },
     { href: "/blog", label: t("blog.nav") },
     { href: "/community", label: t("community.nav") },
@@ -34,7 +35,7 @@ export async function PublicHeader() {
 
         {/* Wide screens: section links in the middle. */}
         <nav aria-label={t("common.menu")} className="flex items-center gap-1 max-lg:hidden">
-          {links.slice(0, viewer ? 4 : 5).map((l) => (
+          {links.slice(0, viewer ? 5 : 6).map((l) => (
             <NavLink key={l.href} href={l.href}>
               {l.label}
             </NavLink>

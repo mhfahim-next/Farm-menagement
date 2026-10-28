@@ -9,6 +9,7 @@ import { Marquee } from "@/components/velora/marquee";
 import { ScrollProgress } from "@/components/velora/scroll-progress";
 import { ShimmerLink } from "@/components/velora/shimmer-link";
 import { SpotlightCard } from "@/components/velora/spotlight-card";
+import { ToolGrid } from "@/components/tool-grid";
 import { WordRotate } from "@/components/velora/word-rotate";
 import { getViewer } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
@@ -188,6 +189,26 @@ export default async function Home({ searchParams }: PageProps<"/">) {
                 </SpotlightCard>
               </BlurFade>
             ))}
+          </div>
+        </section>
+
+        <section id="tools" aria-labelledby="tools-title" className="scroll-mt-20 border-t border-stone-200 bg-emerald-50/60" data-testid="home-tools">
+          <div className="mx-auto max-w-6xl px-4 py-20">
+            <BlurFade className="text-center">
+              <span className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-900">
+                <span aria-hidden>🧮</span> {t("tools.homeKicker")}
+              </span>
+              <h2 id="tools-title" className="mt-4 text-3xl font-bold tracking-tight">{t("tools.homeTitle")}</h2>
+              <p className="mx-auto mt-3 max-w-2xl text-stone-600">{t("tools.homeBody")}</p>
+            </BlurFade>
+            <div className="mt-10">
+              <ToolGrid base="/tools" t={t} />
+            </div>
+            <div className="mt-8 text-center">
+              <ButtonLink href="/tools" variant="secondary" data-testid="home-tools-all">
+                {t("tools.all")} →
+              </ButtonLink>
+            </div>
           </div>
         </section>
 
