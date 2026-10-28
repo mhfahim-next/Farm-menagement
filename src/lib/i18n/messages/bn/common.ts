@@ -53,6 +53,7 @@ export const common: Record<keyof typeof en, string> = {
   "nav.group.layer": "লেয়ার খামার",
   "nav.group.finance": "হিসাব",
   "nav.group.farm": "খামার",
+  "nav.group.more": "আরও",
   "nav.plan": "প্ল্যান",
   "nav.invites": "আমন্ত্রণ",
   "nav.settings": "সেটিংস",

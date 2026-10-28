@@ -64,7 +64,15 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   // The middle paid plan is highlighted as the recommended one.
   const highlightKey = plans.length >= 3 ? plans[1].key : null;
 
-  const features = [1, 2, 3, 13, 16, 17, 4, 18, 7, 8, 5, 9, 10, 14, 15, 11, 12, 6] as const;
+  // All 18 features, in six groups so the section stays short.
+  const featureGroups = [
+    { key: "animals", icon: "🐄", items: [1, 16, 17, 13] },
+    { key: "daily", icon: "🥛", items: [2, 4, 18] },
+    { key: "health", icon: "💉", items: [3, 14, 15] },
+    { key: "money", icon: "💰", items: [5, 8, 7] },
+    { key: "easy", icon: "📶", items: [9, 6, 10] },
+    { key: "team", icon: "👥", items: [12, 11] },
+  ] as const;
   const featureIcons = {
     1: "🐄", 2: "🥛", 3: "💉", 4: "🐔", 5: "💰", 6: "🌐", 7: "📦", 8: "🧾", 9: "📶", 10: "📥", 11: "🤖", 12: "👥", 13: "⚖️", 14: "🏷️", 15: "📄", 16: "🐐", 17: "🐂", 18: "🐥",
   } as const;
@@ -177,18 +185,34 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           <BlurFade>
             <h2 className="text-center text-3xl font-bold tracking-tight">{t("landing.featuresTitle")}</h2>
           </BlurFade>
-          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {features.map((n, i) => (
-              <BlurFade key={n} delay={0.05 * i} className="h-full">
-                <SpotlightCard className="h-full border-stone-200 p-6 transition-shadow hover:shadow-md">
-                  <span aria-hidden className="grid size-11 place-items-center rounded-xl bg-emerald-50 text-2xl">
-                    {featureIcons[n]}
-                  </span>
-                  <h3 className="mt-4 font-semibold text-stone-900">{t(`landing.f${n}.title`)}</h3>
-                  <p className="mt-2 text-sm text-stone-600">{t(`landing.f${n}.body`)}</p>
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {featureGroups.map((g, i) => (
+              <BlurFade key={g.key} delay={0.05 * i} className="h-full">
+                <SpotlightCard className="h-full border-stone-200 p-5 transition-shadow hover:shadow-md">
+                  <h3 className="flex items-center gap-2.5 font-semibold text-stone-900">
+                    <span aria-hidden className="grid size-9 place-items-center rounded-lg bg-emerald-50 text-xl">
+                      {g.icon}
+                    </span>
+                    {t(`landing.fg.${g.key}`)}
+                  </h3>
+                  <ul className="mt-3 space-y-2">
+                    {g.items.map((n) => (
+                      <li key={n} title={t(`landing.f${n}.body`)} className="flex items-center gap-2.5 text-sm font-medium text-stone-700">
+                        <span aria-hidden className="w-5 shrink-0 text-center">
+                          {featureIcons[n]}
+                        </span>
+                        {t(`landing.f${n}.title`)}
+                      </li>
+                    ))}
+                  </ul>
                 </SpotlightCard>
               </BlurFade>
             ))}
+          </div>
+          <div className="mt-8 text-center">
+            <Link href="/farm-management-software" className="text-sm font-semibold text-emerald-700 hover:underline" data-testid="features-more">
+              {t("landing.fg.details")} →
+            </Link>
           </div>
         </section>
 

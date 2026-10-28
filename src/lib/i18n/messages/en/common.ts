@@ -51,6 +51,7 @@ export const common = {
   "nav.group.layer": "Layer farm",
   "nav.group.finance": "Money",
   "nav.group.farm": "Farm",
+  "nav.group.more": "More",
   "nav.plan": "Plan",
   "nav.invites": "Invitations",
   "nav.settings": "Settings",

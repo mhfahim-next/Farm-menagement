@@ -81,6 +81,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
     : [
         { href: "/dashboard", label: t("nav.overview"), icon: "overview" },
         ...(isStaff ? [{ href: "/dashboard/quick", label: t("nav.quick"), icon: "quick" as const }] : []),
+        { href: "/dashboard/notifications", label: t("nav.reminders"), icon: "reminders" },
         { href: "/dashboard/tools", label: t("nav.tools"), icon: "tools" },
         ...(keepsAnimals(farm)
           ? [
@@ -105,26 +106,30 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
               group: t(farm.has_layer && farm.has_broiler ? "nav.group.poultry" : farm.has_broiler ? "nav.group.broiler" : "nav.group.layer"),
             }))
           : []),
+        // Money: what comes in and goes out.
         ...(isStaff
           ? [
               { href: "/dashboard/finance", label: t("nav.finance"), icon: "finance" as const },
               { href: "/dashboard/sales", label: t("nav.sales"), icon: "sales" as const },
-              { href: "/dashboard/inventory", label: t("nav.inventory"), icon: "inventory" as const },
               { href: "/dashboard/profit", label: t("nav.profit"), icon: "profit" as const },
-              ...(isManager ? [{ href: "/dashboard/staff", label: t("nav.staff"), icon: "staff" as const }] : []),
               { href: "/dashboard/reports", label: t("nav.reports"), icon: "reports" as const },
             ].map((i) => ({ ...i, group: t("nav.group.finance") }))
           : []),
+        // Running the farm: stock, people, approvals and settings.
         ...[
+          ...(isStaff ? [{ href: "/dashboard/inventory", label: t("nav.inventory"), icon: "inventory" as const }] : []),
+          ...(isManager ? [{ href: "/dashboard/staff", label: t("nav.staff"), icon: "staff" as const }] : []),
           ...(isManager ? [{ href: "/dashboard/approvals", label: t("nav.approvals"), icon: "approvals" as const, badge: pendingApprovals }] : []),
-          ...(isManager ? [{ href: "/dashboard/plan", label: t("nav.plan"), icon: "plan" as const }] : []),
           ...(isManager ? [{ href: "/dashboard/import", label: t("nav.import"), icon: "import" as const }] : []),
-          { href: "/dashboard/notifications", label: t("nav.reminders"), icon: "reminders" as const },
+          ...(isManager ? [{ href: "/dashboard/plan", label: t("nav.plan"), icon: "plan" as const }] : []),
           { href: "/dashboard/settings", label: t("nav.settings"), icon: "settings" as const },
-          { href: "/dashboard/review", label: t("nav.review"), icon: "review" as const },
+        ].map((i) => ({ ...i, group: t("nav.group.farm") })),
+        // Everything else, used now and then.
+        ...[
           { href: "/community", label: t("community.nav"), icon: "community" as const },
           { href: "/changelog", label: t("changelog.nav"), icon: "changelog" as const },
-        ].map((i) => ({ ...i, group: t("nav.group.farm") })),
+          { href: "/dashboard/review", label: t("nav.review"), icon: "review" as const },
+        ].map((i) => ({ ...i, group: t("nav.group.more") })),
       ];
 
   const invitesCount = invites?.length ?? 0;
