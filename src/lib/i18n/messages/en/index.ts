@@ -23,6 +23,7 @@ import { reminders } from "./reminders";
 import { animalprofit } from "./animalprofit";
 import { tools } from "./tools";
 import { toolsadmin } from "./toolsadmin";
+import { deleteaccount } from "./deleteaccount";
 
-export const en = { ...common, ...auth, ...landing, ...farm, ...dairy, ...account, ...plans, ...team, ...adminplans, ...blog, ...ai, ...farmops, ...community, ...trade, ...changelog, ...offline, ...importing, ...printing, ...analyticsplus, ...payments, ...livestock, ...reminders, ...animalprofit, ...tools, ...toolsadmin } as const;
+export const en = { ...common, ...auth, ...landing, ...farm, ...dairy, ...account, ...plans, ...team, ...adminplans, ...blog, ...ai, ...farmops, ...community, ...trade, ...changelog, ...offline, ...importing, ...printing, ...analyticsplus, ...payments, ...livestock, ...reminders, ...animalprofit, ...tools, ...toolsadmin, ...deleteaccount } as const;
 export type EnMessages = typeof en;

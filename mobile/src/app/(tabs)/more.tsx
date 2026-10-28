@@ -137,6 +137,7 @@ export default function More() {
           <List.Item title={t("more.help")} left={(p) => <List.Icon {...p} icon="lifebuoy" />} onPress={() => open("/contact")} />
           <List.Item title={t("more.privacy")} left={(p) => <List.Icon {...p} icon="shield-lock-outline" />} onPress={() => open("/privacy")} />
           <List.Item title={t("more.terms")} left={(p) => <List.Icon {...p} icon="file-document-outline" />} onPress={() => open("/terms")} />
+          <List.Item title={t("profile.deleteTitle")} description={t("more.deleteHint")} left={(p) => <List.Icon {...p} icon="account-remove-outline" />} onPress={() => router.push("/profile")} testID="open-delete-account" />
         </List.Section>
         <Divider />
         <Button mode="outlined" icon="logout" textColor={theme.colors.error} style={styles.logout} onPress={() => setConfirm(true)} testID="logout">

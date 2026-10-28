@@ -943,8 +943,8 @@ export const bn: Record<MessageKey, string> = {
   "home.eggsToday": "আজকের ডিম",
   "home.litres": "{n} লি.",
   "home.planBadge": "{plan} প্ল্যান",
-  "home.comingTitle": "শীঘ্রই আসছে",
-  "home.comingBody": "টিকা, প্রজনন, বিক্রি আর লাভ শীঘ্রই অ্যাপে আসছে। ততদিন একই অ্যাকাউন্টে ওয়েবসাইটে সব কাজ করা যাবে।",
+  "home.comingTitle": "কম্পিউটারেও চলে",
+  "home.comingBody": "একই অ্যাকাউন্ট farmflows.app-এও চলে, সাথে আছে Excel থেকে তথ্য আনা, কানের ট্যাগ প্রিন্ট আর এআই সহকারী।",
   "home.openWeb": "পূর্ণ ড্যাশবোর্ড খুলুন",
 
   "more.title": "আরও",
@@ -961,6 +961,7 @@ export const bn: Record<MessageKey, string> = {
   "more.help": "সাহায্য ও যোগাযোগ",
   "more.privacy": "গোপনীয়তা নীতি",
   "more.terms": "শর্তাবলী",
+  "more.deleteHint": "আপনার অ্যাকাউন্ট ও খামারের তথ্য মুছে ফেলুন (প্রোফাইলে)",
   "more.logout": "লগআউট",
   "more.logoutConfirm": "এই ফোন থেকে FarmFlows-এ লগআউট করবেন?",
   "more.version": "সংস্করণ {v}",

@@ -26,6 +26,22 @@ export function dropOldCache() {
   }
 }
 
+/** Drops every saved copy (on sign out, so the next person on this phone sees nothing of it). */
+export function clearCache() {
+  try {
+    const store = globalThis.localStorage;
+    if (!store) return;
+    const keys: string[] = [];
+    for (let i = 0; i < store.length; i++) {
+      const k = store.key(i);
+      if (k?.startsWith("ff.cache.")) keys.push(k);
+    }
+    keys.forEach((k) => store.removeItem(k));
+  } catch {
+    // storage unavailable: nothing to clear
+  }
+}
+
 export function readCache<T>(key: string): T | null {
   try {
     const v = getItem(PREFIX + key);

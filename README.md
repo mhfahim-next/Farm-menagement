@@ -95,6 +95,8 @@ The first version has:
 
 See `mobile/README.md` for setup, checks and building the APK / Play Store bundle with EAS.
 
+**Google Play:** everything needed to publish (listing texts in Bangla and English, Data safety and content-rating answers, icon, feature graphic, screenshots, step-by-step checklist) is in [`mobile/store/`](mobile/store/README.md). The account-deletion page Google asks for is `/delete-account`.
+
 ## Super admin
 
 A super admin controls the whole system from `/admin` (only they can open it; everyone else gets a 404):

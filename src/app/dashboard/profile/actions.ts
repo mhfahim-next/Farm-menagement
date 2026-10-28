@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { removeAccountFiles } from "@/lib/account-files";
 import { requireUser } from "@/lib/auth";
 import { dbError, str } from "@/lib/form";
 import { getI18n } from "@/lib/i18n/server";
@@ -92,12 +93,14 @@ export async function removeAvatar(): Promise<ActionState> {
  * Farms owned alone go with it; a farm shared with others must be handed over first.
  */
 export async function deleteAccount(_: ActionState, formData: FormData): Promise<ActionState> {
-  await requireUser();
+  const user = await requireUser();
   const { t } = await getI18n();
   if ((str(formData, "confirm") ?? "").toLowerCase() !== t("profile.deleteWord").toLowerCase()) {
     return { error: t("profile.deleteType", { word: t("profile.deleteWord") }) };
   }
   const supabase = await createClient();
+  const files = await removeAccountFiles(supabase, user.id);
+  if (files.shared.length) return { error: t("profile.deleteShared", { farms: files.shared.join(", ") }) };
   const { error } = await supabase.rpc("delete_my_account");
   if (error) {
     const shared = /SHARED_FARM:(.+)/.exec(error.message)?.[1];

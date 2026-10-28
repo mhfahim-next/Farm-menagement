@@ -40,6 +40,7 @@ export async function SiteFooter() {
         { href: "/contact", label: t("contact.title") },
         { href: "/terms", label: t("legal.terms") },
         { href: "/privacy", label: t("legal.privacy") },
+        { href: "/delete-account", label: t("del.nav") },
       ],
     },
     {
