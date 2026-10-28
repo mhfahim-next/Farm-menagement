@@ -70,26 +70,26 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
 
   const nav: NavItem[] = isVet
     ? [
-        { href: "/dashboard/cattle", label: t("nav.cattle") },
-        { href: "/dashboard/health", label: t("nav.health") },
-        { href: "/dashboard/breeding", label: t("nav.breeding") },
-        { href: "/dashboard/approvals", label: t("nav.approvals") },
-        { href: "/dashboard/notifications", label: t("nav.reminders") },
-        { href: "/dashboard/tools", label: `🧮 ${t("nav.tools")}` },
-        { href: "/doctor", label: `← ${t("doctor.consoleNav")}` },
+        { href: "/dashboard/cattle", label: t("nav.cattle"), icon: "cattle" },
+        { href: "/dashboard/health", label: t("nav.health"), icon: "health" },
+        { href: "/dashboard/breeding", label: t("nav.breeding"), icon: "breeding" },
+        { href: "/dashboard/approvals", label: t("nav.approvals"), icon: "approvals" },
+        { href: "/dashboard/notifications", label: t("nav.reminders"), icon: "reminders" },
+        { href: "/dashboard/tools", label: t("nav.tools"), icon: "tools" },
+        { href: "/doctor", label: t("doctor.consoleNav"), icon: "back" },
       ]
     : [
-        { href: "/dashboard", label: t("nav.overview") },
-        ...(isStaff ? [{ href: "/dashboard/quick", label: `⚡ ${t("nav.quick")}` }] : []),
-        { href: "/dashboard/tools", label: `🧮 ${t("nav.tools")}` },
+        { href: "/dashboard", label: t("nav.overview"), icon: "overview" },
+        ...(isStaff ? [{ href: "/dashboard/quick", label: t("nav.quick"), icon: "quick" as const }] : []),
+        { href: "/dashboard/tools", label: t("nav.tools"), icon: "tools" },
         ...(keepsAnimals(farm)
           ? [
-              ...(keepsCattle(farm) ? [{ href: "/dashboard/cattle", label: t("nav.cattle") }] : []),
-              ...(farm.has_goat ? [{ href: "/dashboard/goats", label: t("nav.goats") }] : []),
-              ...(farm.has_dairy ? [{ href: "/dashboard/milk", label: t("nav.milk") }] : []),
-              { href: "/dashboard/health", label: t("nav.health") },
-              ...(breedsAnimals(farm) ? [{ href: "/dashboard/breeding", label: t("nav.breeding") }] : []),
-              ...(fattens(farm) ? [{ href: "/dashboard/fattening", label: t("nav.fattening") }] : []),
+              ...(keepsCattle(farm) ? [{ href: "/dashboard/cattle", label: t("nav.cattle"), icon: "cattle" as const }] : []),
+              ...(farm.has_goat ? [{ href: "/dashboard/goats", label: t("nav.goats"), icon: "goats" as const }] : []),
+              ...(farm.has_dairy ? [{ href: "/dashboard/milk", label: t("nav.milk"), icon: "milk" as const }] : []),
+              { href: "/dashboard/health", label: t("nav.health"), icon: "health" as const },
+              ...(breedsAnimals(farm) ? [{ href: "/dashboard/breeding", label: t("nav.breeding"), icon: "breeding" as const }] : []),
+              ...(fattens(farm) ? [{ href: "/dashboard/fattening", label: t("nav.fattening"), icon: "fattening" as const }] : []),
             ].map((i) => ({
               ...i,
               group: t(keepsCattle(farm) && farm.has_goat ? "nav.group.livestock" : farm.has_goat ? "nav.group.goat" : "nav.group.cow"),
@@ -97,9 +97,9 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
           : []),
         ...(keepsPoultry(farm)
           ? [
-              ...(farm.has_layer ? [{ href: "/dashboard/flocks", label: t("nav.flocks") }] : []),
-              ...(farm.has_broiler ? [{ href: "/dashboard/broilers", label: t("nav.broilers") }] : []),
-              ...(isStaff ? [{ href: "/dashboard/flock-health", label: t("nav.flockHealth") }] : []),
+              ...(farm.has_layer ? [{ href: "/dashboard/flocks", label: t("nav.flocks"), icon: "flocks" as const }] : []),
+              ...(farm.has_broiler ? [{ href: "/dashboard/broilers", label: t("nav.broilers"), icon: "broilers" as const }] : []),
+              ...(isStaff ? [{ href: "/dashboard/flock-health", label: t("nav.flockHealth"), icon: "flockHealth" as const }] : []),
             ].map((i) => ({
               ...i,
               group: t(farm.has_layer && farm.has_broiler ? "nav.group.poultry" : farm.has_broiler ? "nav.group.broiler" : "nav.group.layer"),
@@ -107,23 +107,23 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
           : []),
         ...(isStaff
           ? [
-              { href: "/dashboard/finance", label: t("nav.finance") },
-              { href: "/dashboard/sales", label: t("nav.sales") },
-              { href: "/dashboard/inventory", label: t("nav.inventory") },
-              { href: "/dashboard/profit", label: t("nav.profit") },
-              ...(isManager ? [{ href: "/dashboard/staff", label: t("nav.staff") }] : []),
-              { href: "/dashboard/reports", label: t("nav.reports") },
+              { href: "/dashboard/finance", label: t("nav.finance"), icon: "finance" as const },
+              { href: "/dashboard/sales", label: t("nav.sales"), icon: "sales" as const },
+              { href: "/dashboard/inventory", label: t("nav.inventory"), icon: "inventory" as const },
+              { href: "/dashboard/profit", label: t("nav.profit"), icon: "profit" as const },
+              ...(isManager ? [{ href: "/dashboard/staff", label: t("nav.staff"), icon: "staff" as const }] : []),
+              { href: "/dashboard/reports", label: t("nav.reports"), icon: "reports" as const },
             ].map((i) => ({ ...i, group: t("nav.group.finance") }))
           : []),
         ...[
-          ...(isManager ? [{ href: "/dashboard/approvals", label: pendingApprovals > 0 ? `${t("nav.approvals")} (${f.number(pendingApprovals)})` : t("nav.approvals") }] : []),
-          ...(isManager ? [{ href: "/dashboard/plan", label: t("nav.plan") }] : []),
-          ...(isManager ? [{ href: "/dashboard/import", label: t("nav.import") }] : []),
-          { href: "/dashboard/notifications", label: t("nav.reminders") },
-          { href: "/dashboard/settings", label: t("nav.settings") },
-          { href: "/dashboard/review", label: t("nav.review") },
-          { href: "/community", label: t("community.nav") },
-          { href: "/changelog", label: t("changelog.nav") },
+          ...(isManager ? [{ href: "/dashboard/approvals", label: t("nav.approvals"), icon: "approvals" as const, badge: pendingApprovals }] : []),
+          ...(isManager ? [{ href: "/dashboard/plan", label: t("nav.plan"), icon: "plan" as const }] : []),
+          ...(isManager ? [{ href: "/dashboard/import", label: t("nav.import"), icon: "import" as const }] : []),
+          { href: "/dashboard/notifications", label: t("nav.reminders"), icon: "reminders" as const },
+          { href: "/dashboard/settings", label: t("nav.settings"), icon: "settings" as const },
+          { href: "/dashboard/review", label: t("nav.review"), icon: "review" as const },
+          { href: "/community", label: t("community.nav"), icon: "community" as const },
+          { href: "/changelog", label: t("changelog.nav"), icon: "changelog" as const },
         ].map((i) => ({ ...i, group: t("nav.group.farm") })),
       ];
 
