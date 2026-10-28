@@ -12,6 +12,7 @@ import { getI18n } from "@/lib/i18n/server";
 export async function PublicHeader() {
   const { t } = await getI18n();
   const viewer = await getViewer();
+  // Wide screens show the five main sections; the phone menu also has the vet sign-up and log in.
   const sections: PublicLink[] = [
     { href: "/#features", label: t("footer.features") },
     { href: "/tools", label: t("tools.navFree") },
@@ -19,9 +20,8 @@ export async function PublicHeader() {
     { href: "/blog", label: t("blog.nav") },
     { href: "/community", label: t("community.nav") },
   ];
-  // Signed-in people don't need log in / sign up / "for doctors": they get their account menu instead.
   const links: PublicLink[] = viewer
-    ? sections
+    ? [...sections, { href: viewer.home, label: t("landing.goDashboard"), primary: true }]
     : [
         ...sections,
         { href: "/doctor/signup", label: t("doctor.landingLink") },
@@ -35,7 +35,7 @@ export async function PublicHeader() {
 
         {/* Wide screens: section links in the middle. */}
         <nav aria-label={t("common.menu")} className="flex items-center gap-1 max-lg:hidden">
-          {links.slice(0, viewer ? 5 : 6).map((l) => (
+          {sections.map((l) => (
             <NavLink key={l.href} href={l.href}>
               {l.label}
             </NavLink>
@@ -46,19 +46,24 @@ export async function PublicHeader() {
           <LanguageSwitcher />
           <ThemeToggle />
           {viewer ? (
-            <UserMenu
-              user={{
-                name: viewer.profile?.full_name ?? null,
-                email: viewer.user.email ?? null,
-                avatarUrl: viewer.profile?.avatar_url ?? null,
-                isSuperAdmin: !!viewer.profile?.is_super_admin,
-                isDoctor: viewer.profile?.account_type === "doctor",
-              }}
-            />
+            <>
+              <ButtonLink href={viewer.home} className="whitespace-nowrap rounded-full px-5 shadow-sm shadow-emerald-700/20 max-md:hidden">
+                {t("landing.goDashboard")}
+              </ButtonLink>
+              <UserMenu
+                user={{
+                  name: viewer.profile?.full_name ?? null,
+                  email: viewer.user.email ?? null,
+                  avatarUrl: viewer.profile?.avatar_url ?? null,
+                  isSuperAdmin: !!viewer.profile?.is_super_admin,
+                  isDoctor: viewer.profile?.account_type === "doctor",
+                }}
+              />
+            </>
           ) : (
             <div className="flex items-center gap-1.5 max-md:hidden">
               <span aria-hidden className="mx-1 h-6 w-px bg-stone-200" />
-              <ButtonLink href="/login" variant="ghost" className="rounded-full">
+              <ButtonLink href="/login" variant="ghost" className="whitespace-nowrap rounded-full">
                 {t("landing.login")}
               </ButtonLink>
               <ButtonLink href="/signup" className="whitespace-nowrap rounded-full px-5 shadow-sm shadow-emerald-700/20">
