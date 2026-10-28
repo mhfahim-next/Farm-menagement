@@ -30,7 +30,7 @@ export function NavLink({ href, children }: { href: string; children: ReactNode 
   return (
     <a
       href={href}
-      className="rounded-full px-3 py-2 text-sm font-medium text-stone-600 transition-colors hover:bg-emerald-50 hover:text-emerald-800"
+      className="whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium text-stone-600 transition-colors hover:bg-emerald-50 hover:text-emerald-800"
     >
       {children}
     </a>
