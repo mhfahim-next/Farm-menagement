@@ -19,6 +19,7 @@ export async function SiteFooter() {
       links: [
         { href: "/#features", label: t("footer.features") },
         { href: "/farm-management-software", label: t("footer.guide") },
+        { href: "/tools", label: t("tools.title") },
         { href: "/#pricing", label: t("footer.pricing") },
         ...(viewer
           ? [{ href: viewer.home, label: t("landing.goDashboard") }]

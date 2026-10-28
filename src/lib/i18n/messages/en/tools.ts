@@ -1,6 +1,10 @@
 export const tools = {
   "nav.tools": "Tools",
   "tools.title": "Farm tools",
+  "tools.navFree": "Free tools",
+  "tools.homeKicker": "Free · no sign-up needed",
+  "tools.homeTitle": "Free calculators for farmers",
+  "tools.homeBody": "Find a cow's weight with a measuring tape, plan a feed ration, work out the calving date or a fair Qurbani price. Open any tool and use it right away.",
   "tools.desc": "Free calculators for farmers: cattle weight with a tape, feed ration, poultry feed, calving date, Qurbani price and more.",
   "tools.estimate": "These are estimates from common rules of thumb. For medicine, follow the label and your vet.",
   "tools.open": "Open",
