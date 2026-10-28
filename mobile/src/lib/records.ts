@@ -428,12 +428,12 @@ export function animalEntry(i: AnimalInput, today: string):
   return { ok: true, entry, startKg: !i.id && i.fattening && start.v ? start.v : null };
 }
 
-/** Live weight of cattle from a measuring tape (Schaeffer): girth² × length ÷ 10838, in cm and kg. */
-export const tapeWeight = (girthCm: number, lengthCm: number) => Math.round(((girthCm * girthCm * lengthCm) / 10838) * 10) / 10;
+/** Live weight of cattle from a measuring tape (Schaeffer): girth² × length ÷ 10838 (or the Tools setting), in cm and kg. */
+export const tapeWeight = (girthCm: number, lengthCm: number, divisor = 10838) => Math.round(((girthCm * girthCm * lengthCm) / divisor) * 10) / 10;
 
 export type WeightEntry = { weigh_date: string; weight_kg: number; method: "scale" | "tape"; heart_girth_cm: number | null; body_length_cm: number | null };
 
-export function weightEntry(i: { date: string; method: string; kg: string; girth: string; length: string }, today: string):
+export function weightEntry(i: { date: string; method: string; kg: string; girth: string; length: string }, today: string, divisor?: number):
   | { ok: true; entry: WeightEntry }
   | Err<"rec.err.date" | "rec.err.future" | "weight.err.kg" | "weight.err.tape"> {
   if (!isDate(i.date)) return { ok: false, error: "rec.err.date" };
@@ -442,7 +442,7 @@ export function weightEntry(i: { date: string; method: string; kg: string; girth
     const g = parseNumber(i.girth);
     const l = parseNumber(i.length);
     if (!g || !l || !Number.isFinite(g) || !Number.isFinite(l) || g < 30 || g > 300 || l < 30 || l > 300) return { ok: false, error: "weight.err.tape" };
-    return { ok: true, entry: { weigh_date: i.date, weight_kg: tapeWeight(g, l), method: "tape", heart_girth_cm: g, body_length_cm: l } };
+    return { ok: true, entry: { weigh_date: i.date, weight_kg: tapeWeight(g, l, divisor), method: "tape", heart_girth_cm: g, body_length_cm: l } };
   }
   const kg = parseNumber(i.kg);
   if (kg === null || !Number.isFinite(kg) || kg <= 0 || kg > 2000) return { ok: false, error: "weight.err.kg" };

@@ -23,11 +23,13 @@ import {
   poultryFeed,
   pregnancyDates,
   tapeWeightKg,
-  UNIT_GROUPS,
+  TOOL_DEFAULTS,
+  unitGroups,
   type BirdKind,
   type Ingredient,
   type LengthUnit,
   type Species,
+  type ToolParams,
   type UnitGroup,
 } from "@/lib/tools";
 
@@ -80,7 +82,7 @@ function Big({ children, testID }: { children: ReactNode; testID?: string }) {
 
 // ---------------------------------------------------------------- 1. weight
 
-function WeightTool() {
+function WeightTool({ p }: { p: ToolParams["weight"] }) {
   const { t, n } = usePrefs();
   const theme = useTheme();
   const { current } = useSession();
@@ -92,7 +94,7 @@ function WeightTool() {
   const [girth, setGirth] = useState("");
   const [length, setLength] = useState("");
   const [picked, setPicked] = useState<string[]>([]);
-  const r = tapeWeightKg(num(girth), num(length), unit);
+  const r = tapeWeightKg(num(girth), num(length), unit, p);
   const active = (animals ?? []).filter((a) => a.status === "active");
   const cm = (v: string) => String(Math.round(num(v) * (unit === "in" ? 2.54 : 1) * 10) / 10);
   const save = () => {
@@ -127,7 +129,7 @@ function WeightTool() {
           <Big testID="weight-kg">{t("tools.weight.kg", { kg: n(r.kg, 1) })}</Big>
           <Text variant="bodyMedium">{t("tools.weight.range", { low: n(r.low), high: n(r.high) })}</Text>
           <Text variant="bodySmall" style={{ color: theme.colors.onPrimaryContainer }}>
-            {t("tools.weight.formula")}
+            {t("tools.weight.formula", { divisor: n(p.divisor) })}
           </Text>
         </Result>
       ) : (
@@ -150,7 +152,7 @@ function WeightTool() {
 
 // ---------------------------------------------------------------- 2. ration
 
-function RationTool() {
+function RationTool({ p }: { p: ToolParams }) {
   const { t, n, money } = usePrefs();
   const [kind, setKind] = useState<"dairy" | "fattening">("dairy");
   const [weight, setWeight] = useState("");
@@ -160,10 +162,10 @@ function RationTool() {
   const [mixKg, setMixKg] = useState("100");
   const [prices, setPrices] = useState<Partial<Record<Ingredient, string>>>({});
   const milkL = Number.isNaN(num(milk)) ? 0 : num(milk);
-  const r = kind === "dairy" ? dairyRation(num(weight), milkL, num(fat) || 4) : fatteningRation(num(weight), num(gain));
+  const r = kind === "dairy" ? dairyRation(num(weight), milkL, num(fat) || 4, p.ration) : fatteningRation(num(weight), num(gain), p.ration);
   const priceNums = Object.fromEntries(Object.entries(prices).map(([k, v]) => [k, num(v ?? "")]).filter(([, v]) => Number.isFinite(v as number))) as Partial<Record<Ingredient, number>>;
   const total = num(mixKg) > 0 ? num(mixKg) : 100;
-  const mix = mixFor(kind, total, priceNums);
+  const mix = mixFor(kind, total, priceNums, p);
   const kg = (v: number) => `${n(v, 1)} ${t("tools.unit.kg")}`;
   return (
     <>
@@ -239,14 +241,14 @@ function RationTool() {
 
 // ---------------------------------------------------------------- 3. poultry
 
-function PoultryTool() {
+function PoultryTool({ p }: { p: ToolParams["poultry"] }) {
   const { t, n, money } = usePrefs();
   const [kind, setKind] = useState<BirdKind>("layer");
   const [birds, setBirds] = useState("");
   const [age, setAge] = useState("");
   const [price, setPrice] = useState("");
   const [hot, setHot] = useState(false);
-  const r = poultryFeed(kind, num(birds), num(age), { bagPrice: num(price), hot });
+  const r = poultryFeed(kind, num(birds), num(age), { bagPrice: num(price), hot }, p);
   return (
     <>
       <SegmentedButtons
@@ -256,7 +258,7 @@ function PoultryTool() {
       />
       <NumberField label={t("tools.poultry.birds")} value={birds} onChange={setBirds} testID="birds" />
       <NumberField label={t("tools.poultry.age")} value={age} onChange={setAge} testID="age" />
-      <NumberField label={t("tools.poultry.bagPrice")} value={price} onChange={setPrice} testID="bag-price" />
+      <NumberField label={t("tools.poultry.bagPrice", { kg: n(p.bagKg) })} value={price} onChange={setPrice} testID="bag-price" />
       <Checkbox.Item label={t("tools.poultry.hot")} status={hot ? "checked" : "unchecked"} onPress={() => setHot(!hot)} mode="android" position="leading" testID="hot" />
       {r ? (
         <Result>
@@ -284,12 +286,12 @@ function PoultryTool() {
 
 // ---------------------------------------------------------------- 4. pregnancy
 
-function PregTool() {
+function PregTool({ p }: { p: ToolParams }) {
   const { t, n, date: fmt } = usePrefs();
   const today = farmToday();
   const [species, setSpecies] = useState<Species>("cattle");
   const [date, setDate] = useState(today);
-  const r = pregnancyDates(species, date, today);
+  const r = pregnancyDates(species, date, today, undefined, p);
   const when = (d: string) => {
     const days = Math.round((Date.parse(d) - Date.parse(today)) / 86_400_000);
     return `${fmt(d)} · ${days >= 0 ? t("tools.preg.left", { n: n(days) }) : t("tools.preg.past", { n: n(-days) })}`;
@@ -321,13 +323,13 @@ function PregTool() {
 
 // ---------------------------------------------------------------- 5. Qurbani
 
-function QurbaniTool() {
+function QurbaniTool({ p }: { p: ToolParams["meat"] }) {
   const { t, n, money } = usePrefs();
   const [species, setSpecies] = useState<"cattle" | "goat">("cattle");
   const [live, setLive] = useState("");
   const [price, setPrice] = useState("");
   const [cost, setCost] = useState("");
-  const r = meatValue(species, num(live), num(price) || undefined, Number.isNaN(num(cost)) ? undefined : num(cost));
+  const r = meatValue(species, num(live), num(price) || undefined, Number.isNaN(num(cost)) ? undefined : num(cost), p);
   return (
     <>
       <SegmentedButtons
@@ -365,15 +367,15 @@ function QurbaniTool() {
 
 const FIRST: Record<UnitGroup, [string, string]> = { weight: ["maund", "kg"], count: ["tray", "piece"], length: ["inch", "cm"], land: ["bigha", "decimal"] };
 
-function UnitsTool() {
+function UnitsTool({ p }: { p: ToolParams["units"] }) {
   const { t, n } = usePrefs();
   const [group, setGroup] = useState<UnitGroup>("weight");
   const [from, setFrom] = useState("maund");
   const [to, setTo] = useState("kg");
   const [value, setValue] = useState("1");
-  const units = Object.keys(UNIT_GROUPS[group]);
+  const units = Object.keys(unitGroups(p)[group]);
   const label = (u: string) => t(`tools.unit.${u}` as MessageKey);
-  const res = units.includes(from) && units.includes(to) ? convertUnit(group, num(value), from as never, to as never) : null;
+  const res = units.includes(from) && units.includes(to) ? convertUnit(group, num(value), from as never, to as never, p) : null;
   return (
     <>
       <ChoiceChips
@@ -404,14 +406,14 @@ function UnitsTool() {
 
 // ---------------------------------------------------------------- 7. dose
 
-function DoseTool() {
+function DoseTool({ p }: { p: ToolParams["dose"] }) {
   const { t, n } = usePrefs();
   const theme = useTheme();
   const [weight, setWeight] = useState("");
   const [mgPerKg, setMgPerKg] = useState("");
   const [form, setForm] = useState<"liquid" | "tablet">("liquid");
   const [strength, setStrength] = useState("");
-  const r = doseFor(num(weight), num(mgPerKg), form === "liquid" ? { mgPerMl: num(strength) } : { mgPerTablet: num(strength) });
+  const r = doseFor(num(weight), num(mgPerKg), form === "liquid" ? { mgPerMl: num(strength) } : { mgPerTablet: num(strength) }, p);
   return (
     <>
       <Card mode="contained" style={[styles.card, { backgroundColor: theme.colors.tertiaryContainer }]}>
@@ -447,13 +449,13 @@ function DoseTool() {
 
 // ---------------------------------------------------------------- 8. fodder
 
-function FodderTool() {
+function FodderTool({ p }: { p: ToolParams["fodder"] }) {
   const { t, n } = usePrefs();
   const [animals, setAnimals] = useState("");
-  const [kgDay, setKgDay] = useState("25");
-  const [yieldT, setYieldT] = useState("70");
+  const [kgDay, setKgDay] = useState(String(p.kgPerDay));
+  const [yieldT, setYieldT] = useState(String(p.tonnesPerAcre));
   const [days, setDays] = useState("");
-  const r = fodderPlan(num(animals), num(kgDay), num(yieldT), Number.isNaN(num(days)) ? 0 : num(days));
+  const r = fodderPlan(num(animals), num(kgDay), num(yieldT), Number.isNaN(num(days)) ? 0 : num(days), p);
   return (
     <>
       <NumberField label={t("tools.fodder.animals")} value={animals} onChange={setAnimals} testID="f-animals" />
@@ -480,14 +482,14 @@ function FodderTool() {
 
 // ---------------------------------------------------------------- 9. milk price
 
-function MilkTool() {
+function MilkTool({ p }: { p: ToolParams["milk"] }) {
   const { t, money } = usePrefs();
   const [fat, setFat] = useState("");
-  const [snf, setSnf] = useState("8.5");
-  const [fatRate, setFatRate] = useState("600");
-  const [snfRate, setSnfRate] = useState("400");
+  const [snf, setSnf] = useState(String(p.snf));
+  const [fatRate, setFatRate] = useState(String(p.fatRate));
+  const [snfRate, setSnfRate] = useState(String(p.snfRate));
   const [litres, setLitres] = useState("");
-  const r = milkPrice(num(fat), num(snf), num(fatRate), num(snfRate), num(litres) || 0);
+  const r = milkPrice(num(fat), num(snf), num(fatRate), num(snfRate), num(litres) || 0, p);
   return (
     <>
       <NumberField label={t("tools.milk.fat")} value={fat} onChange={setFat} testID="m-fat" />
@@ -509,26 +511,27 @@ function MilkTool() {
   );
 }
 
-export function FarmTool({ slug }: { slug: ToolSlug }) {
+/** One tool by its slug; `params` are the numbers to calculate with (defaults plus a super admin's changes). */
+export function FarmTool({ slug, params = TOOL_DEFAULTS }: { slug: ToolSlug; params?: ToolParams }) {
   switch (slug) {
     case "cattle-weight":
-      return <WeightTool />;
+      return <WeightTool p={params.weight} />;
     case "feed-ration":
-      return <RationTool />;
+      return <RationTool p={params} />;
     case "poultry-feed":
-      return <PoultryTool />;
+      return <PoultryTool p={params.poultry} />;
     case "calving-date":
-      return <PregTool />;
+      return <PregTool p={params} />;
     case "qurbani-price":
-      return <QurbaniTool />;
+      return <QurbaniTool p={params.meat} />;
     case "unit-converter":
-      return <UnitsTool />;
+      return <UnitsTool p={params.units} />;
     case "medicine-dose":
-      return <DoseTool />;
+      return <DoseTool p={params.dose} />;
     case "fodder-land":
-      return <FodderTool />;
+      return <FodderTool p={params.fodder} />;
     case "milk-price":
-      return <MilkTool />;
+      return <MilkTool p={params.milk} />;
   }
 }
 

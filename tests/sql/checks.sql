@@ -130,6 +130,27 @@ begin
   end;
   if not v_ok then raise exception 'a farmer could read reminder stats'; end if;
 
+  -- tool settings: everyone reads them, only super admins change them
+  perform 1 from public.tool_settings;
+  v_ok := false;
+  begin
+    perform public.admin_save_tool_params('weight', '{"divisor": 9000}'::jsonb);
+  exception when others then v_ok := true;
+  end;
+  if not v_ok then raise exception 'a farmer could change the tool settings'; end if;
+  v_ok := false;
+  begin
+    insert into public.tool_settings (tool, params) values ('weight', '{"divisor": 9000}'::jsonb);
+  exception when others then v_ok := true;
+  end;
+  if not v_ok then raise exception 'a farmer could write tool_settings directly'; end if;
+  v_ok := false;
+  begin
+    perform public.admin_reset_tool_params();
+  exception when others then v_ok := true;
+  end;
+  if not v_ok then raise exception 'a farmer could reset the tool settings'; end if;
+
   -- farm settings: the owner can change every kind and the profit-per-animal switch
   update public.farms set has_goat = false, has_broiler = false, show_animal_profit = false where id = v_farm;
   if (select has_goat or has_broiler or show_animal_profit from public.farms where id = v_farm) then

@@ -12,12 +12,13 @@ export type WeightRecord = {
 
 /**
  * Live weight from a measuring tape (Schaeffer's formula, metric):
- * kg = heart girth (cm)² × body length (cm) ÷ 10,838.
- * Accurate to roughly ±5–10 % for adult cattle — good when there is no scale.
+ * kg = heart girth (cm)² × body length (cm) ÷ 10,838 (a super admin can change
+ * the divisor for the Tools; pass it in). Accurate to roughly ±5–10 % for adult
+ * cattle — good when there is no scale.
  */
-export function tapeWeight(heartGirthCm: number, bodyLengthCm: number) {
+export function tapeWeight(heartGirthCm: number, bodyLengthCm: number, divisor = 10838) {
   if (!(heartGirthCm > 0) || !(bodyLengthCm > 0)) return null;
-  return Math.round(((heartGirthCm * heartGirthCm * bodyLengthCm) / 10838) * 10) / 10;
+  return Math.round(((heartGirthCm * heartGirthCm * bodyLengthCm) / divisor) * 10) / 10;
 }
 
 const day = (d: string) => Date.parse(d + "T00:00:00Z") / 86_400_000;

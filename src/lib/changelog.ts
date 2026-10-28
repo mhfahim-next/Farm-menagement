@@ -71,6 +71,19 @@ export const UPCOMING: Upcoming[] = [
 
 export const RELEASES: Release[] = [
   {
+    id: "2026-11-01-tools-numbers",
+    date: "2026-11-01",
+    title: { en: "Free tools on the home page, with adjustable numbers", bn: "হোম পেজে ফ্রি টুলস, হিসাবের মান বদলানো যায়" },
+    summary: {
+      en: "The free farm tools are now on the home page and in the menus, and the numbers behind them can be tuned for local practice.",
+      bn: "খামারের ফ্রি টুলস এখন হোম পেজে আর মেনুতে, আর এগুলোর পেছনের হিসাবের মান স্থানীয় প্রচলন অনুযায়ী ঠিক করা যায়।",
+    },
+    changes: [
+      { type: "improved", en: "Home page: a Free tools section, and Free tools links in the top menu and the footer.", bn: "হোম পেজে ফ্রি টুলসের অংশ, আর উপরের মেনু ও ফুটারে ফ্রি টুলসের লিংক।" },
+      { type: "new", en: "The tape formula, ration shares, feed tables, gestation days, meat share and local unit sizes (like the bigha) can be adjusted by FarmFlows; the website and the app use the same numbers.", bn: "ফিতার সূত্র, রেশনের অনুপাত, খাবারের তালিকা, গর্ভকাল, মাংসের অনুপাত আর স্থানীয় এককের মাপ (যেমন বিঘা) FarmFlows ঠিক করতে পারে; ওয়েবসাইট আর অ্যাপ একই মান ব্যবহার করে।" },
+    ],
+  },
+  {
     id: "2026-10-31-farm-tools",
     date: "2026-10-31",
     title: { en: "Farm tools: weight by tape, feed ration and more", bn: "খামারের টুলস: ফিতায় ওজন, খাদ্য রেশন আরও অনেক কিছু" },

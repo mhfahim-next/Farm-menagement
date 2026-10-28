@@ -109,8 +109,15 @@ A super admin controls the whole system from `/admin` (only they can open it; ev
 | Requests | Approve / reject upgrade and support requests |
 | Blog | Write, edit, publish and delete public blog articles (Bangla + English) |
 | Dropdowns | Every dropdown in the app (see below) |
+| Tools numbers | The rules of thumb behind the free farm tools (see below) |
 | Audit log | Every admin action: who, what, when |
 | Announcement | A banner shown at the top of every user's dashboard (English + Bangla) and the **breeding rules** (pregnancy check due N days after AI, default 45) |
+
+### Tools numbers
+
+The nine farm tools (`/tools`, the dashboard's Tools menu and the app) calculate with built-in defaults kept in `src/lib/tools.ts` (copied into the app): the tape formula divisor (10,838), ration shares, the home-made mixes, poultry feed tables by week, gestation and heat-cycle days per species, the carcass share, the size of local units (maund, seer, hand, decimal, katha, bigha), the tablet rounding step, silage density, and the starting values of the fodder and milk-price tools.
+
+In *Admin → Tools numbers* a super admin can change any of them. A box left empty uses the default, and **only the values that differ from the defaults are stored** (table `tool_settings`, one row per group); with no row the tools use their defaults. Every value is checked against an allowed range (a mix has to add up to 100 %), and a stored value that no longer fits is ignored, so the tools never break. *Back to defaults* (per group or for every tool) deletes the stored values. The website reads the table through a cache that is cleared on every save; the app reads it when online and keeps the last copy for offline use. The tape divisor is also used when a tape weight is saved to an animal (website, app and AI assistant). Every change is in the audit log.
 
 ### Dropdowns
 

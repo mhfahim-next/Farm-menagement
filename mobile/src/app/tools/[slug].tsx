@@ -4,6 +4,7 @@ import { Appbar, Text, useTheme } from "react-native-paper";
 import { FarmTool } from "@/components/farm-tools";
 import { usePrefs } from "@/lib/prefs";
 import { toolBySlug, toolName, toolShort } from "@/lib/tool-list";
+import { useToolParams } from "@/lib/tool-params";
 
 /** One farm calculator. */
 export default function ToolScreen() {
@@ -11,6 +12,7 @@ export default function ToolScreen() {
   const { t } = usePrefs();
   const theme = useTheme();
   const tool = toolBySlug(slug ?? "");
+  const params = useToolParams();
   return (
     <KeyboardAvoidingView style={[styles.flex, { backgroundColor: theme.colors.background }]} behavior={Platform.OS === "ios" ? "padding" : undefined} testID={`tool-screen-${slug}`}>
       <Appbar.Header mode="small" elevated={false}>
@@ -24,7 +26,7 @@ export default function ToolScreen() {
               <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
                 {t(toolShort(tool.key))}
               </Text>
-              <FarmTool slug={tool.slug} />
+              <FarmTool slug={tool.slug} params={params} />
               <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
                 {t("tools.estimate")}
               </Text>

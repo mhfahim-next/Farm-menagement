@@ -21,6 +21,7 @@ import { getAllBreedingRules } from "@/lib/breeding-data";
 import { ageInMonths, today } from "@/lib/format";
 import { dueItems, dueLabel } from "@/lib/health";
 import { getI18n } from "@/lib/i18n/server";
+import { getToolParams } from "@/lib/tool-params";
 import { weightSummary, type WeightRecord } from "@/lib/weights";
 import type { BreedingEvent, Cattle, HealthRecord, MilkRecord } from "@/lib/types";
 import { deleteBreedingEvent, logBreedingEvent } from "../../breeding/actions";
@@ -311,7 +312,7 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
         <Card title={t("weight.title")} description={t("weight.desc")}>
           {canWrite && (
             <ActionDisclosure label={t("weight.add")} open={weights.length === 0} testId="record-weight">
-              <WeightForm action={addWeight} cattleId={cow.id} today={today()} allowTape={group === "cattle"} />
+              <WeightForm action={addWeight} cattleId={cow.id} today={today()} allowTape={group === "cattle"} divisor={(await getToolParams()).params.weight.divisor} />
             </ActionDisclosure>
           )}
           {weights.length === 0 ? (

@@ -13,18 +13,21 @@ export function WeightForm({
   cattleId,
   today,
   allowTape = true,
+  divisor,
 }: {
   action: (state: ActionState, formData: FormData) => Promise<ActionState>;
   cattleId: string;
   today: string;
   /** The tape formula is for cattle; goats and sheep use a scale or an estimate. */
   allowTape?: boolean;
+  /** Tape formula divisor (the Tools setting), so the shown weight matches what is saved. */
+  divisor?: number;
 }) {
   const { t, f } = useI18n();
   const [method, setMethod] = useState("scale");
   const [girth, setGirth] = useState("");
   const [length, setLength] = useState("");
-  const tape = method === "tape" ? tapeWeight(Number(girth), Number(length)) : null;
+  const tape = method === "tape" ? tapeWeight(Number(girth), Number(length), divisor) : null;
 
   return (
     <ActionForm action={action} submitLabel={t("weight.save")} className="grid gap-3">

@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { FarmContext } from "@/lib/auth";
 import { animalLabel } from "@/lib/cattle";
 import { today } from "@/lib/format";
+import { getToolParams } from "@/lib/tool-params";
 import { tapeWeight } from "@/lib/weights";
 import type { I18n } from "@/lib/i18n/core";
 import type { AiConfig } from "./config";
@@ -298,7 +299,7 @@ async function propose(ctx: Ctx, name: string, input: Input): Promise<Proposal> 
     const lines: string[] = [animalLabel(a)];
     if (kg === null && girth !== null && length !== null) {
       method = "tape";
-      kg = tapeWeight(girth, length);
+      kg = tapeWeight(girth, length, (await getToolParams()).params.weight.divisor);
     }
     if (kg === null || kg <= 0 || kg > 2000) throw new ToolError("Give the weight in kg, or heart girth and body length in cm from a measuring tape.");
     fields.push(["method", method], ["weight_kg", String(kg)]);
