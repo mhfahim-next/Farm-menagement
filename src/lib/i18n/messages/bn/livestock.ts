@@ -15,7 +15,7 @@ export const livestock: Record<keyof typeof en, string> = {
   "nav.goats": "ছাগল ও ভেড়া",
   "nav.fattening": "মোটাতাজা / কোরবানি",
   "nav.broilers": "ব্রয়লার ব্যাচ",
-  "nav.group.livestock": "গবাদিপশু",
+  "nav.group.livestock": "পশুপালন",
   "nav.group.goat": "ছাগলের খামার",
   "nav.group.poultry": "পোল্ট্রি",
   "nav.group.broiler": "ব্রয়লার খামার",
