@@ -13,6 +13,7 @@ import { tapeWeight, weightEntry } from "@/lib/records";
 import { useSession } from "@/lib/session";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/lib/toast";
+import { useToolParams } from "@/lib/tool-params";
 
 /** A weight from the scale, or worked out from a measuring tape (cattle). */
 export default function WeightRecord() {
@@ -24,6 +25,7 @@ export default function WeightRecord() {
   const a = (animals ?? []).find((x) => x.id === animal);
   const cattle = (a?.species ?? "cattle") === "cattle";
   const toast = useToast();
+  const divisor = useToolParams().weight.divisor;
   const [method, setMethod] = useState(g0 && l0 ? "tape" : "scale");
   const [kg, setKg] = useState(kg0 ?? "");
   const [girth, setGirth] = useState(g0 ?? "");
@@ -34,11 +36,11 @@ export default function WeightRecord() {
   const [busy, setBusy] = useState(false);
   const g = parseNumber(girth);
   const l = parseNumber(length);
-  const tapeKg = g && l && Number.isFinite(g) && Number.isFinite(l) ? tapeWeight(g, l) : null;
+  const tapeKg = g && l && Number.isFinite(g) && Number.isFinite(l) ? tapeWeight(g, l, divisor) : null;
 
   const submit = async () => {
     if (!farm || !animal) return;
-    const r = weightEntry({ date, method, kg, girth, length }, farmToday());
+    const r = weightEntry({ date, method, kg, girth, length }, farmToday(), divisor);
     if (!r.ok) return setError(t(r.error));
     setError(null);
     setBusy(true);

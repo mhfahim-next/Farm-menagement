@@ -34,6 +34,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
     { href: "/admin/site", label: t("nav.adminSite") },
     { href: "/admin/ai", label: t("nav.adminAi") },
     { href: "/admin/options", label: t("nav.adminOptions") },
+    { href: "/admin/tools", label: t("nav.adminTools") },
     { href: "/admin/audit", label: t("nav.adminAudit") },
     { href: "/admin/settings", label: t("nav.adminSettings") },
     { href: "/dashboard", label: `← ${t("menu.backToApp")}` },

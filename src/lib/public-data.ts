@@ -120,3 +120,16 @@ export async function safe<T>(load: () => Promise<T>, fallback: T): Promise<T> {
     return fallback;
   }
 }
+
+export const TOOLS_TAG = "tool-settings";
+
+/** The admin's changes to the farm tools' numbers (usually none: the tools then use their defaults). */
+export const getCachedToolRows = unstable_cache(
+  async (): Promise<{ tool: string; params: unknown }[]> => {
+    const { data, error } = await createPublicClient().from("tool_settings").select("tool, params");
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  },
+  ["tool-settings-v1"],
+  { tags: [TOOLS_TAG], revalidate: 3600 },
+);

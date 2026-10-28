@@ -10,6 +10,7 @@ import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import { langAlternates, SITE_NAME, SITE_URL } from "@/lib/site";
 import { TOOLS, toolBySlug, toolName, toolShort } from "@/lib/tool-list";
+import { getToolParams } from "@/lib/tool-params";
 
 export function generateStaticParams() {
   return TOOLS.map((t) => ({ slug: t.slug }));
@@ -33,7 +34,7 @@ export default async function PublicToolPage({ params }: PageProps<"/tools/[slug
   const tool = toolBySlug((await params).slug);
   if (!tool) notFound();
   const { t, locale } = await getI18n();
-  const viewer = await getViewer();
+  const [viewer, { params: toolParams }] = await Promise.all([getViewer(), getToolParams()]);
   const url = `${SITE_URL}/tools/${tool.slug}`;
   return (
     <div className="flex flex-1 flex-col">
@@ -73,7 +74,7 @@ export default async function PublicToolPage({ params }: PageProps<"/tools/[slug
         </h1>
         <p className="mt-2 text-stone-600">{t(toolShort(tool.key))}</p>
         <div className="mt-6 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:p-6">
-          <FarmTool slug={tool.slug} today={today()} />
+          <FarmTool slug={tool.slug} today={today()} params={toolParams} />
         </div>
         <section className="mt-10 rounded-2xl bg-emerald-50 p-6">
           <h2 className="text-lg font-semibold text-emerald-950">{t("tools.ctaTitle")}</h2>

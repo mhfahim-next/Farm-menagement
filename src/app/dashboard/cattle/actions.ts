@@ -5,7 +5,9 @@ import { MANAGERS, requireRole, STAFF } from "@/lib/auth";
 import { dbError, num, str } from "@/lib/form";
 import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
+import { getToolParams } from "@/lib/tool-params";
 import type { ActionState } from "@/lib/types";
+import { tapeWeight } from "@/lib/weights";
 
 /**
  * Checks the chosen mother (empty = unknown). The database enforces the same
@@ -173,7 +175,7 @@ export async function addWeight(_: ActionState, formData: FormData): Promise<Act
   if (!cattleId || !date) return { error: t("weight.err.date") };
   if (!WEIGH_METHODS.includes(method)) return { error: t("common.errorGeneric") };
   // With the tape method the weight is worked out on the server too, from the two measurements.
-  if (method === "tape" && girth && length) kg = Math.round(((girth * girth * length) / 10838) * 10) / 10;
+  if (method === "tape" && girth && length) kg = tapeWeight(girth, length, (await getToolParams()).params.weight.divisor);
   if (!kg || kg <= 0 || kg > 2000) return { error: t("weight.err.kg") };
 
   const { error } = await supabase.from("cattle_weights").insert({
