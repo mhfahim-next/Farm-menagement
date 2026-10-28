@@ -75,11 +75,13 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
         { href: "/dashboard/breeding", label: t("nav.breeding") },
         { href: "/dashboard/approvals", label: t("nav.approvals") },
         { href: "/dashboard/notifications", label: t("nav.reminders") },
+        { href: "/dashboard/tools", label: `🧮 ${t("nav.tools")}` },
         { href: "/doctor", label: `← ${t("doctor.consoleNav")}` },
       ]
     : [
         { href: "/dashboard", label: t("nav.overview") },
         ...(isStaff ? [{ href: "/dashboard/quick", label: `⚡ ${t("nav.quick")}` }] : []),
+        { href: "/dashboard/tools", label: `🧮 ${t("nav.tools")}` },
         ...(keepsAnimals(farm)
           ? [
               ...(keepsCattle(farm) ? [{ href: "/dashboard/cattle", label: t("nav.cattle") }] : []),

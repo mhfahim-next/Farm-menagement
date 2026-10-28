@@ -62,6 +62,7 @@ export default function Entry() {
     ...(staff ? [{ key: "sale", icon: "cart-outline", label: t("sale.newSale"), hint: t("hub.saleHint"), go: () => router.push("/record/sale"), testID: "quick-sale" }] : []),
     ...(staff ? [{ key: "expense", icon: "cash-minus", label: t("txn.short"), hint: t("hub.expenseHint"), go: () => router.push("/record/expense"), testID: "quick-expense" }] : []),
     ...(staff ? [{ key: "stock", icon: "warehouse", label: t("hub.stock"), hint: t("hub.stockHint"), go: () => router.push("/stock"), testID: "quick-stock" }] : []),
+    { key: "tools", icon: "calculator-variant-outline", label: t("tools.title"), hint: t("tools.menuHint"), go: () => router.push("/tools"), testID: "quick-tools" },
     ...(isManager(current.role) ? [{ key: "attendance", icon: "calendar-check-outline", label: t("staff.attendance"), hint: t("hub.attendanceHint"), go: () => router.push("/staff/attendance"), testID: "quick-attendance" }] : []),
   ];
 
