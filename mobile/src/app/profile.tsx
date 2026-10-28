@@ -5,7 +5,7 @@ import { Button, Card, Dialog, Portal, Text, TextInput, useTheme } from "react-n
 import { FormError } from "@/components/form-error";
 import { FormScreen } from "@/components/form-screen";
 import { PhotoPicker } from "@/components/photo-picker";
-import { photoUrl, removePhoto, uploadPhoto } from "@/lib/photos";
+import { photoUrl, removeAccountFiles, removePhoto, uploadPhoto } from "@/lib/photos";
 import { usePrefs } from "@/lib/prefs";
 import { useSession } from "@/lib/session";
 import { supabase } from "@/lib/supabase";
@@ -70,6 +70,10 @@ export default function Profile() {
 
   const deleteAccount = async () => {
     if (confirmWord.trim().toLowerCase() !== word.toLowerCase()) return setDelError(t("profile.typeWord", { word }));
+    if (uid) {
+      const files = await removeAccountFiles(uid);
+      if (files.shared.length) return setDelError(t("profile.sharedFarm", { farms: files.shared.join(", ") }));
+    }
     const { error: e } = await supabase.rpc("delete_my_account");
     if (e) {
       const shared = /SHARED_FARM:(.+)/.exec(e.message)?.[1];

@@ -138,7 +138,7 @@ export default function Home() {
         </View>
 
         <Card mode="outlined" style={styles.coming}>
-          <Card.Title title={t("home.comingTitle")} titleVariant="titleMedium" left={(p) => <Icon {...p} source="rocket-launch-outline" color={theme.colors.primary} />} />
+          <Card.Title title={t("home.comingTitle")} titleVariant="titleMedium" left={(p) => <Icon {...p} source="monitor-cellphone" color={theme.colors.primary} />} />
           <Card.Content>
             <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
               {t("home.comingBody")}

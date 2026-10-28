@@ -941,8 +941,8 @@ export const en = {
   "home.eggsToday": "Eggs today",
   "home.litres": "{n} L",
   "home.planBadge": "{plan} plan",
-  "home.comingTitle": "Coming next",
-  "home.comingBody": "Vaccines, breeding, sales and profit are on their way to the app. Meanwhile everything works on the website with the same account.",
+  "home.comingTitle": "On your computer too",
+  "home.comingBody": "The same account works on farmflows.app, with extras like importing from Excel, printing ear tags and the AI assistant.",
   "home.openWeb": "Open the full dashboard",
 
   "more.title": "More",
@@ -959,6 +959,7 @@ export const en = {
   "more.help": "Help & support",
   "more.privacy": "Privacy policy",
   "more.terms": "Terms",
+  "more.deleteHint": "Delete your account and farm data (in your profile)",
   "more.logout": "Sign out",
   "more.logoutConfirm": "Sign out of FarmFlows on this phone?",
   "more.version": "Version {v}",

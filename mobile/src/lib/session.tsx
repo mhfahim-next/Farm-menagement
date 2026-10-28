@@ -4,6 +4,7 @@
 import type { Session } from "@supabase/supabase-js";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Farm, Membership } from "./farm";
+import { clearCache } from "./cache";
 import { getItem, KEYS, setItem } from "./storage";
 import { supabase } from "./supabase";
 
@@ -97,6 +98,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       reload: load,
       signOut: async () => {
         await supabase.auth.signOut();
+        clearCache();
         setItem(KEYS.farm, null);
         setItem(KEYS.planPending, null);
         setFarmId(null);

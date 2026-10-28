@@ -71,6 +71,22 @@ export const UPCOMING: Upcoming[] = [
 
 export const RELEASES: Release[] = [
   {
+    id: "2026-11-02-play-store-ready",
+    date: "2026-11-02",
+    title: { en: "Getting the app ready for Google Play", bn: "Google Play-এর জন্য অ্যাপ প্রস্তুত" },
+    summary: {
+      en: "Clearer privacy, an easy way to delete your account, and an app that asks for fewer permissions.",
+      bn: "আরও পরিষ্কার গোপনীয়তা নীতি, সহজে অ্যাকাউন্ট মোছার ব্যবস্থা, আর অ্যাপ এখন কম অনুমতি চায়।",
+    },
+    changes: [
+      { type: "new", en: "A page that explains how to delete your account and what is deleted: farmflows.app/delete-account.", bn: "অ্যাকাউন্ট কীভাবে মুছবেন আর কী কী মুছে যায়, তার পাতা: farmflows.app/delete-account।" },
+      { type: "improved", en: "Deleting your account now also removes your profile photo and your animals' photos.", bn: "অ্যাকাউন্ট মুছলে এখন প্রোফাইল ছবি আর পশুর ছবিও মুছে যায়।" },
+      { type: "improved", en: "App: Delete account in the More tab; signing out clears the farm data kept on the phone.", bn: "অ্যাপ: “আরও” ট্যাবে অ্যাকাউন্ট মুছুন; লগআউট করলে ফোনে রাখা খামারের তথ্য মুছে যায়।" },
+      { type: "improved", en: "App: no access to your photo library, microphone or location is asked for; pictures are chosen with Android's photo picker.", bn: "অ্যাপ: ফটো লাইব্রেরি, মাইক্রোফোন বা লোকেশনের অনুমতি চায় না; ছবি বাছা হয় অ্যান্ড্রয়েডের ফটো পিকার দিয়ে।" },
+      { type: "improved", en: "Privacy policy now covers the Android app, payments and how to delete your data.", bn: "গোপনীয়তা নীতিতে এখন অ্যান্ড্রয়েড অ্যাপ, পেমেন্ট আর তথ্য মোছার কথা আছে।" },
+    ],
+  },
+  {
     id: "2026-11-01-tools-numbers",
     date: "2026-11-01",
     title: { en: "Free tools on the home page, with adjustable numbers", bn: "হোম পেজে ফ্রি টুলস, হিসাবের মান বদলানো যায়" },
