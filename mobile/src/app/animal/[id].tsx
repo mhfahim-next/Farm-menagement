@@ -7,7 +7,7 @@ import { FormError } from "@/components/form-error";
 import { OfflineNote } from "@/components/offline-note";
 import { useCached } from "@/lib/cache";
 import { RecordMenu } from "@/components/record-menu";
-import { deleteRow, isManager, isStaff, useOptions } from "@/lib/data";
+import { fetchAnimalDetail, isManager, isStaff, minusDays, useOptions } from "@/lib/data";
 import { fattenStats } from "@/lib/fattening";
 import { useToast } from "@/lib/toast";
 import { useSession } from "@/lib/session";
@@ -16,100 +16,8 @@ import { siteLink } from "@/lib/env";
 import { ageParts, optionLabel } from "@/lib/options";
 import { photoUrl } from "@/lib/photos";
 import { usePrefs } from "@/lib/prefs";
-import { supabase } from "@/lib/supabase";
-
-type Detail = {
-  animal: {
-    id: string;
-    tag_number: string;
-    name: string | null;
-    breed: string | null;
-    category: string;
-    status: string;
-    species: string | null;
-    date_of_birth: string | null;
-    purchase_date: string | null;
-    father: string | null;
-    photo_path: string | null;
-    purchase_price: number | null;
-    is_fattening: boolean;
-    fattening_start: string | null;
-    target_weight_kg: number | null;
-    created_at: string;
-    mother: { tag_number: string; name: string | null } | null;
-  } | null;
-  weights: { id: string; weigh_date: string; weight_kg: number; method: string }[];
-  costs: number;
-  sale: { sale_date: string; amount: number } | null;
-  settings: { targetDate: string | null; dailyCost: number; pricePerKg: number };
-  milk: { record_date: string; quantity_liters: number }[];
-  health: { id: string; record_date: string; record_type: string; description: string | null; product: string | null; next_due_date: string | null; cost: number | null }[];
-  breeding: { id: string; event_date: string; event_type: string; result: string | null; expected_calving_date: string | null; cost: number | null }[];
-};
-
-async function fetchDetail(id: string, since: string): Promise<Detail> {
-  const [a, milk, health, breeding, weights, sale, sys] = await Promise.all([
-    supabase
-      .from("cattle")
-      .select(
-        "id, farm_id, tag_number, name, breed, category, status, species, date_of_birth, purchase_date, purchase_price, father, mother_id, photo_path, is_fattening, fattening_start, target_weight_kg, created_at",
-      )
-      .eq("id", id)
-      .is("deleted_at", null)
-      .maybeSingle(),
-    supabase.from("milk_records").select("record_date, quantity_liters").eq("cattle_id", id).gte("record_date", since),
-    supabase
-      .from("health_records")
-      .select("id, record_date, record_type, description, product, next_due_date, cost")
-      .eq("cattle_id", id)
-      .order("record_date", { ascending: false })
-      .limit(20),
-    supabase
-      .from("breeding_events")
-      .select("id, event_date, event_type, result, expected_calving_date, cost")
-      .eq("cattle_id", id)
-      .order("event_date", { ascending: false })
-      .limit(20),
-    supabase
-      .from("cattle_weights")
-      .select("id, weigh_date, weight_kg, method")
-      .eq("cattle_id", id)
-      .order("weigh_date", { ascending: false })
-      .order("created_at", { ascending: false }),
-    supabase.from("sales").select("sale_date, amount").eq("cattle_id", id).eq("product", "animal").order("sale_date", { ascending: false }).limit(1).maybeSingle(),
-    supabase.from("system_settings").select("qurbani_date").eq("id", 1).maybeSingle(),
-  ]);
-  const err = a.error ?? milk.error ?? health.error ?? breeding.error ?? weights.error;
-  if (err) throw new Error(err.message);
-  const row = a.data as (Omit<NonNullable<Detail["animal"]>, "mother"> & { mother_id: string | null; farm_id: string }) | null;
-  // The mother is another row of the same table.
-  const mother = row?.mother_id ? await supabase.from("cattle").select("tag_number, name").eq("id", row.mother_id).maybeSingle() : null;
-  if (mother?.error) throw new Error(mother.error.message);
-  // The farm's fattening numbers (the row is per farm; RLS shows only the farms you belong to).
-  const fs = row?.is_fattening
-    ? (await supabase.from("fattening_settings").select("target_date, daily_cost_cattle, daily_cost_goat, price_kg_cattle, price_kg_goat").eq("farm_id", row.farm_id).maybeSingle()).data
-    : null;
-  const small = row?.species === "goat" || row?.species === "sheep";
-  const s = (fs ?? {}) as { target_date?: string | null; daily_cost_cattle?: number | null; daily_cost_goat?: number | null; price_kg_cattle?: number | null; price_kg_goat?: number | null };
-  const healthRows = (health.data ?? []) as Detail["health"];
-  const breedingRows = (breeding.data ?? []) as Detail["breeding"];
-  return {
-    animal: row ? { ...row, mother: (mother?.data as NonNullable<Detail["animal"]>["mother"]) ?? null } : null,
-    milk: (milk.data ?? []) as Detail["milk"],
-    health: healthRows,
-    breeding: breedingRows,
-    weights: (weights.data ?? []) as Detail["weights"],
-    costs: [...healthRows, ...breedingRows].reduce((sum, r) => sum + Number(r.cost ?? 0), 0),
-    sale: (sale.data as Detail["sale"]) ?? null,
-    settings: {
-      targetDate: s.target_date ?? ((sys.data as { qurbani_date: string | null } | null)?.qurbani_date ?? null),
-      dailyCost: Number((small ? s.daily_cost_goat : s.daily_cost_cattle) ?? 0),
-      pricePerKg: Number((small ? s.price_kg_goat : s.price_kg_cattle) ?? 0),
-    },
-  };
-}
-
-const minusDays = (iso: string, n: number) => new Date(Date.parse(iso) - n * 86_400_000).toISOString().slice(0, 10);
+import { useOutbox, useRemove } from "@/lib/outbox";
+import type { DeleteTable } from "@/lib/outbox-core";
 
 /** One animal: its details, milk, and latest health and breeding records. */
 export default function AnimalPage() {
@@ -118,7 +26,7 @@ export default function AnimalPage() {
   const theme = useTheme();
   const options = useOptions();
   const today = farmToday();
-  const { data, offline, error, loading, reload } = useCached(id ? `animal.${id}` : null, () => fetchDetail(id, minusDays(today, 29)));
+  const { data, offline, error, loading, reload } = useCached(id ? `animal.${id}` : null, () => fetchAnimalDetail(id, minusDays(today, 29)));
   const role = useSession().current?.role;
   const staff = isStaff(role);
   // Doctors add vaccines and breeding too; theirs go to the owner for approval.
@@ -126,19 +34,26 @@ export default function AnimalPage() {
   const manager = isManager(role);
   const { n, money } = usePrefs();
   const currency = useSession().current?.farm.currency ?? "BDT";
+  const currentFarmId = useSession().current?.farm.id;
   const toast = useToast();
-  const del = (table: Parameters<typeof deleteRow>[0], rowId: string) => async () => {
-    const err = await deleteRow(table, rowId);
-    toast(err ? `${t("common.error")} ${err}` : t("rec.deleted"));
+  const remove = useRemove();
+  const { save } = useOutbox();
+  const del = (table: DeleteTable, rowId: string) => async () => {
+    const r = await remove(table, rowId, `${t("rec.delete")} · #${data?.animal?.tag_number ?? ""}`);
+    toast(r.error ? `${t("common.error")} ${r.error}` : r.queued ? t("entry.queued") : t("rec.deleted"));
     reload();
   };
   const setFattening = async (on: boolean) => {
-    if (!data?.animal) return;
-    const { error: e } = await supabase
-      .from("cattle")
-      .update(on ? { is_fattening: true, fattening_start: farmToday() } : { is_fattening: false, fattening_start: null })
-      .eq("id", data.animal.id);
-    toast(e ? `${t("common.error")} ${e.message}` : on ? t("fatten.started") : t("fatten.stopped"));
+    const a = data?.animal;
+    const farmId = currentFarmId;
+    if (!a || !farmId) return;
+    const patch = on ? { is_fattening: true, fattening_start: farmToday() } : { is_fattening: false, fattening_start: null };
+    const r = await save({
+      kind: "update",
+      farmId,
+      data: { table: "cattle", id: a.id, patch, seen: a.updated_at, before: { is_fattening: a.is_fattening, fattening_start: a.fattening_start }, label: `#${a.tag_number}` },
+    });
+    toast(r.status === "error" ? `${t("common.error")} ${r.error}` : r.status === "queued" ? t("entry.queued") : on ? t("fatten.started") : t("fatten.stopped"));
     reload();
   };
   // Fresh records when coming back from adding one.
@@ -347,7 +262,7 @@ export default function AnimalPage() {
                       left={(p) => <List.Icon {...p} icon="needle" />}
                       right={() => (
                         <RecordMenu
-                          onEdit={staff ? () => router.push({ pathname: "/record/health", params: { id: h.id } }) : undefined}
+                          onEdit={staff ? () => router.push({ pathname: "/record/health", params: { id: h.id, animal: a.id } }) : undefined}
                           onDelete={manager ? del("health_records", h.id) : undefined}
                           testID={`health-menu-${h.id}`}
                         />
@@ -375,7 +290,7 @@ export default function AnimalPage() {
                         left={(p) => <List.Icon {...p} icon="heart-pulse" />}
                         right={() => (
                           <RecordMenu
-                            onEdit={staff ? () => router.push({ pathname: "/record/breeding", params: { id: b.id } }) : undefined}
+                            onEdit={staff ? () => router.push({ pathname: "/record/breeding", params: { id: b.id, animal: a.id } }) : undefined}
                             onDelete={manager ? del("breeding_events", b.id) : undefined}
                             testID={`breeding-menu-${b.id}`}
                           />

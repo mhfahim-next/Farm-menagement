@@ -71,6 +71,23 @@ export const UPCOMING: Upcoming[] = [
 
 export const RELEASES: Release[] = [
   {
+    id: "2026-11-03-app-offline",
+    date: "2026-11-03",
+    title: { en: "The app works fully without internet", bn: "ইন্টারনেট ছাড়াই পুরো অ্যাপ চলে" },
+    summary: {
+      en: "The app opens on your farm without internet, shows all its data, takes every entry, and sends it by itself once the internet is back.",
+      bn: "ইন্টারনেট ছাড়াই অ্যাপ খামারে খোলে, সব তথ্য দেখায়, সব এন্ট্রি নেয়, আর ইন্টারনেট এলে নিজে থেকেই পাঠিয়ে দেয়।",
+    },
+    changes: [
+      { type: "fixed", en: "Without internet the app no longer asks you to create a farm: it opens on your farm, even when the sign-in has expired.", bn: "ইন্টারনেট না থাকলে অ্যাপ আর খামার খুলতে বলে না: সাইন-ইনের মেয়াদ শেষ হলেও আপনার খামারেই খোলে।" },
+      { type: "new", en: "The current farm's data for the last 12 months is kept on the phone: every animal's page, flocks, stock, staff, sales, money and reports.", bn: "চালু খামারের গত ১২ মাসের তথ্য ফোনে রাখা থাকে: প্রতিটি পশুর পাতা, মুরগির ব্যাচ, স্টক, কর্মী, বিক্রি, টাকার হিসাব আর রিপোর্ট।" },
+      { type: "new", en: "Offline you can add animals (with a photo), weights, stock, attendance, staff pay, flocks and flock health, change and delete records, besides the daily entries.", bn: "অফলাইনে দৈনিক এন্ট্রির পাশাপাশি পশু (ছবিসহ), ওজন, স্টক, হাজিরা, বেতন, মুরগির ব্যাচ ও তার স্বাস্থ্য যোগ করা যায়, রেকর্ড বদলানো ও মোছা যায়।" },
+      { type: "improved", en: "What you enter offline shows in the lists at once and is sent by itself as soon as the internet is back, never twice.", bn: "অফলাইনে যা লেখেন তা সাথে সাথে তালিকায় দেখা যায়, আর ইন্টারনেট এলেই নিজে থেকে পাঠানো হয়, কখনও দুবার নয়।" },
+      { type: "improved", en: "If someone changed the same record meanwhile, the later change is kept and the app tells you which.", bn: "এর মধ্যে কেউ একই রেকর্ড বদলালে শেষের পরিবর্তনটি থাকে, আর অ্যাপ জানিয়ে দেয় কোনটি রাখা হলো।" },
+      { type: "new", en: "Admins choose how many days of records the app keeps for offline use (default 365).", bn: "অফলাইনের জন্য অ্যাপ কত দিনের রেকর্ড রাখবে, অ্যাডমিন তা ঠিক করতে পারেন (শুরুতে ৩৬৫ দিন)।" },
+    ],
+  },
+  {
     id: "2026-11-02-play-store-ready",
     date: "2026-11-02",
     title: { en: "Getting the app ready for Google Play", bn: "Google Play-এর জন্য অ্যাপ প্রস্তুত" },

@@ -31,7 +31,7 @@ DAILY ENTRY IN A FEW TAPS
 • Milk for every cow, morning and evening, with “Same as yesterday”
 • Eggs, deaths and feed for each flock
 • Sales, buyers' dues and expenses
-• No internet? Entries wait on the phone and are sent later
+• No internet? The app still opens with all your farm's data; entries wait on the phone and are sent by themselves later
 
 ANIMAL RECORDS
 • Every cow, goat and sheep with photo, tag, breed and parents

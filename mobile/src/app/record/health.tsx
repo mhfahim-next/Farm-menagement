@@ -9,7 +9,12 @@ import { farmToday } from "@/lib/dates";
 import { useDescribe } from "@/lib/describe";
 import { parseNumber } from "@/lib/entries";
 import { optionLabel, optionsOf } from "@/lib/options";
+import { readView } from "@/lib/cache";
+import type { AnimalDetail } from "@/lib/data";
+import { isOnline } from "@/lib/net";
 import { useOutbox } from "@/lib/outbox";
+import { diff } from "@/lib/outbox-core";
+import { pendingEntries } from "@/lib/outbox-store";
 import { usePrefs } from "@/lib/prefs";
 import { addDays, healthEntry, healthFields, uuid } from "@/lib/records";
 import { submitForApproval } from "@/lib/site-api";
@@ -45,14 +50,28 @@ export default function HealthRecord() {
   const [detail, setDetail] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // Editing one saved record: load it.
+  // Editing one saved record: load it (from the animal's page kept on the phone when offline).
+  const [was, setWas] = useState<Record<string, unknown> | null>(null);
   useEffect(() => {
     if (!id) return;
     let cancelled = false;
     (async () => {
-      const { data } = await supabase.from("health_records").select("cattle_id, record_date, record_type, product, interval_days, cost, description").eq("id", id).maybeSingle();
+      const cols = "cattle_id, record_date, record_type, product, medicine, interval_days, next_due_date, cost, description, updated_at";
+      const fresh = isOnline()
+        ? await supabase
+            .from("health_records")
+            .select(cols)
+            .eq("id", id)
+            .maybeSingle()
+            .then(
+              (x) => (x.error ? undefined : x.data),
+              () => undefined,
+            )
+        : undefined;
+      const data = fresh === undefined && animal ? (readView<AnimalDetail>(`animal.${animal}`, pendingEntries())?.health.find((h) => h.id === id) ?? null) : fresh;
       if (cancelled || !data) return;
       const r = data as { cattle_id: string; record_date: string; record_type: string; product: string | null; interval_days: number | null; cost: number | null; description: string | null };
+      setWas(data as Record<string, unknown>);
       setIds([r.cattle_id]);
       setDate(r.record_date);
       setType(r.record_type);
@@ -64,7 +83,7 @@ export default function HealthRecord() {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, animal]);
 
   const types = optionsOf(options, "health_type");
   const presets = optionsOf(options, "health_preset").filter((p) => (SMALL_RUMINANT.includes(p.value) ? farm?.has_goat : farm?.has_dairy || farm?.has_fattening));
@@ -101,9 +120,9 @@ export default function HealthRecord() {
       }
     }
     if (id) {
-      const { error: e } = await supabase
-        .from("health_records")
-        .update({
+      const before = was ?? {};
+      const patch = diff(
+        {
           record_date: r.entry.record_date,
           record_type: r.entry.record_type,
           product: r.entry.product,
@@ -112,15 +131,28 @@ export default function HealthRecord() {
           interval_days: r.entry.interval_days,
           next_due_date: r.entry.next_due_date,
           cost: r.entry.cost,
-        })
-        .eq("id", id);
+        },
+        before,
+      );
+      const res = await save({
+        kind: "update",
+        farmId: farm.id,
+        data: {
+          table: "health_records",
+          id,
+          patch,
+          seen: (before.updated_at as string | null | undefined) ?? undefined,
+          before: Object.fromEntries(Object.keys(patch).map((k) => [k, before[k] ?? null])),
+          label: `${optionLabel(options, "health_type", r.entry.record_type, locale)} · ${r.entry.product}`,
+        },
+      });
       setBusy(false);
-      if (e) {
+      if (res.status === "error") {
         setError(t("common.error"));
-        setDetail(e.message);
+        setDetail(res.error);
         return;
       }
-      toast(t("rec.saved"));
+      toast(res.status === "queued" ? t("entry.queued") : t("rec.saved"));
       return router.back();
     }
     const label = `${optionLabel(options, "health_type", r.entry.record_type, locale)} · ${r.entry.product} · ${t("rec.animalsN", { n: r.entry.cattle_ids.length })}`;

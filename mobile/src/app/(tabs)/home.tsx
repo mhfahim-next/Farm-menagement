@@ -1,6 +1,6 @@
 import * as WebBrowser from "expo-web-browser";
 import { router, useFocusEffect } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { Button, Card, Chip, Icon, Text, useTheme } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -9,12 +9,12 @@ import { InviteCards } from "@/components/invite-card";
 import { ReminderItem } from "@/components/reminder-item";
 import { SyncBar } from "@/components/sync-bar";
 import { useReminders } from "@/lib/reminders";
+import { useCached } from "@/lib/cache";
+import { fetchToday, useAnimals, useFlocks, type Animal, type Flock, type Today } from "@/lib/data";
 import { farmToday } from "@/lib/dates";
-import type { Farm } from "@/lib/farm";
 import { siteLink } from "@/lib/env";
 import { usePrefs } from "@/lib/prefs";
 import { useSession } from "@/lib/session";
-import { supabase } from "@/lib/supabase";
 
 type Summary = { cattle: number; goats: number; birds: number; milk: number; eggs: number };
 
@@ -25,25 +25,23 @@ export default function Home() {
   const insets = useSafeAreaInsets();
   const { current, profile } = useSession();
   const farm = current?.farm;
-  const [summary, setSummary] = useState<Summary | null>(null);
   const reminders = useReminders(farm?.id, locale);
   const { reload: reloadReminders } = reminders;
   const [refreshing, setRefreshing] = useState(false);
+  // From the same copies the other screens keep (so they work without internet too).
+  const day = farmToday();
+  const birdsFarm = Boolean(farm?.has_layer || farm?.has_broiler);
+  const animals = useAnimals(farm?.id);
+  const flocks = useFlocks(birdsFarm ? farm?.id : undefined);
+  const todayData = useCached(farm ? `today.${farm.id}.${day}.${Number(Boolean(farm.has_dairy))}${Number(birdsFarm)}` : null, () => fetchToday(farm!.id, day, Boolean(farm!.has_dairy), birdsFarm));
+  const { reload: reloadAnimals } = animals;
+  const { reload: reloadFlocks } = flocks;
+  const { reload: reloadToday } = todayData;
+  const summary = useMemo(() => summarize(animals.data, birdsFarm ? flocks.data : [], todayData.data), [animals.data, flocks.data, todayData.data, birdsFarm]);
 
   const load = useCallback(async () => {
-    if (farm) setSummary(await fetchSummary(farm));
-  }, [farm]);
-
-  useEffect(() => {
-    if (!farm) return;
-    let cancelled = false;
-    fetchSummary(farm)
-      .then((s) => !cancelled && setSummary(s))
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [farm]);
+    await Promise.all([reloadAnimals(), reloadFlocks(), reloadToday()]);
+  }, [reloadAnimals, reloadFlocks, reloadToday]);
 
   useFocusEffect(
     useCallback(() => {
@@ -155,24 +153,15 @@ export default function Home() {
   );
 }
 
-async function fetchSummary(farm: Farm): Promise<Summary> {
-  const day = farmToday();
-  const [animals, stats, milk, eggs] = await Promise.all([
-    supabase.from("cattle").select("species").eq("farm_id", farm.id).eq("status", "active").is("deleted_at", null),
-    farm.has_layer || farm.has_broiler ? supabase.from("flocks").select("id").eq("farm_id", farm.id).eq("status", "active").is("deleted_at", null) : null,
-    farm.has_dairy ? supabase.from("milk_records").select("quantity_liters").eq("farm_id", farm.id).eq("record_date", day) : null,
-    farm.has_layer ? supabase.from("flock_daily_logs").select("eggs_collected").eq("farm_id", farm.id).eq("log_date", day) : null,
-  ]);
-  const list = (animals.data ?? []) as { species: string | null }[];
-  const flockIds = ((stats?.data ?? []) as { id: string }[]).map((f) => f.id);
-  const { data: counts } = flockIds.length ? await supabase.from("flock_stats").select("current_count").in("flock_id", flockIds) : { data: [] };
-  const flocks = (counts ?? []) as { current_count: number }[];
+function summarize(animals: Animal[] | null, flocks: Flock[] | null, today: Today | null): Summary | null {
+  if (!animals && !flocks && !today) return null;
+  const active = (animals ?? []).filter((a) => a.status === "active");
   return {
-    cattle: list.filter((a) => (a.species ?? "cattle") === "cattle").length,
-    goats: list.filter((a) => a.species === "goat" || a.species === "sheep").length,
-    birds: flocks.reduce((s, f) => s + Number(f.current_count), 0),
-    milk: ((milk?.data ?? []) as { quantity_liters: number }[]).reduce((s, m) => s + Number(m.quantity_liters), 0),
-    eggs: ((eggs?.data ?? []) as { eggs_collected: number }[]).reduce((s, e) => s + Number(e.eggs_collected), 0),
+    cattle: active.filter((a) => (a.species ?? "cattle") === "cattle").length,
+    goats: active.filter((a) => a.species === "goat" || a.species === "sheep").length,
+    birds: (flocks ?? []).reduce((s, f) => s + Number(f.birds), 0),
+    milk: today?.litres ?? 0,
+    eggs: today?.eggs ?? 0,
   };
 }
 

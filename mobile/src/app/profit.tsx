@@ -5,7 +5,8 @@ import { Appbar, Button, Card, Divider, List, SegmentedButtons, Text, useTheme }
 import { OfflineNote } from "@/components/offline-note";
 import { useCached } from "@/lib/cache";
 import { RecordMenu } from "@/components/record-menu";
-import { deleteRow, fetchLedger, fetchTransactions, isManager, useOptions } from "@/lib/data";
+import { useRemove } from "@/lib/outbox";
+import { fetchLedger, fetchTransactions, isManager, useOptions } from "@/lib/data";
 import { optionLabel } from "@/lib/options";
 import { useToast } from "@/lib/toast";
 import { farmToday } from "@/lib/dates";
@@ -32,6 +33,7 @@ export default function Profit() {
   }, [reloadLedger, reloadEntered]);
   const manager = isManager(useSession().current?.role);
   const toast = useToast();
+  const remove = useRemove();
   useFocusEffect(
     useCallback(() => {
       reload();
@@ -110,8 +112,8 @@ export default function Profit() {
                       {manager && (
                         <RecordMenu
                           onDelete={async () => {
-                            const err = await deleteRow("transactions", x.id);
-                            toast(err ? `${t("common.error")} ${err}` : t("rec.deleted"));
+                            const r = await remove("transactions", x.id, `${t("rec.delete")} · ${money(Number(x.amount), currency)}`);
+                            toast(r.error ? `${t("common.error")} ${r.error}` : r.queued ? t("entry.queued") : t("rec.deleted"));
                             reload();
                           }}
                           testID={`txn-menu-${x.id}`}

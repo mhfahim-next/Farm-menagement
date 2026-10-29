@@ -7,9 +7,10 @@ import { FormError } from "@/components/form-error";
 import { FormScreen } from "@/components/form-screen";
 import { useStock } from "@/lib/data";
 import { usePrefs } from "@/lib/prefs";
-import { ITEM_KINDS, ITEM_UNITS, STOCK_SECTIONS, stockItemEntry } from "@/lib/records";
+import { useOutbox } from "@/lib/outbox";
+import { diff } from "@/lib/outbox-core";
+import { ITEM_KINDS, ITEM_UNITS, STOCK_SECTIONS, stockItemEntry, uuid } from "@/lib/records";
 import { useSession } from "@/lib/session";
-import { supabase } from "@/lib/supabase";
 import { useToast } from "@/lib/toast";
 
 /** A new stock item (a feed, a medicine…), or changes to one. */
@@ -20,6 +21,7 @@ export default function StockItemForm() {
   const { data } = useStock(farm?.id);
   const old = id ? (data ?? []).find((i) => i.id === id) : undefined;
   const toast = useToast();
+  const { save } = useOutbox();
   const [name, setName] = useState(old?.name ?? "");
   const [kind, setKind] = useState(old?.kind ?? "feed");
   const [unit, setUnit] = useState(old?.unit ?? "kg");
@@ -37,17 +39,24 @@ export default function StockItemForm() {
     const r = stockItemEntry({ name, kind, unit, unitKg, module, lowStock, notes });
     if (!r.ok) return setError(t(r.error));
     setError(null);
+    // Each name once per farm (checked here too, so an entry made offline isn't refused later).
+    const taken = (data ?? []).some((i) => i.id !== id && i.name.trim().toLowerCase() === r.entry.name.trim().toLowerCase());
+    if (taken) return setError(t("stock.err.taken"));
     setBusy(true);
-    const { error: e } = id
-      ? await supabase.from("inventory_items").update({ ...r.entry, archived }).eq("id", id).eq("farm_id", farm.id)
-      : await supabase.from("inventory_items").insert({ farm_id: farm.id, ...r.entry });
+    const label = `${id ? t("stock.editItem") : t("stock.newItem")} · ${r.entry.name}`;
+    const was = (old ?? {}) as unknown as Record<string, unknown>;
+    const patch = diff({ ...r.entry, archived }, was);
+    const res = id
+      ? await save({ kind: "update", farmId: farm.id, data: { table: "inventory_items", id, patch, before: Object.fromEntries(Object.keys(patch).map((k) => [k, was[k] ?? null])), label } })
+      : await save({ kind: "insert", farmId: farm.id, data: { table: "inventory_items", row: { id: uuid(), ...r.entry }, label } });
     setBusy(false);
-    if (e) {
-      setError(e.code === "23505" ? t("stock.err.taken") : t("common.error"));
-      setDetail(e.code === "23505" ? null : e.message);
+    if (res.status === "error") {
+      const dup = /duplicate key|23505|unique/i.test(res.error);
+      setError(dup ? t("stock.err.taken") : t("common.error"));
+      setDetail(dup ? null : res.error);
       return;
     }
-    toast(t("stock.itemSaved"));
+    toast(res.status === "queued" ? t("entry.queued") : t("stock.itemSaved"));
     router.back();
   };
 

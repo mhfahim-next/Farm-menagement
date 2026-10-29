@@ -6,26 +6,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { OfflineNote } from "@/components/offline-note";
 import { SyncBar } from "@/components/sync-bar";
 import { useCached } from "@/lib/cache";
-import { isManager, isStaff, useFlocks } from "@/lib/data";
+import { fetchToday, isManager, isStaff, useFlocks } from "@/lib/data";
 import { farmToday } from "@/lib/dates";
 import { todayStatus } from "@/lib/entry-helpers";
 import { usePrefs } from "@/lib/prefs";
 import { useSession } from "@/lib/session";
-import { supabase } from "@/lib/supabase";
-
-/** What is already written today: milkings, and flocks with a daily log. */
-async function fetchToday(farmId: string, day: string, dairy: boolean, birds: boolean) {
-  const [milk, logs] = await Promise.all([
-    dairy ? supabase.from("milk_records").select("session").eq("farm_id", farmId).eq("record_date", day) : null,
-    birds ? supabase.from("flock_daily_logs").select("flock_id").eq("farm_id", farmId).eq("log_date", day) : null,
-  ]);
-  const err = milk?.error ?? logs?.error;
-  if (err) throw new Error(err.message);
-  return {
-    sessions: [...new Set(((milk?.data ?? []) as { session: string }[]).map((r) => r.session))],
-    flocks: [...new Set(((logs?.data ?? []) as { flock_id: string }[]).map((r) => r.flock_id))],
-  };
-}
 
 type Tile = { key: string; icon: string; label: string; hint?: string; pending?: boolean; go: () => void; testID: string };
 
@@ -42,7 +27,7 @@ export default function Entry() {
   const breeds = Boolean(farm?.has_dairy || farm?.has_goat);
   const day = farmToday();
   const { data: flocks } = useFlocks(birds ? farm?.id : undefined);
-  const { data, offline, reload } = useCached(farm ? `today.${farm.id}.${day}` : null, () => fetchToday(farm!.id, day, dairy, birds));
+  const { data, offline, reload } = useCached(farm ? `today.${farm.id}.${day}.${Number(dairy)}${Number(birds)}` : null, () => fetchToday(farm!.id, day, dairy, birds));
   useFocusEffect(
     useCallback(() => {
       reload();

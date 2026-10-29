@@ -1,7 +1,10 @@
 // Lists read from the server are also kept on the phone, so screens open at
 // once and still work without internet (showing what was last loaded).
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { isNetworkError } from "./entries";
+import { isOnline, onReconnect } from "./net";
+import { onSynced, usePending } from "./outbox-store";
+import { overlay } from "./overlay";
 import { getItem, setItem } from "./storage";
 
 // Bump the version when the shape of saved data changes, so a copy saved by
@@ -51,22 +54,52 @@ export function readCache<T>(key: string): T | null {
   }
 }
 
-export const writeCache = (key: string, v: unknown) => setItem(PREFIX + key, JSON.stringify(v));
+/** Screens showing a key hear when a new copy is saved for it (e.g. by the offline download). */
+const watchers = new Map<string, Set<(v: unknown) => void>>();
+
+export function writeCache(key: string, v: unknown) {
+  setItem(PREFIX + key, JSON.stringify(v));
+  watchers.get(key)?.forEach((f) => f(v));
+}
+
+/** Saved-copy keys starting with `prefix` (to tidy up old days). */
+export function cacheKeys(prefix = ""): string[] {
+  const out: string[] = [];
+  try {
+    const store = globalThis.localStorage;
+    if (!store) return out;
+    for (let i = 0; i < store.length; i++) {
+      const k = store.key(i);
+      if (k?.startsWith(PREFIX + prefix)) out.push(k.slice(PREFIX.length));
+    }
+  } catch {
+    // storage unavailable
+  }
+  return out;
+}
+
+export const dropCache = (key: string) => setItem(PREFIX + key, null);
+
+/** The saved copy with the entries still waiting on the phone applied (what the screen would show). */
+export const readView = <T,>(key: string, pending: Parameters<typeof overlay>[2]) => overlay(key, readCache<T>(key), pending) as T | null;
 
 /**
- * Data for `key`: the saved copy first, then fresh from the server.
- * `offline` is true when the server could not be reached, `error` holds the
- * server's reason when it answered with one (the saved copy stays either way).
+ * Data for `key`: the saved copy first, then fresh from the server, with the
+ * entries still waiting on the phone applied. `offline` is true when the
+ * server could not be reached, `error` holds the server's reason when it
+ * answered with one (the saved copy stays either way).
  */
 export function useCached<T>(key: string | null, fetcher: () => Promise<T>) {
   type State = { key: string | null; data: T | null; offline: boolean; error: string | null; loading: boolean };
-  const start = (k: string | null): State => ({ key: k, data: k ? readCache<T>(k) : null, offline: false, error: null, loading: Boolean(k) });
+  const start = (k: string | null): State => ({ key: k, data: k ? readCache<T>(k) : null, offline: !isOnline(), error: null, loading: Boolean(k) });
   const [state, setState] = useState<State>(() => start(key));
   // A different key (another farm): start from that key's saved copy.
   if (state.key !== key) setState(start(key));
 
   const load = useCallback(async () => {
     if (!key) return;
+    // No connection: the saved copy is all there is (refreshed once it's back).
+    if (!isOnline()) return setState((s) => (s.key === key ? { ...s, offline: true, loading: false } : s));
     try {
       const data = await fetcher();
       writeCache(key, data);
@@ -91,5 +124,24 @@ export function useCached<T>(key: string | null, fetcher: () => Promise<T>) {
     };
   }, [load]);
 
-  return { data: state.data, offline: state.offline, error: state.error, loading: state.loading && state.data === null, reload: load };
+  // Back online, or entries just sent: fresh data. A new copy saved elsewhere: shown here too.
+  useEffect(() => {
+    if (!key) return;
+    const off = onReconnect(() => void load());
+    const offSynced = onSynced(() => void load());
+    const set = watchers.get(key) ?? new Set();
+    const watch = (v: unknown) => setState((s) => (s.key === key ? { ...s, data: v as T } : s));
+    set.add(watch);
+    watchers.set(key, set);
+    return () => {
+      off();
+      offSynced();
+      set.delete(watch);
+    };
+  }, [key, load]);
+
+  const pending = usePending();
+  const data = useMemo(() => (key ? (overlay(key, state.data, pending) as T | null) : null), [key, state.data, pending]);
+
+  return { data, offline: state.offline, error: state.error, loading: state.loading && data === null, reload: load };
 }

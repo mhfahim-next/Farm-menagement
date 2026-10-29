@@ -126,6 +126,14 @@ export async function saveLivestockRules(_: ActionState, formData: FormData): Pr
   );
 }
 
+/** How many days of records the Android app keeps on the phone for use without internet. */
+export async function saveOfflineDays(_: ActionState, formData: FormData): Promise<ActionState> {
+  const { t } = await getI18n();
+  const days = Number(str(formData, "offline_days"));
+  if (!Number.isInteger(days) || days < 30 || days > 1095) return { error: t("adminoffline.invalid") };
+  return run((s) => s.rpc("admin_set_offline_days", { p_days: days }), t("adminlive.saved"));
+}
+
 /** Super admin: sends a test error to Sentry from the server, to check the setup. */
 export async function sendSentryTest(): Promise<ActionState> {
   await requireSuperAdmin();

@@ -8,7 +8,12 @@ import { useAnimals, useOptions, useRules } from "@/lib/data";
 import { farmToday } from "@/lib/dates";
 import { useDescribe } from "@/lib/describe";
 import { optionLabel, optionsOf } from "@/lib/options";
+import { readView } from "@/lib/cache";
+import type { AnimalDetail } from "@/lib/data";
+import { isOnline } from "@/lib/net";
 import { useOutbox } from "@/lib/outbox";
+import { diff } from "@/lib/outbox-core";
+import { pendingEntries } from "@/lib/outbox-store";
 import { usePrefs } from "@/lib/prefs";
 import { breedingEntry, breedingFields, calfCategories, EVENT_TYPES, PREGNANCY_RESULTS, uuid } from "@/lib/records";
 import { submitForApproval } from "@/lib/site-api";
@@ -53,16 +58,26 @@ export default function BreedingRecord() {
   const [busy, setBusy] = useState(false);
 
   // Editing a saved event (its type stays; a birth's newborn is edited on its own page).
+  // From the animal's page kept on the phone when offline.
+  const [was, setWas] = useState<Record<string, unknown> | null>(null);
   useEffect(() => {
     if (!eventId) return;
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
-        .from("breeding_events")
-        .select("cattle_id, event_type, event_date, bull_or_semen, technician, cost, heat_signs, result, notes")
-        .eq("id", eventId)
-        .maybeSingle();
+      const fresh = isOnline()
+        ? await supabase
+            .from("breeding_events")
+            .select("cattle_id, event_type, event_date, bull_or_semen, technician, cost, heat_signs, result, expected_calving_date, notes, updated_at")
+            .eq("id", eventId)
+            .maybeSingle()
+            .then(
+              (x) => (x.error ? undefined : x.data),
+              () => undefined,
+            )
+        : undefined;
+      const data = fresh === undefined && animal ? (readView<AnimalDetail>(`animal.${animal}`, pendingEntries())?.breeding.find((b) => b.id === eventId) ?? null) : fresh;
       if (cancelled || !data) return;
+      setWas(data as Record<string, unknown>);
       const e = data as { cattle_id: string; event_type: string; event_date: string; bull_or_semen: string | null; technician: string | null; cost: number | null; heat_signs: string | null; result: string | null; notes: string | null };
       setId(e.cattle_id);
       setType(e.event_type);
@@ -77,7 +92,7 @@ export default function BreedingRecord() {
     return () => {
       cancelled = true;
     };
-  }, [eventId]);
+  }, [eventId, animal]);
 
   const calfTypes = calfCategories(species);
   const input = { cattleId: id ?? "", species, type, date, semen, technician, cost, heatSigns: signs, result, notes, calfTag, calfName, calfCategory: calfCategory || calfTypes[0] };
@@ -107,14 +122,27 @@ export default function BreedingRecord() {
     }
     if (eventId) {
       const { calf: _calf, cattle_id: _c, event_type: _t, ...fields } = r.entry;
-      const { error: e } = await supabase.from("breeding_events").update(fields).eq("id", eventId);
+      const before = was ?? {};
+      const patch = diff(fields, before);
+      const res = await save({
+        kind: "update",
+        farmId: farm.id,
+        data: {
+          table: "breeding_events",
+          id: eventId,
+          patch,
+          seen: (before.updated_at as string | null | undefined) ?? undefined,
+          before: Object.fromEntries(Object.keys(patch).map((k) => [k, before[k] ?? null])),
+          label: `${label("breeding_event", r.entry.event_type)} · #${cow?.tag_number ?? ""}`,
+        },
+      });
       setBusy(false);
-      if (e) {
+      if (res.status === "error") {
         setError(t("common.error"));
-        setDetail(e.message);
+        setDetail(res.error);
         return;
       }
-      toast(t("rec.saved"));
+      toast(res.status === "queued" ? t("entry.queued") : t("rec.saved"));
       return router.back();
     }
     const text = `${label("breeding_event", r.entry.event_type)} · #${cow?.tag_number ?? ""}`;

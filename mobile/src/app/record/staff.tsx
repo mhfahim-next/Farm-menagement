@@ -9,9 +9,10 @@ import { useOptions, useStaffMonth } from "@/lib/data";
 import { farmToday } from "@/lib/dates";
 import { optionLabel, optionsOf } from "@/lib/options";
 import { usePrefs } from "@/lib/prefs";
-import { STAFF_SECTIONS, staffEntry } from "@/lib/records";
+import { useOutbox } from "@/lib/outbox";
+import { diff } from "@/lib/outbox-core";
+import { STAFF_SECTIONS, staffEntry, uuid } from "@/lib/records";
 import { useSession } from "@/lib/session";
-import { supabase } from "@/lib/supabase";
 import { useToast } from "@/lib/toast";
 
 /** A new worker, or changes to one (including marking them as no longer working). */
@@ -23,6 +24,7 @@ export default function StaffForm() {
   const { data } = useStaffMonth(farm?.id, farmToday().slice(0, 7));
   const old = id ? (data?.staff ?? []).find((s) => s.id === id) : undefined;
   const toast = useToast();
+  const { save } = useOutbox();
   const [name, setName] = useState(old?.name ?? "");
   const [phone, setPhone] = useState(old?.phone ?? "");
   const [position, setPosition] = useState(old?.position ?? "");
@@ -42,16 +44,19 @@ export default function StaffForm() {
     if (!r.ok) return setError(t(r.error));
     setError(null);
     setBusy(true);
-    const { error: e } = id
-      ? await supabase.from("staff").update({ ...r.entry, active }).eq("id", id).eq("farm_id", farm.id)
-      : await supabase.from("staff").insert({ farm_id: farm.id, ...r.entry });
+    const label = `${id ? t("staff.edit") : t("staff.add")} · ${r.entry.name}`;
+    const was = (old ?? {}) as unknown as Record<string, unknown>;
+    const patch = diff({ ...r.entry, active }, was);
+    const res = id
+      ? await save({ kind: "update", farmId: farm.id, data: { table: "staff", id, patch, before: Object.fromEntries(Object.keys(patch).map((k) => [k, was[k] ?? null])), label } })
+      : await save({ kind: "insert", farmId: farm.id, data: { table: "staff", row: { id: uuid(), ...r.entry }, label } });
     setBusy(false);
-    if (e) {
+    if (res.status === "error") {
       setError(t("common.error"));
-      setDetail(e.message);
+      setDetail(res.error);
       return;
     }
-    toast(id ? t("staff.updated") : t("staff.added", { name: r.entry.name }));
+    toast(res.status === "queued" ? t("entry.queued") : id ? t("staff.updated") : t("staff.added", { name: r.entry.name }));
     router.back();
   };
 

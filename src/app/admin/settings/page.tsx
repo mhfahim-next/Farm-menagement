@@ -4,7 +4,7 @@ import { Card, Field, Input, PageHeader, Textarea } from "@/components/ui";
 import { SentryTest } from "@/components/sentry-test";
 import { requireSuperAdmin } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
-import { saveAnnouncement, saveBreedingRules, saveLivestockRules } from "../actions";
+import { saveAnnouncement, saveBreedingRules, saveLivestockRules, saveOfflineDays } from "../actions";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -18,7 +18,7 @@ export default async function AdminSettingsPage() {
 
   const { data } = await supabase
     .from("system_settings")
-    .select("announcement_en, announcement_bn, announcement_active, payment_instructions_en, payment_instructions_bn, pregnancy_check_days, goat_gestation_days, sheep_gestation_days, qurbani_date")
+    .select("announcement_en, announcement_bn, announcement_active, payment_instructions_en, payment_instructions_bn, pregnancy_check_days, goat_gestation_days, sheep_gestation_days, qurbani_date, offline_days")
     .eq("id", 1)
     .maybeSingle();
 
@@ -89,6 +89,13 @@ export default async function AdminSettingsPage() {
               <Input name="qurbani_date" type="date" defaultValue={(data as Record<string, string> | null)?.qurbani_date ?? ""} />
             </Field>
           </div>
+        </ActionForm>
+      </Card>
+      <Card title={t("adminoffline.title")} description={t("adminoffline.desc")} className="mt-6 max-w-2xl">
+        <ActionForm action={saveOfflineDays} submitLabel={t("adminlive.save")}>
+          <Field label={t("adminoffline.days")} hint={t("adminoffline.hint")}>
+            <Input name="offline_days" type="number" min={30} max={1095} step={1} required defaultValue={(data as Record<string, number> | null)?.offline_days ?? 365} data-testid="offline-days" />
+          </Field>
         </ActionForm>
       </Card>
       <Card title={t("adminsentry.title")} className="mt-6 max-w-2xl">

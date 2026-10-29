@@ -50,11 +50,17 @@ The Android app comes first. The same code can later build the iPhone app.
     - After saving, it offers the next flock or the milk.
   - Bangla digits (১২.৫) and a decimal comma work in every number box.
 - **Works without internet.**
-  - The animal and flock lists are kept on the phone, so they still open offline.
-  - An entry saved without internet waits on the phone. A bar shows how many are waiting, and the Entry tab shows a badge.
-  - Waiting entries are sent in order: when the app comes back to the front, every half minute, or with *Send now*.
-  - If the server refuses one (for example, the animal was deleted meanwhile), it shows why and can be discarded. It doesn't hold up the others.
-  - Entries use the same tables and security rules as the website. A second sheet for the same day and milking replaces the first, as on the website.
+  - **Opens offline.** The account and the farms are kept on the phone, so the app opens on the farm without internet, even when the sign-in has expired (it is renewed by itself once online).
+  - **The current farm is kept on the phone.** When the app opens (at most every 6 hours), when the internet comes back and with *More → Use without internet → Download now*, the app downloads:
+    - every list (animals, flocks, buyers, stock, staff), every animal's page (details, milk, health, breeding, weights), each flock's page, each buyer's sales and payments, stock moves, staff months, money this month and last, and the reports;
+    - records of the last **365 days**. A super admin changes the number of days in the website's */admin/settings* (`system_settings.offline_days`, 30–1095). Saved days older than that are removed from the phone.
+  - **Everything can be entered offline**: milk, eggs and flock days, vaccines and treatments, breeding, sales, payments, buyers, expenses, new animals and changes to them (with the photo, uploaded later), weights, stock purchases, uses and counts, stock items, staff, attendance, staff pay, new flocks and flock health, and deleting records.
+  - **What waits shows at once** in the screens (a new animal is in the list and opens its page, a vaccine is on the animal's page, a purchase raises the stock, a credit sale raises the buyer's due). A bar shows how many entries are waiting, and the Entry tab shows a badge.
+  - **Sent by itself** as soon as the internet is back, when the app comes back to the front, every half minute while some wait, or with *Send now*. A save that gets no answer in 12 seconds waits on the phone instead.
+  - **Never twice.** Every new row gets its id on the phone, so an entry sent again (the reply lost on a weak network) is saved once. A second sheet for the same day and milking (or flock day, or attendance day) replaces the first, as on the website. A tag or stock name already used is refused at once, offline too.
+  - **Changes made elsewhere meanwhile: the later one stays, and the app says so.** Each change carries when the screen last saw the record. If the record was changed again after yours (on the website or another phone), that change is kept; if yours is later, yours replaces it; if it was deleted, yours is dropped. The note shows on the Home and Entry tabs. Changes elsewhere to other fields of the same record are kept with yours.
+  - If the server refuses an entry (for example, the animal was deleted meanwhile), it shows why and can be discarded. It doesn't hold up the others.
+  - Signing out clears the copies kept on the phone. Team, profile, farm settings and new farms need the internet.
 
 - **Vaccine / treatment** (from the Entry tab or an animal's page):
   - Quick choices fill in the vaccine, the type and how often to repeat it: FMD, HS, BQ, LSD, deworming, tick spray, and for goats PPR, goat pox and ET.
@@ -72,9 +78,6 @@ The Android app comes first. The same code can later build the iPhone app.
     - An animal sold this way is marked sold.
   - **Buyer page:** what they owe, their sales and payments, a call button, and *Payment* (cash, bKash, Nagad, Rocket, bank).
   - **New buyer:** name, phone, usual rates.
-- **Every record works offline.**
-  - Records get their id on the phone, so sending one twice (when the connection drops just after the server saved it) never makes a copy.
-  - A buyer added offline can be sold to straight away. The buyer reaches the server first.
 - **Farm tools** (More → Farm tools, or the Write tab): nine calculators, the same as the website's Tools menu (`src/lib/tools.ts` is copied):
   - **Cattle & goat weight** from a measuring tape (cm or inch), shown in kg with a ±10 % range. *Save to an animal* opens the weight form already filled in.
   - **Feed ration** for a milking cow (weight, milk, fat) or fattening (weight, gain wanted): concentrate, green grass, straw, water, salt and minerals a day. Also a home-made concentrate mix with its cost per kg from your prices.

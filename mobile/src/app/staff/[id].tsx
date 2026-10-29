@@ -10,7 +10,7 @@ import { usePrefs } from "@/lib/prefs";
 import { shiftMonth } from "@/lib/records";
 import { useSession } from "@/lib/session";
 import { payroll, workDaysSoFar } from "@/lib/staff";
-import { supabase } from "@/lib/supabase";
+import { useRemove } from "@/lib/outbox";
 import { useToast } from "@/lib/toast";
 
 /** One worker: a month's attendance and salary, and the payments made. */
@@ -22,6 +22,7 @@ export default function StaffMemberPage() {
   const currency = current?.farm.currency ?? "BDT";
   const options = useOptions();
   const toast = useToast();
+  const remove = useRemove();
   const today = farmToday();
   const [month, setMonth] = useState(today.slice(0, 7));
   const { data, reload } = useStaffMonth(current?.farm.id, month);
@@ -97,8 +98,8 @@ export default function StaffMemberPage() {
                       right={() => (
                         <RecordMenu
                           onDelete={async () => {
-                            const { error } = await supabase.from("staff_payments").delete().eq("id", x.id);
-                            toast(error ? `${t("common.error")} ${error.message}` : t("rec.deleted"));
+                            const r = await remove("staff_payments", x.id, `${t("rec.delete")} · ${money(Number(x.amount), currency)}`);
+                            toast(r.error ? `${t("common.error")} ${r.error}` : r.queued ? t("entry.queued") : t("rec.deleted"));
                             reload();
                           }}
                         />

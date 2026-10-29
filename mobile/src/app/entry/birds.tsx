@@ -1,5 +1,5 @@
 import { router, useFocusEffect } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { Appbar, Button, Chip, HelperText, Text, TextInput, useTheme } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -7,31 +7,16 @@ import { EntryDone } from "@/components/entry-done";
 import { DateField, Label } from "@/components/fields";
 import { FormError } from "@/components/form-error";
 import { OfflineNote } from "@/components/offline-note";
-import { useFlocks, useStock, type Flock } from "@/lib/data";
+import { useCached } from "@/lib/cache";
+import { fetchFlockLog, useFlocks, useStock, type Flock } from "@/lib/data";
 import { farmToday } from "@/lib/dates";
 import { flockEntry, type FlockFields } from "@/lib/entries";
 import { useOutbox } from "@/lib/outbox";
 import { usePrefs } from "@/lib/prefs";
 import { addDays, isDate } from "@/lib/records";
 import { useSession } from "@/lib/session";
-import { supabase } from "@/lib/supabase";
 
 const EMPTY: FlockFields = { eggs: "", broken: "", mortality: "", culled: "", feed: "", weight: "" };
-type Log = FlockFields & { feedItem: string | null };
-
-async function loadLog(flockId: string, day: string): Promise<Log | null> {
-  const { data, error } = await supabase
-    .from("flock_daily_logs")
-    .select("eggs_collected, eggs_broken, mortality, culled, feed_kg, avg_weight_g, feed_item_id")
-    .eq("flock_id", flockId)
-    .eq("log_date", day)
-    .maybeSingle();
-  if (error) throw error;
-  if (!data) return null;
-  const s = (v: unknown) => (v === null || v === undefined ? "" : String(Number(v)));
-  return { eggs: s(data.eggs_collected), broken: s(data.eggs_broken), mortality: s(data.mortality), culled: s(data.culled), feed: s(data.feed_kg), weight: s(data.avg_weight_g), feedItem: (data.feed_item_id as string | null) ?? null };
-}
-
 /** One flock's day: eggs, deaths, birds taken out, feed (from stock) and, for broilers, weight. */
 export default function BirdSheet() {
   const { t, n, date } = usePrefs();
@@ -124,23 +109,16 @@ function FlockDay({
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const layer = flock.kind === "layer";
-  const [existing, setExisting] = useState<Log | null>(null);
-  const [yesterday, setYesterday] = useState<Log | null>(null);
+  // The day's log and yesterday's, kept on the phone too.
+  const log = useCached(isDate(day) ? `flocklog.${flock.id}.${day}` : null, () => fetchFlockLog(flock.id, day));
+  const prev = useCached(isDate(day) ? `flocklog.${flock.id}.${addDays(day, -1)}` : null, () => fetchFlockLog(flock.id, addDays(day, -1)));
+  const existing = log.data;
+  const yesterday = prev.data;
   const [typed, setTyped] = useState<Partial<FlockFields>>({});
   const [feedItem, setFeedItem] = useState<string | null | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [detail, setDetail] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    if (!isDate(day)) return;
-    let cancelled = false;
-    loadLog(flock.id, day).then((v) => !cancelled && setExisting(v), () => {});
-    loadLog(flock.id, addDays(day, -1)).then((v) => !cancelled && setYesterday(v), () => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [flock.id, day]);
 
   const f: FlockFields = { ...EMPTY, ...(existing ?? {}), ...typed };
   const item = feedItem === undefined ? (existing?.feedItem ?? null) : feedItem;
@@ -156,7 +134,7 @@ function FlockDay({
     setError(null);
     setDetail(null);
     setBusy(true);
-    const res = await save({ kind: "flock", farmId, data: { ...r.entry, feed_item_id: item, flock_name: flock.name } });
+    const res = await save({ kind: "flock", farmId, data: { ...r.entry, feed_item_id: item, flock_name: flock.name, seen: existing?.updated_at ?? null } });
     setBusy(false);
     if (res.status === "error") {
       setError(t("common.error"));

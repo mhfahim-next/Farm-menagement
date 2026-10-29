@@ -9,9 +9,9 @@ import { farmToday } from "@/lib/dates";
 import { parseNumber } from "@/lib/entries";
 import { optionLabel, optionsOf } from "@/lib/options";
 import { usePrefs } from "@/lib/prefs";
-import { addDays, healthEntry } from "@/lib/records";
+import { useOutbox } from "@/lib/outbox";
+import { addDays, healthEntry, uuid } from "@/lib/records";
 import { useSession } from "@/lib/session";
-import { supabase } from "@/lib/supabase";
 import { useToast } from "@/lib/toast";
 
 /** A vaccine, dewormer, spray or medicine course for one or more flocks. */
@@ -22,6 +22,7 @@ export default function FlockHealth() {
   const options = useOptions();
   const { data: flocks } = useFlocks(farm?.id);
   const toast = useToast();
+  const { save } = useOutbox();
   const [ids, setIds] = useState<string[]>(flock ? [flock] : []);
   const [type, setType] = useState("vaccination");
   const [product, setProduct] = useState("");
@@ -53,14 +54,24 @@ export default function FlockHealth() {
     setError(null);
     setBusy(true);
     const { cattle_ids, ...v } = r.entry;
-    const { error: e } = await supabase.from("flock_health_records").insert(cattle_ids.map((flock_id) => ({ farm_id: farm.id, flock_id, ...v })));
-    setBusy(false);
-    if (e) {
-      setError(t("common.error"));
-      setDetail(e.message);
-      return;
+    let queued = false;
+    for (const flock_id of cattle_ids) {
+      const name = (flocks ?? []).find((f) => f.id === flock_id)?.name ?? "";
+      const res = await save({
+        kind: "insert",
+        farmId: farm.id,
+        data: { table: "flock_health_records", row: { id: uuid(), flock_id, ...v }, label: `${optionLabel(options, "health_type", v.record_type, locale)} · ${v.product} · ${name}` },
+      });
+      if (res.status === "error") {
+        setBusy(false);
+        setError(t("common.error"));
+        setDetail(res.error);
+        return;
+      }
+      queued ||= res.status === "queued";
     }
-    toast(t("rec.saved"));
+    setBusy(false);
+    toast(queued ? t("entry.queued") : t("rec.saved"));
     router.back();
   };
 

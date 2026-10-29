@@ -1,6 +1,7 @@
 import { Tabs } from "expo-router";
 import { BottomNavigation, Icon } from "react-native-paper";
 import { useAnimals, useFlocks, useOptions } from "@/lib/data";
+import { useOfflineDownload } from "@/lib/offline";
 import { useOutbox } from "@/lib/outbox";
 import { usePrefs } from "@/lib/prefs";
 import { useSession } from "@/lib/session";
@@ -17,7 +18,7 @@ const ICONS: Record<string, [string, string]> = {
 
 /** Material 3 bottom navigation; tabs the farm has no use for are left out. */
 export default function TabsLayout() {
-  const { t } = usePrefs();
+  const { t, locale } = usePrefs();
   const { current } = useSession();
   const { waiting } = useOutbox();
   const farm = current?.farm;
@@ -26,6 +27,8 @@ export default function TabsLayout() {
   useAnimals(farm?.has_dairy || farm?.has_fattening || farm?.has_goat ? farm.id : undefined);
   useFlocks(farm?.has_layer || farm?.has_broiler ? farm.id : undefined);
   useNotifySchedule();
+  // The current farm's data is kept on the phone, so the app works without internet.
+  useOfflineDownload(current, locale);
   const hidden = new Set<string>();
   const birdsOnly = Boolean(farm && !farm.has_dairy && !farm.has_fattening && !farm.has_goat);
   // Doctors write only vaccines and breeding (sent for approval): no sales.

@@ -7,9 +7,9 @@ import { FormScreen } from "@/components/form-screen";
 import { useFlocks, useStock } from "@/lib/data";
 import { farmToday } from "@/lib/dates";
 import { usePrefs } from "@/lib/prefs";
-import { STOCK_SECTIONS, stockMoveEntry } from "@/lib/records";
+import { useOutbox } from "@/lib/outbox";
+import { STOCK_SECTIONS, stockMoveEntry, uuid } from "@/lib/records";
 import { useSession } from "@/lib/session";
-import { supabase } from "@/lib/supabase";
 import { useToast } from "@/lib/toast";
 
 /** Bought more, used some, or counted what is left. Purchases go into the farm's expenses. */
@@ -21,6 +21,7 @@ export default function StockMoveForm() {
   const { data: flocks } = useFlocks(farm?.id);
   const item = (data ?? []).find((i) => i.id === params.item);
   const toast = useToast();
+  const { save } = useOutbox();
   const [type, setType] = useState(params.type === "use" || params.type === "adjust" ? params.type : "purchase");
   const [date, setDate] = useState(farmToday());
   const [qty, setQty] = useState("");
@@ -47,14 +48,20 @@ export default function StockMoveForm() {
       return router.back();
     }
     setBusy(true);
-    const { error: e } = await supabase.from("inventory_moves").insert({ farm_id: farm.id, item_id: item.id, ...r.entry });
+    const id = uuid();
+    const res = await save({
+      kind: "insert",
+      farmId: farm.id,
+      // client_id: the website's offline entries use it against double counting; the same id here.
+      data: { table: "inventory_moves", row: { id, client_id: id, item_id: item.id, ...r.entry }, label: `${item.name} · ${n(Math.abs(r.entry.quantity))} ${unit}` },
+    });
     setBusy(false);
-    if (e) {
+    if (res.status === "error") {
       setError(t("common.error"));
-      setDetail(e.message);
+      setDetail(res.error);
       return;
     }
-    toast(t(`stock.saved.${r.entry.move_type}`));
+    toast(res.status === "queued" ? t("entry.queued") : t(`stock.saved.${r.entry.move_type}`));
     router.back();
   };
 

@@ -2,7 +2,7 @@ import { useCached } from "@/lib/cache";
 import { supabase } from "@/lib/supabase";
 import { mergeToolParams, TOOL_DEFAULTS, type ToolParams } from "@/lib/tools";
 
-async function fetchToolRows() {
+export async function fetchToolRows() {
   const { data, error } = await supabase.from("tool_settings").select("tool, params");
   if (error) throw new Error(error.message);
   return (data ?? []) as { tool: string; params: unknown }[];
