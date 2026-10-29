@@ -3,7 +3,7 @@ import type { blog as en } from "../en/blog";
 export const blog: Record<keyof typeof en, string> = {
   "blog.nav": "ব্লগ",
   "blog.title": "ব্লগ",
-  "blog.desc": "খামার ব্যবস্থাপনার কাজের টিপস ও গাইড, FarmFlows থেকে।",
+  "blog.desc": "ডেইরি, গরু, ছাগল ও মুরগির খামারিদের জন্য কাজের গাইড: খাবার, টিকা, প্রজনন, দুধ ও ডিমের হিসাব, খরচ আর লাভ, FarmFlows থেকে।",
   "blog.empty": "এখনো কোনো লেখা নেই। শিগগিরই আসছে।",
   "blog.read": "লেখাটি পড়ুন",
   "blog.draftNotice": "খসড়া: শুধু সুপার অ্যাডমিন এই পেজ দেখতে পারেন।",

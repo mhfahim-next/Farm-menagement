@@ -1,7 +1,7 @@
 export const blog = {
   "blog.nav": "Blog",
   "blog.title": "Blog",
-  "blog.desc": "Practical farm management tips and guides from FarmFlows.",
+  "blog.desc": "Practical guides for dairy, cattle, goat and poultry farmers: feeding, vaccines, breeding, milk and egg records, costs and profit, from FarmFlows.",
   "blog.empty": "No articles yet. Check back soon.",
   "blog.read": "Read article",
   "blog.draftNotice": "Draft: only super admins can see this page.",

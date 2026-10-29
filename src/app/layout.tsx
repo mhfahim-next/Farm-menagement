@@ -8,7 +8,7 @@ import { NavProgress } from "@/components/nav-progress";
 import { PwaRegister } from "@/components/pwa";
 import { ToastProvider } from "@/components/toast";
 import { Suspense } from "react";
-import { getI18n, getOptionRows, messagesFor } from "@/lib/i18n/server";
+import { clientMessagesFor, getI18n, getOptionRows } from "@/lib/i18n/server";
 import { SITE_NAME, SITE_URL, verificationToken } from "@/lib/site";
 import "./globals.css";
 
@@ -100,7 +100,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="min-h-full flex flex-col font-sans">
-        <I18nProvider locale={locale} messages={messagesFor(locale)} optionRows={optionRows}>
+        <I18nProvider locale={locale} messages={clientMessagesFor(locale)} optionRows={optionRows}>
           <ToastProvider>{children}</ToastProvider>
           <Suspense fallback={null}>
             <NavProgress />

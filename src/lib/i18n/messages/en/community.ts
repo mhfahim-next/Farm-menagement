@@ -1,7 +1,7 @@
 export const community = {
   "community.nav": "Community",
   "community.title": "Farmers' community",
-  "community.metaTitle": "Farmers' community: ask questions, get answers from farmers and vets",
+  "community.metaTitle": "Farmers' Q&A: ask farmers and vets",
   "community.metaDesc": "Ask questions about cattle, dairy and layer farming in Bangla or English. Farmers and verified vets answer.",
   "community.desc": "Ask about cows, calves, milk, feed or layer hens. Other farmers and verified vets answer.",
   "community.ask": "Ask a question",

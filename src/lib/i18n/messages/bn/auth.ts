@@ -3,6 +3,10 @@ import type { auth as en } from "../en/auth";
 export const auth: Record<keyof typeof en, string> = {
   "auth.loginTitle": "আবার স্বাগতম",
   "auth.loginSubtitle": "আপনার খামার পরিচালনা করতে লগ ইন করুন।",
+  "auth.loginDesc": "আপনার FarmFlows খামারের অ্যাকাউন্টে লগ ইন করুন।",
+  "auth.signupMetaTitle": "ফ্রি খামার অ্যাকাউন্ট খুলুন",
+  "auth.signupDesc": "ফ্রিতে শুরু করুন: ডেইরি, গরু, ছাগল বা মুরগির খামারের দুধ, ডিম, টিকা, প্রজনন, বিক্রি আর খরচের হিসাব রাখুন, বাংলা বা ইংরেজিতে, ওয়েব ও অ্যান্ড্রয়েডে।",
+  "doctor.signupDesc": "পশু চিকিৎসকরা: ফ্রি FarmFlows ডাক্তার অ্যাকাউন্ট খুলুন, যে খামারগুলো দেখেন সেগুলো অনুসরণ করুন আর টিকা ও চিকিৎসা লিখে রাখুন।",
   "auth.loginMeta": "লগ ইন",
   "auth.loginSubmit": "লগ ইন",
   "auth.linkInvalid": "লিংকটি সঠিক নয় অথবা মেয়াদ শেষ হয়ে গেছে। অনুগ্রহ করে আবার লগ ইন করুন।",

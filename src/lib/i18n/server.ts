@@ -6,10 +6,26 @@ import { createClient } from "@/lib/supabase/server";
 import type { OptionRow } from "../options";
 import { cookies, headers } from "next/headers";
 import { createI18n, DEFAULT_LOCALE, isLocale, LOCALE_COOKIE, type Locale, type Messages } from "./core";
+import { CLIENT_KEYS } from "./client-keys";
 import { bn } from "./messages/bn";
 import { en } from "./messages/en";
 
 const catalogs: Record<Locale, Messages> = { en, bn };
+
+const clientCatalogs: Partial<Record<Locale, Messages>> = {};
+
+/**
+ * The translations the browser needs: only the keys client code uses
+ * (src/lib/i18n/client-keys.ts). Server components translate on the server, so
+ * sending the whole catalog made every page ~150 KB heavier.
+ */
+export function clientMessagesFor(locale: Locale): Messages {
+  if (!clientCatalogs[locale]) {
+    const all = catalogs[locale] as Record<string, string>;
+    clientCatalogs[locale] = Object.fromEntries(CLIENT_KEYS.filter((k) => k in all).map((k) => [k, all[k]])) as Messages;
+  }
+  return clientCatalogs[locale]!;
+}
 
 export function messagesFor(locale: Locale): Messages {
   return catalogs[locale];

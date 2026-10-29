@@ -3,7 +3,7 @@ import type { community as en } from "../en/community";
 export const community: Record<keyof typeof en, string> = {
   "community.nav": "কমিউনিটি",
   "community.title": "খামারি কমিউনিটি",
-  "community.metaTitle": "খামারি কমিউনিটি: প্রশ্ন করুন, খামারি ও পশু চিকিৎসকের উত্তর পান",
+  "community.metaTitle": "খামারি কমিউনিটি: প্রশ্ন করুন, উত্তর পান",
   "community.metaDesc": "গরু, দুগ্ধ খামার ও লেয়ার মুরগি নিয়ে বাংলা বা ইংরেজিতে প্রশ্ন করুন। উত্তর দেন অভিজ্ঞ খামারি ও যাচাইকৃত পশু চিকিৎসক।",
   "community.desc": "গরু, বাছুর, দুধ, খাবার বা লেয়ার মুরগি নিয়ে প্রশ্ন করুন। অন্য খামারি ও যাচাইকৃত পশু চিকিৎসকেরা উত্তর দেন।",
   "community.ask": "প্রশ্ন করুন",

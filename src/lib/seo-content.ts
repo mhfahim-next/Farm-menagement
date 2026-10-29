@@ -4,11 +4,11 @@ export type Bilingual = { en: string; bn: string };
 
 export const GUIDE = {
   metaTitle: {
-    en: "Free Farm Management Software & App for Dairy, Cattle and Poultry Farms",
-    bn: "ডেইরি, গবাদিপশু ও পোল্ট্রি খামারের ফ্রি ফার্ম ম্যানেজমেন্ট সফটওয়্যার ও অ্যাপ",
+    en: "Free Farm Management Software for Dairy & Poultry",
+    bn: "ডেইরি ও পোল্ট্রি খামারের ফ্রি ফার্ম ম্যানেজমেন্ট সফটওয়্যার",
   },
   metaDescription: {
-    en: "What a farm management system is, what it should track, how to choose one, and how FarmFlows gives dairy, cattle and layer farms a free farm management app in Bangla and English.",
+    en: "What farm management software should track, how to choose one, and how FarmFlows gives dairy, cattle and poultry farms a free app in Bangla and English.",
     bn: "ফার্ম ম্যানেজমেন্ট সিস্টেম কী, কী কী হিসাব রাখা উচিত, কীভাবে বাছবেন, আর FarmFlows কীভাবে ডেইরি, গবাদিপশু ও লেয়ার খামারকে বাংলা ও ইংরেজিতে ফ্রি অ্যাপ দেয়।",
   },
   h1: {

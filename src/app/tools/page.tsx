@@ -5,7 +5,7 @@ import { ToolGrid } from "@/components/tool-grid";
 import { ButtonLink } from "@/components/ui";
 import { getViewer } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
-import { langAlternates, SITE_NAME, SITE_URL } from "@/lib/site";
+import { DEFAULT_OG_IMAGE, langAlternates, SITE_NAME, SITE_URL } from "@/lib/site";
 import { TOOLS, toolName } from "@/lib/tool-list";
 
 const PATH = "/tools";
@@ -16,7 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: t("tools.title"),
     description: t("tools.desc"),
     alternates: langAlternates(PATH, locale),
-    openGraph: { title: t("tools.title"), description: t("tools.desc"), url: PATH },
+    openGraph: { title: t("tools.title"), description: t("tools.desc"), url: PATH, images: [DEFAULT_OG_IMAGE] },
   };
 }
 

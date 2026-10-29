@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { langAlternates } from "@/lib/site";
 import Link from "next/link";
 import { ActionForm } from "@/components/action-form";
 import { GoogleButton } from "@/components/google-button";
@@ -8,7 +9,8 @@ import { signup } from "../actions";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
-  return { title: t("auth.signupMeta") };
+  const { locale } = await getI18n();
+  return { title: t("auth.signupMetaTitle"), description: t("auth.signupDesc"), alternates: langAlternates("/signup", locale) };
 }
 
 export default async function SignupPage({ searchParams }: PageProps<"/signup">) {

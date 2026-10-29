@@ -3,6 +3,7 @@ import type { deleteaccount as en } from "../en/deleteaccount";
 export const deleteaccount: Record<keyof typeof en, string> = {
   "del.nav": "অ্যাকাউন্ট মুছে ফেলুন",
   "del.title": "আপনার FarmFlows অ্যাকাউন্ট মুছে ফেলুন",
+  "del.metaDesc": "অ্যাপ বা ওয়েবসাইট থেকে FarmFlows অ্যাকাউন্ট কীভাবে মুছবেন, কী কী মোছে, আর মত বদলানোর জন্য ৩০ দিন।",
   "del.intro": "অ্যান্ড্রয়েড অ্যাপ বা ওয়েবসাইট থেকে আপনি নিজেই FarmFlows অ্যাকাউন্ট আর তার তথ্য মোছার অনুরোধ করতে পারেন। সাথে সাথে লগআউট হবেন, আর ৩০ দিন পর অ্যাকাউন্ট মুছে যাবে।",
   "del.appTitle": "FarmFlows অ্যাপে",
   "del.app1": "অ্যাপ খুলে “আরও” ট্যাবে যান।",
