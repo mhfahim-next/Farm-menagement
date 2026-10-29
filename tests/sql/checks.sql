@@ -175,7 +175,9 @@ end $$;
 
 reset role;
 
--- 4. Deleting your own account (Google Play rule): refused while others share a farm you own.
+-- 4. Deleting your own account (Google Play rule) waits 30 days: refused while others
+--    share a farm you own; a request deletes nothing; signing in again cancels it; only
+--    the server (service role) deletes, and then only the reason and dates stay.
 insert into auth.users (id, instance_id, aud, role, email, raw_user_meta_data, created_at, updated_at) values
   ('00000000-0000-4000-8000-0000000000c2', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'ci-owner@example.com', '{}', now(), now()),
   ('00000000-0000-4000-8000-0000000000c3', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'ci-worker@example.com', '{}', now(), now());
@@ -184,7 +186,7 @@ select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-0000000
 \o
 set local role authenticated;
 do $$
-declare v_farm uuid; v_ok boolean := false;
+declare v_farm uuid;
 begin
   v_farm := public.create_farm('CI shared farm', null, 'BDT', true, false, false, false, false);
   perform set_config('ci.farm', v_farm::text, true);
@@ -197,7 +199,7 @@ do $$
 declare v_ok boolean := false;
 begin
   begin
-    perform public.delete_my_account();
+    perform public.request_account_deletion('too_expensive', 'note', 'app');
   exception when others then v_ok := sqlerrm like 'SHARED_FARM:%';
   end;
   if not v_ok then raise exception 'an owner could delete their account while others share the farm'; end if;
@@ -205,13 +207,53 @@ end $$;
 reset role;
 delete from public.farm_members where user_id = '00000000-0000-4000-8000-0000000000c3';
 set local role authenticated;
-select public.delete_my_account();
+do $$
+declare v_due timestamptz; v_ok boolean := false;
+begin
+  v_due := public.request_account_deletion('too_expensive', 'Costs too much', 'app');
+  if v_due < now() + interval '29 days' then raise exception 'the deletion does not wait 30 days'; end if;
+  -- Only the service role deletes; a person can't delete at once or read the requests.
+  begin
+    perform public.delete_account_now((select id from public.account_deletion_requests limit 1), 'admin');
+  exception when insufficient_privilege then v_ok := true;
+  end;
+  if not v_ok then raise exception 'a person could delete an account at once'; end if;
+  if exists (select 1 from public.account_deletion_requests) then raise exception 'a non-admin can read deletion requests'; end if;
+end $$;
 reset role;
 do $$
+declare r public.account_deletion_requests;
 begin
+  select * into r from public.account_deletion_requests where user_id = '00000000-0000-4000-8000-0000000000c2';
+  if r.status <> 'pending' or r.email <> 'ci-owner@example.com' or r.reason <> 'too_expensive' or jsonb_array_length(r.farms) <> 1 then raise exception 'request not saved as asked'; end if;
+  if not exists (select 1 from public.farms where id = current_setting('ci.farm')::uuid) then raise exception 'the request deleted the farm at once'; end if;
+end $$;
+-- Signing in again cancels it.
+update auth.users set last_sign_in_at = now() + interval '1 second' where id = '00000000-0000-4000-8000-0000000000c2';
+do $$
+begin
+  if not exists (select 1 from public.account_deletion_requests where user_id = '00000000-0000-4000-8000-0000000000c2' and status = 'cancelled' and cancelled_by = 'login') then
+    raise exception 'signing in again did not cancel the deletion';
+  end if;
+end $$;
+-- Asked again, then deleted by the server: the account and the farm go, only the reason stays.
+set local role authenticated;
+select public.request_account_deletion('other_app', null, 'web') is not null as asked;
+reset role;
+do $$
+declare v_id uuid; r public.account_deletion_requests;
+begin
+  select id into v_id from public.account_deletion_requests where user_id = '00000000-0000-4000-8000-0000000000c2' and status = 'pending';
+  if public.delete_account_now(v_id, 'schedule') <> 'deleted' then raise exception 'the server could not delete'; end if;
   if exists (select 1 from auth.users where id = '00000000-0000-4000-8000-0000000000c2') then raise exception 'the account was not deleted'; end if;
   if exists (select 1 from public.farms where id = current_setting('ci.farm')::uuid) then raise exception 'the farm owned alone was not deleted'; end if;
-  if has_function_privilege('anon', 'public.delete_my_account()', 'execute') then raise exception 'visitors can call delete_my_account'; end if;
+  select * into r from public.account_deletion_requests where id = v_id;
+  if r.status <> 'deleted' or r.email is not null or r.full_name is not null or r.phone is not null or r.user_id is not null or r.reason <> 'other_app' then
+    raise exception 'personal details stayed after deletion';
+  end if;
+  if has_function_privilege('anon', 'public.request_account_deletion(text, text, text)', 'execute') then raise exception 'visitors can ask to delete accounts'; end if;
+  if has_function_privilege('authenticated', 'public.delete_account_now(uuid, text)', 'execute') then raise exception 'people can call delete_account_now'; end if;
+  if exists (select 1 from pg_proc where proname = 'delete_my_account') then raise exception 'the instant delete is still there'; end if;
 end $$;
 rollback;
 \echo 'database checks passed'
