@@ -16,12 +16,13 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
     getI18n(),
     createClient().then((supabase) => supabase.rpc("admin_inbox_counts")),
   ]);
-  const counts = (inbox ?? {}) as { requests?: number; messages?: number; payments?: number };
+  const counts = (inbox ?? {}) as { requests?: number; messages?: number; payments?: number; deletions?: number };
 
   const nav: NavItem[] = [
     { href: "/admin", label: t("nav.adminOverview"), icon: "overview" },
     { href: "/admin/analytics", label: t("nav.adminAnalytics"), icon: "analytics" },
     { href: "/admin/users", label: t("nav.adminUsers"), icon: "users" },
+    { href: "/admin/deletions", label: t("nav.adminDeletions"), icon: "accountOff", badge: counts.deletions ?? 0 },
     { href: "/admin/farms", label: t("nav.adminFarms"), icon: "farms" },
     { href: "/admin/plans", label: t("nav.adminPlans"), icon: "plan" },
     { href: "/admin/payments", label: t("nav.adminPayments"), icon: "payments", badge: counts.payments ?? 0 },

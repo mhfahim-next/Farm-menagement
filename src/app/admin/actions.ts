@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { runDueDeletions } from "@/lib/account-deletion";
 import { requireSuperAdmin } from "@/lib/auth";
 import { str } from "@/lib/form";
 import { getI18n } from "@/lib/i18n/server";
@@ -142,4 +143,29 @@ export async function sendSentryTest(): Promise<ActionState> {
   const Sentry = await import("@sentry/nextjs");
   Sentry.captureException(new Error("FarmFlows Sentry test (server)"));
   return (await Sentry.flush(5000)) ? { success: t("adminsentry.sent") } : { error: t("adminsentry.failed") };
+}
+
+/** Account deletion requests (/admin/deletions): keep the account after talking to the person. */
+export async function cancelAccountDeletion(_: ActionState, formData: FormData): Promise<ActionState> {
+  const { t } = await getI18n();
+  const id = str(formData, "id");
+  if (!id) return { error: t("common.errorGeneric") };
+  const r = await run((s) => s.rpc("admin_cancel_account_deletion", { p_request: id }), t("adel.cancelled"));
+  revalidatePath("/admin/deletions");
+  return r;
+}
+
+/** Deletes the account at once instead of waiting for the 30 days. */
+export async function deleteAccountNow(_: ActionState, formData: FormData): Promise<ActionState> {
+  const { t } = await getI18n();
+  const id = str(formData, "id");
+  if (!id) return { error: t("common.errorGeneric") };
+  const due = await run((s) => s.rpc("admin_delete_account_now", { p_request: id }), "");
+  if (due?.error) return due;
+  const result = await runDueDeletions("admin", id);
+  revalidatePath("/admin", "layout");
+  if ("error" in result) return { success: t("adel.dueSoon") };
+  if (result.blocked) return { error: t("adel.blockedNow") };
+  if (result.failed) return { error: t("common.errorGeneric") };
+  return { success: t("adel.deletedNow") };
 }

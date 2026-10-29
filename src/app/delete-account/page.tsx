@@ -16,8 +16,10 @@ export async function generateMetadata(): Promise<Metadata> {
  * How to delete a FarmFlows account and what goes with it. Public (no login),
  * because Google Play asks for a web page where people can request deletion.
  */
-export default async function DeleteAccountPage() {
-  const { t } = await getI18n();
+export default async function DeleteAccountPage({ searchParams }: PageProps<"/delete-account">) {
+  const { t, f } = await getI18n();
+  const requested = (await searchParams).requested;
+  const due = typeof requested === "string" && /^\d{4}-\d{2}-\d{2}$/.test(requested) ? requested : null;
   const [viewer, info] = await Promise.all([getViewer(), safe(() => getSiteInfo(), null)]);
   const list = (keys: MessageKey[]) => (
     <ul className="mt-3 list-disc space-y-1.5 pl-5 text-stone-700">
@@ -40,6 +42,16 @@ export default async function DeleteAccountPage() {
         <p className="text-sm font-semibold text-emerald-700">FarmFlows</p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight text-stone-900 sm:text-4xl">{t("del.title")}</h1>
         <p className="mt-3 text-lg text-stone-600">{t("del.intro")}</p>
+        {due && (
+          <p className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 font-medium text-emerald-900" role="status" data-testid="delete-requested">
+            {t("del.requested", { date: f.date(due) })}
+          </p>
+        )}
+
+        <section className="mt-6 rounded-2xl border border-emerald-200 bg-white p-6">
+          <h2 className="text-lg font-semibold text-stone-900">⏳ {t("del.waitTitle")}</h2>
+          <p className="mt-2 text-stone-700">{t("del.wait")}</p>
+        </section>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           <section className="rounded-2xl border border-stone-200 bg-white p-6">
@@ -79,7 +91,7 @@ export default async function DeleteAccountPage() {
           </section>
           <section className="rounded-2xl border border-stone-200 bg-white p-6">
             <h2 className="text-lg font-semibold text-stone-900">{t("del.keptTitle")}</h2>
-            {list(["del.kept1", "del.kept2", "del.kept3"])}
+            {list(["del.kept1", "del.kept2", "del.kept3", "del.kept4"])}
           </section>
         </div>
 

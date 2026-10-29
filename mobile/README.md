@@ -136,7 +136,7 @@ The Android app comes first. The same code can later build the iPhone app.
   - Batch page: age, live birds, mortality, average weight, FCR, cost per kg, sales and profit (`src/lib/broiler.ts` is copied too).
   - Vaccines and medicine for one or more flocks, with Newcastle, Gumboro and other presets.
   - A flock can be marked sold or culled.
-- **Profile:** name, phone, photo, a new password, and **Delete account** (type DELETE to confirm).
+- **Profile:** name, phone, photo, a new password, and **Delete account**: an optional reason and note, type DELETE to confirm. This saves a request and signs out everywhere; the account is deleted 30 days later. Signing in again before then cancels it, and Home says so.
   - Google Play requires the delete option. The website has the same button under Profile.
   - Farms owned alone are deleted with all their records.
   - A farm shared with others has to be handed over first.

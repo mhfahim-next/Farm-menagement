@@ -1,9 +1,11 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { farmClock } from "@/lib/format";
+import { runDueDeletions } from "@/lib/account-deletion";
 import { runReminderJob } from "@/lib/reminder-job";
 
-// Called by Vercel Cron (vercel.json) at 7:00 and 20:00 Bangladesh time, with
+// Called by Vercel Cron (vercel.json) at 7:00 and 20:00 Bangladesh time (the
+// morning run also deletes the accounts whose 30 days are up), with
 // "Authorization: Bearer <CRON_SECRET>". Any other scheduler can call it the
 // same way, with ?slot=morning|evening.
 export const maxDuration = 300;
@@ -23,5 +25,7 @@ export async function GET(request: Request) {
   const slot = asked === "morning" || asked === "evening" ? asked : farmClock().hour < 12 ? "morning" : "evening";
   const result = await runReminderJob(slot);
   if ("error" in result) return NextResponse.json(result, { status: 503 });
-  return NextResponse.json(result);
+  // Once a day, the accounts whose 30 days are up are deleted too (also callable alone: /api/cron/deletions).
+  const deletions = slot === "morning" ? await runDueDeletions("schedule") : null;
+  return NextResponse.json(deletions ? { ...result, deletions } : result);
 }

@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { ActionForm } from "@/components/action-form";
 import { AvatarUploader } from "@/components/avatar-uploader";
-import { Card, Field, Input, PageHeader } from "@/components/ui";
+import { Card, Field, Input, PageHeader, Select, Textarea } from "@/components/ui";
 import { getProfile, requireUser } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
+import { DELETE_REASONS } from "@/lib/delete-reasons";
 import { changePassword, deleteAccount, updateProfile } from "./actions";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -58,6 +59,12 @@ export default async function ProfilePage() {
         <Card title={t("profile.deleteTitle")} className="border-red-200 lg:col-span-2">
           <p className="mb-3 text-sm text-stone-700">{t("profile.deleteBody")}</p>
           <ActionForm action={deleteAccount} submitLabel={t("profile.deleteButton")} submitVariant="danger">
+            <Field label={t("profile.deleteReason")}>
+              <Select name="reason" defaultValue="" data-testid="delete-reason" options={[{ value: "", label: "—" }, ...DELETE_REASONS.map((r) => ({ value: r, label: t(`profile.reason.${r}`) }))]} />
+            </Field>
+            <Field label={t("profile.deleteNote")}>
+              <Textarea name="note" rows={2} maxLength={1000} data-testid="delete-note" />
+            </Field>
             <Field label={t("profile.deleteType", { word: t("profile.deleteWord") })}>
               <Input name="confirm" autoComplete="off" required />
             </Field>

@@ -71,38 +71,3 @@ export const photoUrl = (bucket: "animal-photos" | "avatars", path: string | nul
 export async function removePhoto(bucket: "animal-photos" | "avatars", path: string | null | undefined) {
   if (path && !local(path)) await supabase.storage.from(bucket).remove([path]).catch(() => {});
 }
-
-/** Every file in one folder of a bucket (paged), as full paths. */
-async function filesIn(bucket: "animal-photos" | "avatars", folder: string) {
-  const paths: string[] = [];
-  for (let offset = 0; ; offset += 1000) {
-    const { data, error } = await supabase.storage.from(bucket).list(folder, { limit: 1000, offset });
-    if (error || !data?.length) break;
-    paths.push(...data.filter((f) => f.id).map((f) => `${folder}/${f.name}`));
-    if (data.length < 1000) break;
-  }
-  return paths;
-}
-
-/**
- * Before an account is deleted: removes the person's profile photos and the
- * animal photos of the farms that will be deleted with it (files can't be
- * removed from the database side). Returns the names of farms that block the
- * deletion because other people use them; nothing is removed then.
- */
-export async function removeAccountFiles(userId: string) {
-  const { data: farms } = await supabase.from("farms").select("id, name").eq("owner_id", userId);
-  const owned = (farms ?? []) as { id: string; name: string }[];
-  if (owned.length) {
-    const { data: others } = await supabase.from("farm_members").select("farm_id").in("farm_id", owned.map((f) => f.id)).neq("user_id", userId);
-    const shared = owned.filter((f) => (others ?? []).some((m) => m.farm_id === f.id)).map((f) => f.name);
-    if (shared.length) return { shared };
-  }
-  const avatars = await filesIn("avatars", userId);
-  if (avatars.length) await supabase.storage.from("avatars").remove(avatars).catch(() => {});
-  for (const f of owned) {
-    const photos = await filesIn("animal-photos", f.id);
-    for (let i = 0; i < photos.length; i += 100) await supabase.storage.from("animal-photos").remove(photos.slice(i, i + 100)).catch(() => {});
-  }
-  return { shared: [] as string[] };
-}
