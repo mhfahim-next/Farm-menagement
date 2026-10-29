@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { removeAccountFiles } from "@/lib/account-files";
 import { requireUser } from "@/lib/auth";
+import { DELETE_REASONS } from "@/lib/delete-reasons";
 import { dbError, str } from "@/lib/form";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
@@ -89,23 +89,29 @@ export async function removeAvatar(): Promise<ActionState> {
 }
 
 /**
- * Deletes the signed-in account (Google Play asks every app to offer this).
- * Farms owned alone go with it; a farm shared with others must be handed over first.
+ * Asks to delete the signed-in account (Google Play asks every app to offer this).
+ * Nothing is deleted yet: the account is deleted 30 days later, unless the person
+ * signs in again before that. Farms owned alone go with it; a farm shared with
+ * others must be handed over first. Signs out everywhere.
  */
 export async function deleteAccount(_: ActionState, formData: FormData): Promise<ActionState> {
-  const user = await requireUser();
+  await requireUser();
   const { t } = await getI18n();
   if ((str(formData, "confirm") ?? "").toLowerCase() !== t("profile.deleteWord").toLowerCase()) {
     return { error: t("profile.deleteType", { word: t("profile.deleteWord") }) };
   }
+  const reason = str(formData, "reason");
   const supabase = await createClient();
-  const files = await removeAccountFiles(supabase, user.id);
-  if (files.shared.length) return { error: t("profile.deleteShared", { farms: files.shared.join(", ") }) };
-  const { error } = await supabase.rpc("delete_my_account");
+  const { data: due, error } = await supabase.rpc("request_account_deletion", {
+    p_reason: (DELETE_REASONS as readonly string[]).includes(reason ?? "") ? reason : null,
+    p_note: (str(formData, "note") ?? "").slice(0, 1000),
+    p_source: "web",
+  });
   if (error) {
     const shared = /SHARED_FARM:(.+)/.exec(error.message)?.[1];
     return { error: shared ? t("profile.deleteShared", { farms: shared }) : dbError(t, error) };
   }
-  await supabase.auth.signOut();
-  redirect("/?account=deleted");
+  // Signed out on every phone and browser: signing in again is what keeps the account.
+  await supabase.auth.signOut({ scope: "global" });
+  redirect(`/delete-account?requested=${encodeURIComponent(String(due).slice(0, 10))}`);
 }

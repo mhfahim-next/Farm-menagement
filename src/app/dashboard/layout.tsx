@@ -23,7 +23,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
   const isVet = role === "vet";
 
   // Everything the frame needs, in one round trip to the database.
-  const [{ data: settings }, { data: invites }, plans, planCtx, pending, ai] = await Promise.all([
+  const [{ data: settings }, { data: invites }, plans, planCtx, pending, ai, { data: restored }] = await Promise.all([
     supabase
       .from("system_settings")
       .select("announcement_en, announcement_bn, announcement_active")
@@ -36,6 +36,8 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
     isManager ? supabase.from("pending_entries").select("id", { count: "exact", head: true }).eq("farm_id", farm.id).eq("status", "pending") : null,
     // AI assistant (staff only): how many prompts this farm has used this month.
     isStaff ? supabase.rpc("ai_prompts_status", { p_farm: farm.id }) : null,
+    // True once after signing in cancelled an account deletion request.
+    supabase.rpc("take_deletion_notice"),
   ]);
   const announcement = settings?.announcement_active
     ? ((locale === "bn" ? settings.announcement_bn : settings.announcement_en) ??
@@ -172,6 +174,11 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
       banner={
         <>
           {isStaff && <OfflineSync userId={user.id} farmId={farm.id} />}
+          {restored === true && (
+            <div role="status" className="border-b border-emerald-200 bg-emerald-50 px-4 py-2 text-center text-sm text-emerald-900" data-testid="deletion-cancelled">
+              ✓ {t("profile.deletionCancelled")}
+            </div>
+          )}
           {announcement && (
             <div role="status" className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-sm text-amber-900">
               📢 {announcement}

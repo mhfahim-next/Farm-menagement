@@ -10,6 +10,8 @@ something new.
 **Is all of the user data collected by your app encrypted in transit?** Yes (HTTPS only).
 **Do you provide a way for users to request that their data is deleted?** Yes:
 in the app (More → Delete account) and at https://www.farmflows.app/delete-account
+(the account is deleted 30 days after the request; signing in again before then
+cancels it, which the page and the app explain)
 
 "Shared" means given to another company for its own use. Hosting, storage,
 email, notifications, payments and the AI provider work for us (service

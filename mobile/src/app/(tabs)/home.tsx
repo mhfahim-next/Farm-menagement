@@ -23,7 +23,7 @@ export default function Home() {
   const { t, n, locale } = usePrefs();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const { current, profile } = useSession();
+  const { current, profile, restored, clearRestored } = useSession();
   const farm = current?.farm;
   const reminders = useReminders(farm?.id, locale);
   const { reload: reloadReminders } = reminders;
@@ -90,6 +90,20 @@ export default function Home() {
         </View>
 
         <View style={styles.sync}>
+          {restored && (
+            <Card mode="contained" style={{ borderRadius: 16, backgroundColor: theme.colors.primaryContainer }} testID="deletion-cancelled">
+              <Card.Content>
+                <Text variant="bodyMedium" style={{ color: theme.colors.onPrimaryContainer }}>
+                  {t("profile.deletionCancelled")}
+                </Text>
+              </Card.Content>
+              <Card.Actions>
+                <Button compact onPress={clearRestored}>
+                  {t("sync.ok")}
+                </Button>
+              </Card.Actions>
+            </Card>
+          )}
           <SyncBar />
           <InviteCards />
           <ApprovalBanner />

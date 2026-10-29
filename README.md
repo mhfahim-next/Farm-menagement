@@ -112,6 +112,7 @@ A super admin controls the whole system from `/admin` (only they can open it; ev
 | Blog | Write, edit, publish and delete public blog articles (Bangla + English) |
 | Dropdowns | Every dropdown in the app (see below) |
 | Tools numbers | The rules of thumb behind the free farm tools (see below) |
+| Account deletions | Requests to delete an account (website or app): name, email, phone (call / WhatsApp), the reason and note, the farms (with animals and flocks) that would go, days left. **Keep the account** cancels the request; **Delete now** deletes at once. Accounts are deleted 30 days after the request by the morning cron run (`/api/cron/reminders`, also `/api/cron/deletions`; needs `SUPABASE_SERVICE_ROLE_KEY` and `CRON_SECRET`), unless the person signs in again (a trigger on `auth.users` cancels it). A farm someone else joined meanwhile is not deleted and is flagged. After deletion only the reason, farm types and dates stay |
 | Audit log | Every admin action: who, what, when |
 | Announcement | A banner shown at the top of every user's dashboard (English + Bangla), the **breeding rules** (pregnancy check due N days after AI, default 45) and **how many days of records the Android app keeps on the phone for use without internet** (`offline_days`, 30–1095, default 365) |
 

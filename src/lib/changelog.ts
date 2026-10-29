@@ -71,6 +71,20 @@ export const UPCOMING: Upcoming[] = [
 
 export const RELEASES: Release[] = [
   {
+    id: "2026-11-04-account-deletion",
+    date: "2026-11-04",
+    title: { en: "30 days to change your mind before an account is deleted", bn: "অ্যাকাউন্ট মোছার আগে মত বদলানোর ৩০ দিন" },
+    summary: {
+      en: "Asking to delete your account no longer deletes it at once: it is deleted 30 days later, and signing in again keeps it.",
+      bn: "অ্যাকাউন্ট মোছার অনুরোধ করলে আর সাথে সাথে মোছে না: ৩০ দিন পর মোছে, আর আবার লগইন করলে থেকে যায়।",
+    },
+    changes: [
+      { type: "improved", en: "Delete account (app and website) now saves a request and signs you out; the account is deleted 30 days later.", bn: "অ্যাকাউন্ট মুছুন (অ্যাপ ও ওয়েবসাইট) এখন একটি অনুরোধ জমা রাখে আর লগআউট করে; ৩০ দিন পর অ্যাকাউন্ট মোছে।" },
+      { type: "new", en: "Changed your mind? Just sign in again within the 30 days and everything stays as it was.", bn: "মত বদলেছেন? ৩০ দিনের মধ্যে আবার লগইন করুন, সব যেমন ছিল তেমনই থাকবে।" },
+      { type: "new", en: "You can tell us why you are leaving, so we can get in touch and help.", bn: "কেন চলে যাচ্ছেন জানাতে পারেন, যাতে আমরা যোগাযোগ করে সাহায্য করতে পারি।" },
+    ],
+  },
+  {
     id: "2026-11-03-app-offline",
     date: "2026-11-03",
     title: { en: "The app works fully without internet", bn: "ইন্টারনেট ছাড়াই পুরো অ্যাপ চলে" },

@@ -23,6 +23,9 @@ type SessionState = {
   /** The farm being worked on (null until the person has one). */
   current: Membership | null;
   setCurrentFarm: (id: string) => void;
+  /** Signing in just cancelled an account deletion request (shown once on Home). */
+  restored: boolean;
+  clearRestored: () => void;
   /** Set right after creating a farm, until a plan is chosen. */
   planPending: boolean;
   setPlanPending: (v: boolean) => void;
@@ -42,6 +45,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<{ for: string; profile: Profile | null; memberships: Membership[] } | null>(null);
   const [farmId, setFarmId] = useState<string | null>(() => getItem(KEYS.farm));
   const [planPending, setPlanPendingState] = useState(() => getItem(KEYS.planPending) === "1");
+  const [restored, setRestored] = useState(false);
 
   useEffect(() => {
     let settled = false;
@@ -92,6 +96,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       const a = await fetchAccount(userId);
       writeCache(`account.${userId}`, a);
       if (who.current === userId) setData({ for: userId, ...a });
+      // True once when this sign-in cancelled an account deletion request.
+      const notice = await supabase.rpc("take_deletion_notice");
+      if (notice.data === true && who.current === userId) setRestored(true);
     } catch {
       if (!saved && who.current === userId) setData({ for: userId, profile: null, memberships: [] });
     }
@@ -134,6 +141,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         setItem(KEYS.farm, id);
         setFarmId(id);
       },
+      restored,
+      clearRestored: () => setRestored(false),
       planPending,
       setPlanPending: (v) => {
         setItem(KEYS.planPending, v ? "1" : null);
@@ -149,7 +158,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         setPlanPendingState(false);
       },
     }),
-    [authReady, loaded, introSeen, session, profile, memberships, current, planPending, load],
+    [authReady, loaded, introSeen, session, profile, memberships, current, planPending, restored, load],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
