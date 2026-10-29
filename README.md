@@ -174,6 +174,8 @@ src/app/onboarding/    create the first farm
 src/app/dashboard/     overview, cattle, milk, health, breeding, flocks, finance, settings, profile
 src/app/admin/         super admin panel
 src/lib/i18n/          English + Bangla dictionaries (typed: a missing Bangla key fails the build)
+                       Only the keys client code uses go to the browser (client-keys.ts, made by
+                       `npm run i18n:client-keys`; a unit test fails while it is out of date)
 ```
 
 ## Getting started

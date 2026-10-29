@@ -1,6 +1,10 @@
 export const auth = {
   "auth.loginTitle": "Welcome back",
   "auth.loginSubtitle": "Log in to manage your farm.",
+  "auth.loginDesc": "Log in to your FarmFlows farm account.",
+  "auth.signupMetaTitle": "Create a free farm account",
+  "auth.signupDesc": "Start free: record milk, eggs, vaccines, breeding, sales and costs for your dairy, cattle, goat or poultry farm, in Bangla or English, on the web and Android.",
+  "doctor.signupDesc": "Vets and livestock doctors: create a free FarmFlows doctor account, follow the farms you serve and record vaccines and treatments.",
   "auth.loginMeta": "Log in",
   "auth.loginSubmit": "Log in",
   "auth.linkInvalid": "That link is invalid or has expired. Please log in again.",

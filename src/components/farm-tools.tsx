@@ -56,7 +56,7 @@ function Choice<T extends string>({ label, value, options, onChange, testId }: {
             aria-checked={value === o.value}
             onClick={() => onChange(o.value)}
             data-testid={`${testId}-${o.value}`}
-            className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${value === o.value ? "border-emerald-600 bg-emerald-600 text-white" : "border-stone-300 bg-white text-stone-700 hover:bg-stone-50"}`}
+            className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${value === o.value ? "border-emerald-700 bg-emerald-700 text-white" : "border-stone-300 bg-white text-stone-700 hover:bg-stone-50"}`}
           >
             {o.label}
           </button>
@@ -70,7 +70,7 @@ function Result({ children }: { children: ReactNode }) {
   const { t } = useI18n();
   return (
     <section aria-live="polite" className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-950" data-testid="tool-result">
-      <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-emerald-800">{t("tools.result")}</h3>
+      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-emerald-800">{t("tools.result")}</h2>
       {children}
     </section>
   );
@@ -148,7 +148,7 @@ function WeightTool({ animals, saveWeight, today, p }: { animals?: { id: string;
 function Card2({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-      <h3 className="mb-2 text-sm font-semibold text-stone-800">{title}</h3>
+      <h2 className="mb-2 text-sm font-semibold text-stone-800">{title}</h2>
       {children}
     </section>
   );

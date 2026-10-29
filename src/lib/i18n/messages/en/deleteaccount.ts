@@ -1,6 +1,7 @@
 export const deleteaccount = {
   "del.nav": "Delete your account",
   "del.title": "Delete your FarmFlows account",
+  "del.metaDesc": "How to delete your FarmFlows account in the app or on the website, what is deleted, and the 30 days you have to change your mind.",
   "del.intro": "You can ask to delete your FarmFlows account and its data yourself, in the Android app or on the website. You are signed out at once, and the account is deleted 30 days later.",
   "del.appTitle": "In the FarmFlows app",
   "del.app1": "Open the app and go to More.",

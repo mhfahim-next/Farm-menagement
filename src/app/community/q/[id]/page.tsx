@@ -14,7 +14,7 @@ import { getUser } from "@/lib/auth";
 import { communityImageUrl, excerpt, postLang, type CommunityAnswer } from "@/lib/community";
 import { getAuthors, getMyHelpful, getQuestion, getTopics } from "@/lib/community-data";
 import { getI18n } from "@/lib/i18n/server";
-import { langAlternates, SITE_URL } from "@/lib/site";
+import { DEFAULT_OG_IMAGE, langAlternates, SITE_URL } from "@/lib/site";
 import { createClient } from "@/lib/supabase/server";
 import { postAnswer, setBestAnswer } from "../../actions";
 
@@ -39,7 +39,7 @@ export async function generateMetadata({ params }: PageProps<"/community/q/[id]"
       description: excerpt(q.body),
       type: "article",
       url: `/community/q/${q.id}`,
-      images: q.images[0] ? [communityImageUrl(q.images[0])] : undefined,
+      images: q.images[0] ? [communityImageUrl(q.images[0])] : [DEFAULT_OG_IMAGE],
     },
   };
 }

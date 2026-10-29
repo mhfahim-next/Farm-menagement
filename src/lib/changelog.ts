@@ -71,6 +71,20 @@ export const UPCOMING: Upcoming[] = [
 
 export const RELEASES: Release[] = [
   {
+    id: "2026-11-05-faster-pages",
+    date: "2026-11-05",
+    title: { en: "Faster pages and better search results", bn: "আরও দ্রুত পাতা, সার্চে আরও ভালো" },
+    summary: {
+      en: "Every page is lighter, so the website opens faster on mobile data, and links look right when shared.",
+      bn: "প্রতিটি পাতা হালকা হয়েছে, তাই মোবাইল ডেটায় ওয়েবসাইট দ্রুত খোলে, আর শেয়ার করা লিংক ঠিকঠাক দেখায়।",
+    },
+    changes: [
+      { type: "improved", en: "Pages send about 120 KB less, the home page is ready much sooner on phones.", bn: "পাতাগুলো প্রায় ১২০ KB কম পাঠায়, ফোনে হোম পাতা অনেক আগে ব্যবহারযোগ্য হয়।" },
+      { type: "fixed", en: "The guide and the free tools now show a picture when shared on Facebook or WhatsApp.", bn: "গাইড আর ফ্রি টুলের লিংক Facebook বা WhatsApp-এ শেয়ার করলে এখন ছবি দেখায়।" },
+      { type: "improved", en: "Clearer titles and descriptions in Google results; easier-to-read buttons on the tools.", bn: "Google-এ আরও পরিষ্কার শিরোনাম ও বর্ণনা; টুলের বোতাম পড়তে আরও সহজ।" },
+    ],
+  },
+  {
     id: "2026-11-04-account-deletion",
     date: "2026-11-04",
     title: { en: "30 days to change your mind before an account is deleted", bn: "অ্যাকাউন্ট মোছার আগে মত বদলানোর ৩০ দিন" },

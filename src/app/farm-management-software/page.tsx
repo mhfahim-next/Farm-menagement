@@ -6,7 +6,7 @@ import { ButtonLink } from "@/components/ui";
 import { getViewer } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
 import { GUIDE } from "@/lib/seo-content";
-import { langAlternates, SITE_NAME, SITE_URL } from "@/lib/site";
+import { DEFAULT_OG_IMAGE, langAlternates, SITE_NAME, SITE_URL } from "@/lib/site";
 
 const PATH = "/farm-management-software";
 
@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: { absolute: `${title} | ${SITE_NAME}` },
     description: GUIDE.metaDescription[locale],
     alternates: langAlternates(PATH, locale),
-    openGraph: { title, description: GUIDE.metaDescription[locale], type: "article", url: PATH },
+    openGraph: { title, description: GUIDE.metaDescription[locale], type: "article", url: PATH, images: [DEFAULT_OG_IMAGE] },
   };
 }
 

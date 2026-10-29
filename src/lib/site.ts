@@ -20,6 +20,12 @@ export const SITE_URL = normalizeSiteUrl(process.env.NEXT_PUBLIC_SITE_URL);
 export const SITE_NAME = "FarmFlows";
 
 /**
+ * The site's share image (src/app/opengraph-image.tsx). A page that sets its own
+ * openGraph replaces the inherited one, image included, so it adds this back.
+ */
+export const DEFAULT_OG_IMAGE = { url: "/opengraph-image", width: 1200, height: 630, alt: "FarmFlows — dairy, cattle and layer farm management" };
+
+/**
  * Canonical + hreflang for a public page. English lives at the plain path,
  * Bangla at `?lang=bn` (see the proxy), so search engines index both.
  */

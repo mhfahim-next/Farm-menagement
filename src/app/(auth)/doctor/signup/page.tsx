@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { langAlternates } from "@/lib/site";
 import Link from "next/link";
 import { ActionForm } from "@/components/action-form";
 import { Field, Input, Select } from "@/components/ui";
@@ -7,7 +8,8 @@ import { signupDoctor } from "../../actions";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
-  return { title: t("doctor.signupMeta") };
+  const { locale } = await getI18n();
+  return { title: t("doctor.signupMeta"), description: t("doctor.signupDesc"), alternates: langAlternates("/doctor/signup", locale) };
 }
 
 export default async function DoctorSignupPage() {

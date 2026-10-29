@@ -8,7 +8,8 @@ import { login } from "../actions";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
-  return { title: t("auth.loginMeta") };
+  // Nothing to find here for search engines; the sign-up page is the one to show.
+  return { title: t("auth.loginMeta"), description: t("auth.loginDesc"), robots: { index: false, follow: true }, alternates: { canonical: "/login" } };
 }
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {

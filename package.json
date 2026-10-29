@@ -12,7 +12,8 @@
     "db:start": "supabase start",
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset",
-    "db:types": "supabase gen types typescript --local > src/lib/database.types.ts"
+    "db:types": "supabase gen types typescript --local > src/lib/database.types.ts",
+    "i18n:client-keys": "node scripts/client-keys.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.135.0",
