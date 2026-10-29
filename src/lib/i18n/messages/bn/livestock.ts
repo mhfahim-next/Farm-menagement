@@ -183,4 +183,9 @@ export const livestock: Record<keyof typeof en, string> = {
   "adminlive.qurbani": "ঈদুল আযহার তারিখ",
   "adminlive.save": "সেভ করুন",
   "adminlive.saved": "সেভ হয়েছে।",
+  "adminoffline.title": "অ্যান্ড্রয়েড অ্যাপ: অফলাইনের জন্য রাখা তথ্য",
+  "adminoffline.desc": "ইন্টারনেট ছাড়াও চালানোর জন্য অ্যাপ চালু খামারের তথ্য ফোনে রাখে। এর চেয়ে পুরোনো রেকর্ড নামানো হয় না।",
+  "adminoffline.days": "ফোনে কত দিনের রেকর্ড থাকবে",
+  "adminoffline.hint": "৩০ থেকে ১০৯৫ দিন। ৩৬৫ = প্রায় ১২ মাস। বেশি দিন দিলে ফোনে বেশি জায়গা লাগে আর নামাতে বেশি সময় লাগে।",
+  "adminoffline.invalid": "৩০ থেকে ১০৯৫-এর মধ্যে পূর্ণ সংখ্যায় দিন লিখুন।",
 };

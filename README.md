@@ -113,7 +113,7 @@ A super admin controls the whole system from `/admin` (only they can open it; ev
 | Dropdowns | Every dropdown in the app (see below) |
 | Tools numbers | The rules of thumb behind the free farm tools (see below) |
 | Audit log | Every admin action: who, what, when |
-| Announcement | A banner shown at the top of every user's dashboard (English + Bangla) and the **breeding rules** (pregnancy check due N days after AI, default 45) |
+| Announcement | A banner shown at the top of every user's dashboard (English + Bangla), the **breeding rules** (pregnancy check due N days after AI, default 45) and **how many days of records the Android app keeps on the phone for use without internet** (`offline_days`, 30–1095, default 365) |
 
 ### Tools numbers
 

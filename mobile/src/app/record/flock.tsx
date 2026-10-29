@@ -8,9 +8,9 @@ import { knownDbError, useOptions } from "@/lib/data";
 import { farmToday } from "@/lib/dates";
 import { optionLabel, optionsOf } from "@/lib/options";
 import { usePrefs } from "@/lib/prefs";
-import { flockNew } from "@/lib/records";
+import { useOutbox } from "@/lib/outbox";
+import { flockNew, uuid } from "@/lib/records";
 import { useSession } from "@/lib/session";
-import { supabase } from "@/lib/supabase";
 import { useToast } from "@/lib/toast";
 
 /** Start a layer flock, or a broiler / Sonali batch. */
@@ -19,6 +19,7 @@ export default function NewFlock() {
   const farm = useSession().current?.farm;
   const options = useOptions();
   const toast = useToast();
+  const { save } = useOutbox();
   const kinds = [...(farm?.has_layer ? ["layer"] : []), ...(farm?.has_broiler ? ["broiler", "sonali"] : [])];
   const [kind, setKind] = useState(kinds[0] ?? "layer");
   const [name, setName] = useState("");
@@ -40,16 +41,17 @@ export default function NewFlock() {
     if (!r.ok) return setError(t(r.error));
     setError(null);
     setBusy(true);
-    const { data, error: e } = await supabase.from("flocks").insert({ farm_id: farm.id, ...r.entry }).select("id").single();
+    const id = uuid();
+    const res = await save({ kind: "insert", farmId: farm.id, data: { table: "flocks", row: { id, ...r.entry }, label: `${t("flock.new")} · ${r.entry.name}` } });
     setBusy(false);
-    if (e) {
-      const known = knownDbError(e.message);
+    if (res.status === "error") {
+      const known = knownDbError(res.error);
       setError(known ? t(known.key, { n: known.n ?? 0, tag: "" }) : t("common.error"));
-      setDetail(known ? null : e.message);
+      setDetail(known ? null : res.error);
       return;
     }
-    toast(t("flock.added", { name: r.entry.name }));
-    router.replace({ pathname: "/flock/[id]", params: { id: (data as { id: string }).id } });
+    toast(res.status === "queued" ? t("entry.queued") : t("flock.added", { name: r.entry.name }));
+    router.replace({ pathname: "/flock/[id]", params: { id } });
   };
 
   return (

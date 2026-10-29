@@ -41,7 +41,7 @@ export default function Reports() {
   const showAnimals = keepsAnimals && farm?.show_animal_profit !== false;
   const range = { from: period === "12m" ? addDays(today, -364) : period === "year" ? `${today.slice(0, 4)}-01-01` : "2000-01-01", to: today };
 
-  const daily = useCached(farm ? `daily.${farm.id}.${today}` : null, () => fetchDaily(farm!.id, from30, today, dairy, layer));
+  const daily = useCached(farm ? `daily.${farm.id}.${today}.${Number(dairy)}${Number(layer)}` : null, () => fetchDaily(farm!.id, from30, today, dairy, layer));
   const monthly = useCached(farm ? `monthly.${farm.id}.${month}` : null, () =>
     fetchMonthly(farm!.id, `${shiftMonth(month, -5)}-01`, `${month}-${String(daysInMonth(month)).padStart(2, "0")}`),
   );

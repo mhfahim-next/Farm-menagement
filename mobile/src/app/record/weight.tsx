@@ -9,9 +9,9 @@ import { useAnimals } from "@/lib/data";
 import { farmToday } from "@/lib/dates";
 import { parseNumber } from "@/lib/entries";
 import { usePrefs } from "@/lib/prefs";
-import { tapeWeight, weightEntry } from "@/lib/records";
+import { useOutbox } from "@/lib/outbox";
+import { tapeWeight, uuid, weightEntry } from "@/lib/records";
 import { useSession } from "@/lib/session";
-import { supabase } from "@/lib/supabase";
 import { useToast } from "@/lib/toast";
 import { useToolParams } from "@/lib/tool-params";
 
@@ -25,6 +25,7 @@ export default function WeightRecord() {
   const a = (animals ?? []).find((x) => x.id === animal);
   const cattle = (a?.species ?? "cattle") === "cattle";
   const toast = useToast();
+  const { save } = useOutbox();
   const divisor = useToolParams().weight.divisor;
   const [method, setMethod] = useState(g0 && l0 ? "tape" : "scale");
   const [kg, setKg] = useState(kg0 ?? "");
@@ -44,14 +45,18 @@ export default function WeightRecord() {
     if (!r.ok) return setError(t(r.error));
     setError(null);
     setBusy(true);
-    const { error: e } = await supabase.from("cattle_weights").insert({ farm_id: farm.id, cattle_id: animal, ...r.entry });
+    const res = await save({
+      kind: "insert",
+      farmId: farm.id,
+      data: { table: "cattle_weights", row: { id: uuid(), cattle_id: animal, ...r.entry }, label: `${t("weight.add")} · #${a?.tag_number ?? ""} · ${n(r.entry.weight_kg, 1)} kg` },
+    });
     setBusy(false);
-    if (e) {
+    if (res.status === "error") {
       setError(t("common.error"));
-      setDetail(e.message);
+      setDetail(res.error);
       return;
     }
-    toast(t("weight.saved", { kg: n(r.entry.weight_kg, 1) }));
+    toast(res.status === "queued" ? t("entry.queued") : t("weight.saved", { kg: n(r.entry.weight_kg, 1) }));
     router.back();
   };
 

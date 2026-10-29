@@ -9,19 +9,20 @@ import { useOptions, useStaffMonth } from "@/lib/data";
 import { farmToday } from "@/lib/dates";
 import { optionLabel } from "@/lib/options";
 import { usePrefs } from "@/lib/prefs";
+import { useOutbox } from "@/lib/outbox";
 import { ATTENDANCE, isDate } from "@/lib/records";
 import { useSession } from "@/lib/session";
 import type { AttendanceStatus } from "@/lib/staff";
-import { supabase } from "@/lib/supabase";
 import { useToast } from "@/lib/toast";
 
 /** One day's attendance. Everyone counts as present; mark only who was absent, on half day or on leave. */
 export default function AttendanceForm() {
-  const { t, n, locale } = usePrefs();
+  const { t, n, locale, date: fmt } = usePrefs();
   const theme = useTheme();
   const farm = useSession().current?.farm;
   const options = useOptions();
   const toast = useToast();
+  const { save } = useOutbox();
   const [date, setDate] = useState(farmToday());
   const valid = isDate(date);
   const { data } = useStaffMonth(farm?.id, valid ? date.slice(0, 7) : farmToday().slice(0, 7));
@@ -42,18 +43,19 @@ export default function AttendanceForm() {
     if (people.length === 0) return setError(t("staff.nobody"));
     setError(null);
     setBusy(true);
+    const saved = (data?.attendance ?? []).filter((a) => a.att_date === date);
     const present = people.filter((s) => mark(s.id) === "present").map((s) => s.id);
-    const others = people.filter((s) => mark(s.id) !== "present").map((s) => ({ farm_id: farm.id, staff_id: s.id, att_date: date, status: mark(s.id) }));
-    const del = present.length ? await supabase.from("staff_attendance").delete().eq("farm_id", farm.id).eq("att_date", date).in("staff_id", present) : { error: null };
-    const up = !del.error && others.length ? await supabase.from("staff_attendance").upsert(others, { onConflict: "staff_id,att_date" }) : { error: null };
+    const others = people.filter((s) => mark(s.id) !== "present").map((s) => ({ staff_id: s.id, status: mark(s.id) as string, note: saved.find((a) => a.staff_id === s.id)?.note ?? null }));
+    // When each mark was last changed, as shown here (to spot changes made elsewhere meanwhile).
+    const seen = Object.fromEntries(people.map((s) => [s.id, saved.find((a) => a.staff_id === s.id)?.updated_at ?? null]));
+    const res = await save({ kind: "attendance", farmId: farm.id, data: { date, marks: others, present, seen, label: `${t("staff.attendance")} · ${fmt(date, true)}` } });
     setBusy(false);
-    const e = del.error ?? up.error;
-    if (e) {
+    if (res.status === "error") {
       setError(t("common.error"));
-      setDetail(e.message);
+      setDetail(res.error);
       return;
     }
-    toast(others.length ? t("staff.marksSaved", { n: n(others.length) }) : t("staff.allPresent"));
+    toast(res.status === "queued" ? t("entry.queued") : others.length ? t("staff.marksSaved", { n: n(others.length) }) : t("staff.allPresent"));
     router.back();
   };
 

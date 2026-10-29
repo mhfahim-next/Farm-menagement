@@ -1,5 +1,5 @@
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { Appbar, Button, IconButton, SegmentedButtons, Text, TextInput, useTheme } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -7,26 +7,21 @@ import { EntryDone } from "@/components/entry-done";
 import { DateField } from "@/components/fields";
 import { FormError } from "@/components/form-error";
 import { OfflineNote } from "@/components/offline-note";
-import { useAnimals, useOptions } from "@/lib/data";
+import { readView, useCached, writeCache } from "@/lib/cache";
+import { fetchMilkDay, useAnimals, useOptions, type MilkDay } from "@/lib/data";
 import { farmToday } from "@/lib/dates";
 import { milkEntry } from "@/lib/entries";
 import { defaultSession, farmHour, fillFrom, filledCount, stepLitres } from "@/lib/entry-helpers";
 import { milkingCategories, optionLabel, optionsOf } from "@/lib/options";
+import { isOnline } from "@/lib/net";
 import { useOutbox } from "@/lib/outbox";
+import { pendingEntries } from "@/lib/outbox-store";
 import { usePrefs } from "@/lib/prefs";
 import { addDays, isDate } from "@/lib/records";
 import { useSession } from "@/lib/session";
-import { supabase } from "@/lib/supabase";
 import { useToast } from "@/lib/toast";
 
 const SESSION_ICON: Record<string, string> = { morning: "weather-sunset-up", evening: "weather-night", other: "plus-circle-outline" };
-
-/** Litres per cow for one milking, read back when it was already written. */
-async function loadMilk(farmId: string, day: string, session: string) {
-  const { data, error } = await supabase.from("milk_records").select("cattle_id, quantity_liters").eq("farm_id", farmId).eq("record_date", day).eq("session", session);
-  if (error) throw error;
-  return Object.fromEntries((data ?? []).map((r) => [r.cattle_id as string, String(Number(r.quantity_liters))]));
-}
 
 /** The milking sheet: one line per milking cow, the total and Save always at the bottom. */
 export default function MilkSheet() {
@@ -54,27 +49,15 @@ export default function MilkSheet() {
   }, [animals, options]);
   const ids = cows.map((c) => c.id);
   const key = `${day}|${session}`;
-  const [saved, setSaved] = useState<Record<string, Record<string, string>>>({});
+  // What is already written for this day and milking (kept on the phone too).
+  const milk = useCached(farm && isDate(day) ? `milkday.${farm.id}.${day}.${session}` : null, () => fetchMilkDay(farm!.id, day, session));
   const [typed, setTyped] = useState<Record<string, Record<string, string>>>({});
   const [error, setError] = useState<string | null>(null);
   const [detail, setDetail] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<{ total: number; cows: number; queued: boolean } | null>(null);
 
-  // What is already written for this day and milking.
-  useEffect(() => {
-    if (!farm || !isDate(day)) return;
-    let cancelled = false;
-    loadMilk(farm.id, day, session).then(
-      (v) => !cancelled && setSaved((s) => ({ ...s, [key]: v })),
-      () => {},
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [farm, day, session, key]);
-
-  const existing = saved[key] ?? {};
+  const existing = milk.data?.values ?? {};
   const onSheet = new Set(ids);
   const values = Object.fromEntries(Object.entries({ ...existing, ...(typed[key] ?? {}) }).filter(([id]) => onSheet.has(id)));
   const total = milkEntry(day, session, values);
@@ -87,7 +70,14 @@ export default function MilkSheet() {
   const sameAsYesterday = async () => {
     if (!farm) return;
     try {
-      const prev = await loadMilk(farm.id, addDays(day, -1), session);
+      const k = `milkday.${farm.id}.${addDays(day, -1)}.${session}`;
+      // Yesterday's sheet: from the server, else the copy kept on the phone.
+      const prev = isOnline()
+        ? await fetchMilkDay(farm.id, addDays(day, -1), session)
+            .then((v) => (writeCache(k, v), v.values))
+            .catch(() => readView<MilkDay>(k, pendingEntries())?.values ?? null)
+        : (readView<MilkDay>(k, pendingEntries())?.values ?? null);
+      if (!prev) return toast(t("common.network"));
       const r = fillFrom(prev, values, ids);
       if (!r.filled) return toast(t("milk.nothingYesterday"));
       setTyped((x) => ({ ...x, [key]: { ...(x[key] ?? {}), ...r.values } }));
@@ -105,7 +95,9 @@ export default function MilkSheet() {
     setError(null);
     setDetail(null);
     setBusy(true);
-    const res = await save({ kind: "milk", farmId: farm.id, data: r.entry });
+    // When each cow's litres were last changed, as this sheet showed them (to spot changes made elsewhere meanwhile).
+    const seen = Object.fromEntries(r.entry.rows.map((x) => [x.cattle_id, milk.data?.seen[x.cattle_id] ?? null]));
+    const res = await save({ kind: "milk", farmId: farm.id, data: { ...r.entry, seen } });
     setBusy(false);
     if (res.status === "error") {
       setError(t("common.error"));

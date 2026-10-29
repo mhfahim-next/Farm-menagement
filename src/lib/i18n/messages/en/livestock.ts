@@ -181,4 +181,9 @@ export const livestock = {
   "adminlive.qurbani": "Eid-ul-Adha date",
   "adminlive.save": "Save",
   "adminlive.saved": "Saved.",
+  "adminoffline.title": "Android app: data kept for offline use",
+  "adminoffline.desc": "The app keeps the current farm's data on the phone so it works without internet. Older records than this are not downloaded.",
+  "adminoffline.days": "Days of records kept on the phone",
+  "adminoffline.hint": "30 to 1095 days. 365 = about 12 months. More days use more phone storage and take longer to download.",
+  "adminoffline.invalid": "Enter a whole number of days between 30 and 1095.",
 } as const;

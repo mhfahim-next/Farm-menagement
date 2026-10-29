@@ -1,14 +1,17 @@
 // Who is signed in, their farms and the farm they are working on. Everything
 // is read with the person's own session, so the database's row-level security
 // decides what they see (exactly as on the website).
-import type { Session } from "@supabase/supabase-js";
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { isAuthRetryableFetchError, type Session } from "@supabase/supabase-js";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { Farm, Membership } from "./farm";
-import { clearCache } from "./cache";
+import { clearCache, readCache, writeCache } from "./cache";
 import { getItem, KEYS, setItem } from "./storage";
+import { onReconnect } from "./net";
 import { supabase } from "./supabase";
 
 type Profile = { full_name: string | null; account_type: "farmer" | "doctor"; avatar_url: string | null; phone: string | null };
+
+type Account = { profile: Profile | null; memberships: Membership[] };
 
 type SessionState = {
   ready: boolean;
@@ -41,32 +44,73 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [planPending, setPlanPendingState] = useState(() => getItem(KEYS.planPending) === "1");
 
   useEffect(() => {
+    let settled = false;
+    // Without internet an expired sign-in can't be renewed, and Supabase keeps
+    // trying for half a minute before it answers. The sign-in saved on the
+    // phone is used meanwhile (and after, while the connection is down), so the
+    // app opens offline; it is renewed by itself once the internet is back.
+    const early = setTimeout(() => {
+      const saved = storedSession();
+      if (!settled && saved) {
+        setSession(saved);
+        setAuthReady(true);
+      }
+    }, 1500);
     supabase.auth
       .getSession()
-      .then(({ data }) => setSession(data.session))
-      .finally(() => setAuthReady(true));
-    const { data } = supabase.auth.onAuthStateChange((_event, s) => setSession(s));
-    return () => data.subscription.unsubscribe();
+      .then(({ data, error }) => setSession(data.session ?? (error && isAuthRetryableFetchError(error) ? storedSession() : null)))
+      .catch(() => setSession(storedSession()))
+      .finally(() => {
+        settled = true;
+        clearTimeout(early);
+        setAuthReady(true);
+      });
+    const { data } = supabase.auth.onAuthStateChange((event, s) => {
+      // The first answer is the one above (it knows about a failed renewal).
+      if (event !== "INITIAL_SESSION") setSession(s);
+    });
+    return () => {
+      clearTimeout(early);
+      data.subscription.unsubscribe();
+    };
   }, []);
 
   const userId = session?.user.id ?? null;
 
+  const who = useRef(userId);
+  useEffect(() => {
+    who.current = userId;
+  }, [userId]);
+
+  // The copy kept on the phone at once (so the app opens without internet),
+  // then fresh from the server.
   const load = useCallback(async () => {
-    const d = userId ? await fetchAccount(userId).catch(() => ({ profile: null, memberships: [] })) : { profile: null, memberships: [] };
-    setData({ for: userId ?? "", ...d });
+    if (!userId) return setData({ for: "", profile: null, memberships: [] });
+    const saved = readCache<Account>(`account.${userId}`);
+    if (saved) setData({ for: userId, ...saved });
+    try {
+      const a = await fetchAccount(userId);
+      writeCache(`account.${userId}`, a);
+      if (who.current === userId) setData({ for: userId, ...a });
+    } catch {
+      if (!saved && who.current === userId) setData({ for: userId, profile: null, memberships: [] });
+    }
   }, [userId]);
 
   useEffect(() => {
     if (!authReady) return;
     let cancelled = false;
     (async () => {
-      const d = userId ? await fetchAccount(userId).catch(() => ({ profile: null, memberships: [] })) : { profile: null, memberships: [] };
-      if (!cancelled) setData({ for: userId ?? "", ...d });
+      await Promise.resolve();
+      if (!cancelled) await load();
     })();
     return () => {
       cancelled = true;
     };
-  }, [authReady, userId]);
+  }, [authReady, load]);
+
+  // Back online: the farms may have changed meanwhile.
+  useEffect(() => (userId ? onReconnect(() => void load()) : undefined), [userId, load]);
 
   const loaded = data !== null && data.for === (userId ?? "");
   const profile = loaded ? data.profile : null;
@@ -110,7 +154,19 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
-async function fetchAccount(userId: string): Promise<{ profile: Profile | null; memberships: Membership[] }> {
+/** The sign-in Supabase keeps on the phone, even when it has expired (it is renewed once online). */
+function storedSession(): Session | null {
+  try {
+    const key = (supabase.auth as unknown as { storageKey: string }).storageKey;
+    const s = JSON.parse(getItem(key) ?? "null") as Session | null;
+    return s && s.user?.id && s.refresh_token && s.access_token ? s : null;
+  } catch {
+    return null;
+  }
+}
+
+/** The person's profile and farms (a copy is kept on the phone, see `load`). */
+async function fetchAccount(userId: string): Promise<Account> {
   const [p, m] = await Promise.all([
     supabase.from("profiles").select("full_name, account_type, avatar_url, phone").eq("id", userId).maybeSingle(),
     supabase.from("farm_members").select(`role, created_at, farm:farms!inner(${FARM_COLUMNS})`).eq("user_id", userId).order("created_at"),

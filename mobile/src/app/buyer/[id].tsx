@@ -5,7 +5,8 @@ import { Appbar, Button, Card, List, Text, useTheme } from "react-native-paper";
 import { OfflineNote } from "@/components/offline-note";
 import { useCached } from "@/lib/cache";
 import { RecordMenu } from "@/components/record-menu";
-import { deleteRow, fetchSales, isManager, useBuyers } from "@/lib/data";
+import { useRemove } from "@/lib/outbox";
+import { fetchSales, isManager, useBuyers } from "@/lib/data";
 import { useToast } from "@/lib/toast";
 import { usePrefs } from "@/lib/prefs";
 import { useSession } from "@/lib/session";
@@ -30,6 +31,7 @@ export default function BuyerPage() {
   const b = (buyers.data ?? []).find((x) => x.id === id);
   const manager = isManager(useSession().current?.role);
   const toast = useToast();
+  const remove = useRemove();
   const back = () => (router.canGoBack() ? router.back() : router.replace("/sales"));
 
   const lines = [
@@ -103,8 +105,8 @@ export default function BuyerPage() {
                     {manager && (
                       <RecordMenu
                         onDelete={async () => {
-                          const err = await deleteRow(l.payment ? "buyer_payments" : "sales", l.id);
-                          toast(err ? `${t("common.error")} ${err}` : t("rec.deleted"));
+                          const r = await remove(l.payment ? "buyer_payments" : "sales", l.id, `${t("rec.delete")} · ${money(l.amount, currency)}`);
+                          toast(r.error ? `${t("common.error")} ${r.error}` : r.queued ? t("entry.queued") : t("rec.deleted"));
                           reloadBuyers();
                           reloadHistory();
                         }}

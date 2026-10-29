@@ -7,9 +7,9 @@ import { FormScreen } from "@/components/form-screen";
 import { useStaffMonth } from "@/lib/data";
 import { farmToday } from "@/lib/dates";
 import { usePrefs } from "@/lib/prefs";
-import { staffPayEntry } from "@/lib/records";
+import { useOutbox } from "@/lib/outbox";
+import { staffPayEntry, uuid } from "@/lib/records";
 import { useSession } from "@/lib/session";
-import { supabase } from "@/lib/supabase";
 import { useToast } from "@/lib/toast";
 
 /** Salary, an advance or a bonus paid to a worker for a month. It goes into the farm's expenses. */
@@ -21,6 +21,7 @@ export default function StaffPayForm() {
   const { data } = useStaffMonth(farm?.id, month);
   const person = (data?.staff ?? []).find((s) => s.id === params.staff);
   const toast = useToast();
+  const { save } = useOutbox();
   const [type, setType] = useState("salary");
   const [amount, setAmount] = useState(params.amount ?? "");
   const [paidOn, setPaidOn] = useState(farmToday());
@@ -35,14 +36,18 @@ export default function StaffPayForm() {
     if (!r.ok) return setError(t(r.error));
     setError(null);
     setBusy(true);
-    const { error: e } = await supabase.from("staff_payments").insert({ farm_id: farm.id, staff_id: params.staff, ...r.entry });
+    const res = await save({
+      kind: "insert",
+      farmId: farm.id,
+      data: { table: "staff_payments", row: { id: uuid(), staff_id: params.staff, ...r.entry }, label: `${t("staff.pay")} · ${person?.name ?? ""} · ${monthName(month)}` },
+    });
     setBusy(false);
-    if (e) {
+    if (res.status === "error") {
       setError(t("common.error"));
-      setDetail(e.message);
+      setDetail(res.error);
       return;
     }
-    toast(t("staff.paySaved"));
+    toast(res.status === "queued" ? t("entry.queued") : t("staff.paySaved"));
     router.back();
   };
 

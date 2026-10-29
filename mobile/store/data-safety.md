@@ -71,6 +71,7 @@ The app needs an account, so give reviewers one:
 | Camera | Scanning an animal's QR ear tag; taking a photo of an animal or yourself |
 | Notifications | Vaccine, calving and other farm reminders |
 | Internet | Syncing with your account |
+| Network state | Knowing when the internet is back, to send entries made offline at once |
 
 The app does **not** request location, microphone, contacts or access to
 the photo library (pictures are chosen with Android's photo picker). These

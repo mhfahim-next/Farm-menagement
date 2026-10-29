@@ -7,6 +7,7 @@ import { Avatar, Button, Dialog, Divider, List, Portal, RadioButton, SegmentedBu
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LanguageToggle } from "@/components/language-toggle";
 import { siteLink } from "@/lib/env";
+import { useOfflineDownload } from "@/lib/offline";
 import { disableNotifications, enableNotifications, notifyOn, notifySupported } from "@/lib/notify";
 import { useToast } from "@/lib/toast";
 import { usePrefs, type ThemeMode } from "@/lib/prefs";
@@ -14,13 +15,23 @@ import { useSession } from "@/lib/session";
 
 /** Account, farm switcher, language, theme, links and sign out. */
 export default function More() {
-  const { t, themeMode, setThemeMode } = usePrefs();
+  const { t, themeMode, setThemeMode, locale, date } = usePrefs();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const s = useSession();
   const [confirm, setConfirm] = useState(false);
   const [notify, setNotify] = useState(notifyOn);
   const toast = useToast();
+  const offline = useOfflineDownload(s.current, locale);
+  const when = (at: number) => {
+    const d = new Date(at);
+    const pad = (x: number) => String(x).padStart(2, "0");
+    return `${date(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`, true)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+  const downloadNow = async () => {
+    const r = await offline.download(true);
+    toast(r.ok ? t("offline.done") : r.error ? t("offline.failed", { error: r.error }) : t("offline.noNet"));
+  };
   const toggleNotify = async (on: boolean) => {
     if (!on) {
       await disableNotifications();
@@ -69,6 +80,23 @@ export default function More() {
           )}
           <List.Item title={t("settings.newFarm")} left={(p) => <List.Icon {...p} icon="plus-circle-outline" />} onPress={() => router.push("/record/farm")} testID="open-new-farm" />
         </List.Section>
+
+        {s.current && (
+          <View style={[styles.offline, { backgroundColor: theme.colors.elevation.level1 }]} testID="offline-card">
+            <Text variant="titleSmall">{t("offline.title")}</Text>
+            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+              {t("offline.body", { days: offline.meta?.days ?? 365 })}
+            </Text>
+            <View style={styles.offlineRow}>
+              <Text variant="bodySmall" style={[styles.flex, { color: theme.colors.onSurfaceVariant }]} testID="offline-when">
+                {offline.meta ? t("offline.updated", { when: when(offline.meta.at) }) : t("offline.never")}
+              </Text>
+              <Button mode="contained-tonal" compact icon="download-outline" onPress={downloadNow} loading={offline.busy} disabled={offline.busy} testID="offline-download">
+                {offline.busy ? t("offline.updating") : t("offline.update")}
+              </Button>
+            </View>
+          </View>
+        )}
 
         <List.Section>
           <List.Subheader>{t("tools.title")}</List.Subheader>
@@ -173,6 +201,8 @@ export default function More() {
 }
 
 const styles = StyleSheet.create({
+  offline: { borderRadius: 16, padding: 14, gap: 6, marginTop: 12 },
+  offlineRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   content: { paddingHorizontal: 16, paddingBottom: 32 },
   inner: { width: "100%", maxWidth: 720, alignSelf: "center" },
   title: { paddingHorizontal: 4, marginBottom: 12 },

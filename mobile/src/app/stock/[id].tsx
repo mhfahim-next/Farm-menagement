@@ -8,7 +8,7 @@ import { fetchMoves, isManager, isStaff, useStock } from "@/lib/data";
 import { usePrefs } from "@/lib/prefs";
 import { daysLeft } from "@/lib/records";
 import { useSession } from "@/lib/session";
-import { supabase } from "@/lib/supabase";
+import { useRemove } from "@/lib/outbox";
 import { useToast } from "@/lib/toast";
 
 /** One stock item: on hand, average cost, days left, and its purchases, uses and counts. */
@@ -21,6 +21,7 @@ export default function StockItemPage() {
   const stock = useStock(current?.farm.id);
   const moves = useCached(id ? `moves.${id}` : null, () => fetchMoves(id));
   const toast = useToast();
+  const remove = useRemove();
   const { reload: reloadStock } = stock;
   const { reload: reloadMoves } = moves;
   const reload = useCallback(() => {
@@ -86,8 +87,8 @@ export default function StockItemPage() {
                         isManager(current?.role) && !m.log_id ? (
                           <RecordMenu
                             onDelete={async () => {
-                              const { error } = await supabase.from("inventory_moves").delete().eq("id", m.id).is("log_id", null);
-                              toast(error ? `${t("common.error")} ${error.message}` : t("rec.deleted"));
+                              const r = await remove("inventory_moves", m.id, `${t("rec.delete")} · ${item?.name ?? ""}`);
+                              toast(r.error ? `${t("common.error")} ${r.error}` : r.queued ? t("entry.queued") : t("rec.deleted"));
                               reload();
                             }}
                           />

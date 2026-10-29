@@ -7,13 +7,13 @@ import { OfflineNote } from "@/components/offline-note";
 import { RecordMenu } from "@/components/record-menu";
 import { batchStats } from "@/lib/broiler";
 import { useCached } from "@/lib/cache";
-import { deleteRow, fetchFlockDetail, isManager, isStaff, useOptions } from "@/lib/data";
+import { fetchFlockDetail, isManager, isStaff, useOptions } from "@/lib/data";
 import { farmToday } from "@/lib/dates";
 import { optionLabel, optionsOf } from "@/lib/options";
 import { usePrefs } from "@/lib/prefs";
 import { flockWeeks, layerStats } from "@/lib/records";
 import { useSession } from "@/lib/session";
-import { supabase } from "@/lib/supabase";
+import { useOutbox, useRemove } from "@/lib/outbox";
 import { useToast } from "@/lib/toast";
 
 /** One flock or batch: how it is doing, its last days, its vaccines, and closing it. */
@@ -25,6 +25,8 @@ export default function FlockPage() {
   const currency = current?.farm.currency ?? "BDT";
   const options = useOptions();
   const toast = useToast();
+  const remove = useRemove();
+  const { save } = useOutbox();
   const { data, offline, error, reload } = useCached(id ? `flock.${id}` : null, () => fetchFlockDetail(id));
   useFocusEffect(
     useCallback(() => {
@@ -40,8 +42,8 @@ export default function FlockPage() {
   const setStatus = async (status: string) => {
     setStatusMenu(false);
     if (!f) return;
-    const { error: e } = await supabase.from("flocks").update({ status }).eq("id", f.id);
-    toast(e ? `${t("common.error")} ${e.message}` : t("rec.saved"));
+    const r = await save({ kind: "update", farmId: f && current ? current.farm.id : "", data: { table: "flocks", id: f.id, patch: { status }, before: { status: f.status }, label: f.name } });
+    toast(r.status === "error" ? `${t("common.error")} ${r.error}` : r.status === "queued" ? t("entry.queued") : t("rec.saved"));
     reload();
   };
 
@@ -181,8 +183,8 @@ export default function FlockPage() {
                         isManager(current?.role) ? (
                           <RecordMenu
                             onDelete={async () => {
-                              const err = await deleteRow("flock_health_records", h.id);
-                              toast(err ? `${t("common.error")} ${err}` : t("rec.deleted"));
+                              const r = await remove("flock_health_records", h.id, `${t("rec.delete")} · ${f?.name ?? ""} · ${h.product ?? ""}`);
+                              toast(r.error ? `${t("common.error")} ${r.error}` : r.queued ? t("entry.queued") : t("rec.deleted"));
                               reload();
                             }}
                           />
