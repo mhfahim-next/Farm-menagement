@@ -31,5 +31,5 @@ test("splitLocale reads the language prefix only as a whole segment", () => {
 
 test("addresses that look like files but are not ours go to the 404 page", () => {
   for (const p of ["/xyz.a", "/abc.df", "/x.y.z", "/blog/x.y", "/community/q/a.b"]) assert.equal(isMissingFile(p), true, p);
-  for (const p of ["/robots.txt", "/sitemap.xml", "/llms.txt", "/sw.js", "/icons/icon-192.png", "/brand/logo.svg", "/api/x.json", "/dashboard/a.b", "/blog", "/"]) assert.equal(isMissingFile(p), false, p);
+  for (const p of ["/robots.txt", "/sitemap.xml", "/llms.txt", "/llms-full.txt", "/sw.js", "/icons/icon-192.png", "/brand/logo.svg", "/api/x.json", "/dashboard/a.b", "/blog", "/"]) assert.equal(isMissingFile(p), false, p);
 });

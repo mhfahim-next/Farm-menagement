@@ -35,7 +35,7 @@ export function isSitePath(href: string) {
  * other address that merely looks like a file (/abc.df) is not a page either,
  * so the proxy sends it to the public 404 page instead.
  */
-const SERVED_FILES = new Set(["/robots.txt", "/sitemap.xml", "/llms.txt", "/manifest.webmanifest", "/favicon.ico", "/sw.js"]);
+const SERVED_FILES = new Set(["/robots.txt", "/sitemap.xml", "/llms.txt", "/llms-full.txt", "/manifest.webmanifest", "/favicon.ico", "/sw.js"]);
 const FILE_DIRS = new Set(["brand", "icons"]);
 
 /** An address that looks like a file but is none of ours: show the 404 page. */

@@ -22,6 +22,8 @@ export function revalidateSite(path: string, type?: "layout") {
   const p = path === "/" ? "" : path;
   if (type === "layout") {
     for (const page of SECTIONS[p] ?? [p]) revalidatePath(`/[lang]${page}`, "page");
+    // /llms-full.txt holds the full text of every published article.
+    if (p === "/blog") revalidatePath("/llms-full.txt");
     return;
   }
   for (const l of LOCALES) revalidatePath(`/${l}${p}`);
