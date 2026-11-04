@@ -65,8 +65,6 @@ export type PublicReview = {
   body: string;
   lang: "bn" | "en";
   approved_at: string | null;
-  /** The founder's own review: labelled, and not counted as a customer rating. */
-  is_founder?: boolean;
 };
 
 export const getSitePage = unstable_cache(
@@ -91,15 +89,16 @@ export const getSiteInfo = unstable_cache(
 
 export const getApprovedReviews = unstable_cache(
   async (): Promise<PublicReview[]> => {
-    const read = (columns: string) =>
-      createPublicClient().from("reviews").select(columns).eq("status", "approved").order("approved_at", { ascending: false }).limit(40);
-    let { data, error } = await read("id, name, role, rating, body, lang, approved_at, is_founder");
-    // Before the is_founder migration has run, the column doesn't exist: still show the reviews.
-    if (error && /is_founder/.test(error.message)) ({ data, error } = await read("id, name, role, rating, body, lang, approved_at"));
+    const { data, error } = await createPublicClient()
+      .from("reviews")
+      .select("id, name, role, rating, body, lang, approved_at")
+      .eq("status", "approved")
+      .order("approved_at", { ascending: false })
+      .limit(40);
     if (error) throw new Error(error.message);
-    return (data ?? []) as unknown as PublicReview[];
+    return (data ?? []) as PublicReview[];
   },
-  ["reviews-v3"],
+  ["reviews-v1"],
   { tags: [REVIEWS_TAG], revalidate: 3600 },
 );
 
