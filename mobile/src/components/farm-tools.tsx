@@ -10,11 +10,15 @@ import { parseNumber } from "@/lib/entries";
 import type { MessageKey } from "@/lib/i18n/en";
 import { usePrefs } from "@/lib/prefs";
 import { useSession } from "@/lib/session";
+import { getItem, setItem } from "@/lib/storage";
 import type { ToolSlug } from "@/lib/tool-list";
 import {
   convertUnit,
   dairyRation,
   doseFor,
+  FEEDS,
+  leastCostRation,
+  RATION_FEEDS,
   fatteningRation,
   fodderPlan,
   meatValue,
@@ -26,6 +30,8 @@ import {
   TOOL_DEFAULTS,
   unitGroups,
   type BirdKind,
+  type FeedId,
+  type RationAnimal,
   type Ingredient,
   type LengthUnit,
   type Species,
@@ -235,6 +241,137 @@ function RationTool({ p }: { p: ToolParams }) {
           )}
         </Card.Content>
       </Card>
+    </>
+  );
+}
+
+// ---------------------------------------------------------------- 2b. least-cost ration
+
+/** Feeds ticked at first: what most Bangladeshi cattle farms have. */
+const LCR_START: FeedId[] = ["rice_straw", "napier", "wheat_bran", "maize", "mustard_cake"];
+const LCR_STORE = "ff.lcr.v1";
+type LcrFeedState = { on: boolean; price: string; max: string };
+
+function LeastCostTool({ p }: { p: ToolParams["feedPrice"] }) {
+  const { t, n, money } = usePrefs();
+  const theme = useTheme();
+  const [kind, setKind] = useState<RationAnimal["kind"]>("milking");
+  const [weight, setWeight] = useState("");
+  const [milk, setMilk] = useState("");
+  const [fat, setFat] = useState("4");
+  const [gain, setGain] = useState("0.8");
+  const [pregnant, setPregnant] = useState(false);
+  // The farmer's own feeds and prices are remembered on the phone.
+  const [feeds, setFeeds] = useState<Record<FeedId, LcrFeedState>>(() => {
+    let saved: Partial<Record<FeedId, LcrFeedState>> = {};
+    try {
+      saved = JSON.parse(getItem(LCR_STORE) ?? "{}") ?? {};
+    } catch {}
+    return Object.fromEntries(RATION_FEEDS.map((id) => [id, { on: LCR_START.includes(id), price: String(p[id]), max: "", ...(saved[id] ?? {}) }])) as Record<FeedId, LcrFeedState>;
+  });
+  const change = (id: FeedId, patch: Partial<LcrFeedState>) =>
+    setFeeds((cur) => {
+      const next = { ...cur, [id]: { ...cur[id], ...patch } };
+      setItem(LCR_STORE, JSON.stringify(next));
+      return next;
+    });
+  const choices = RATION_FEEDS.filter((id) => feeds[id].on && Number.isFinite(num(feeds[id].price))).map((id) => ({
+    id,
+    price: num(feeds[id].price),
+    maxKg: Number.isFinite(num(feeds[id].max)) ? num(feeds[id].max) : undefined,
+  }));
+  const animal: RationAnimal = { kind, weightKg: num(weight), milkL: Number.isNaN(num(milk)) ? 0 : num(milk), fatPct: num(fat) || 4, gainKg: Number.isNaN(num(gain)) ? 0 : num(gain), pregnant };
+  const r = leastCostRation(animal, choices);
+  const kg = (v: number) => `${n(v, 1)} ${t("tools.unit.kg")}`;
+  const feedRow = (id: FeedId) => (
+    <View key={id} style={{ gap: 4 }}>
+      <Checkbox.Item label={t(`tools.feed.${id}` as MessageKey)} status={feeds[id].on ? "checked" : "unchecked"} onPress={() => change(id, { on: !feeds[id].on })} mode="android" position="leading" testID={`lcr-on-${id}`} style={styles.check} />
+      {feeds[id].on && (
+        <View style={[styles.row, { paddingLeft: 48 }]}>
+          <TextInput mode="outlined" dense keyboardType="decimal-pad" label={t("tools.lcr.price")} value={feeds[id].price} onChangeText={(v) => change(id, { price: v })} style={styles.flex} testID={`lcr-price-${id}`} />
+          <TextInput mode="outlined" dense keyboardType="decimal-pad" label={t("tools.lcr.max")} value={feeds[id].max} onChangeText={(v) => change(id, { max: v })} style={styles.flex} testID={`lcr-max-${id}`} />
+        </View>
+      )}
+    </View>
+  );
+  return (
+    <>
+      <SegmentedButtons
+        value={kind}
+        onValueChange={(v) => setKind(v as RationAnimal["kind"])}
+        buttons={(["milking", "dry", "growing"] as const).map((k) => ({ value: k, label: t(`tools.lcr.${k}`), testID: `lcr-kind-${k}` }))}
+      />
+      <NumberField label={t("tools.ration.weight")} value={weight} onChange={setWeight} testID="lcr-weight" />
+      {kind === "milking" && (
+        <>
+          <NumberField label={t("tools.ration.milk")} value={milk} onChange={setMilk} testID="lcr-milk" />
+          <NumberField label={t("tools.ration.fat")} value={fat} onChange={setFat} testID="lcr-fat" />
+        </>
+      )}
+      {kind === "growing" && <NumberField label={t("tools.ration.gain")} value={gain} onChange={setGain} testID="lcr-gain" />}
+      {kind !== "growing" && (
+        <Checkbox.Item label={t("tools.lcr.pregnant")} status={pregnant ? "checked" : "unchecked"} onPress={() => setPregnant(!pregnant)} mode="android" position="leading" testID="lcr-pregnant" />
+      )}
+      <Card mode="outlined" style={styles.card}>
+        <Card.Title title={t("tools.lcr.feedsTitle")} titleVariant="titleSmall" />
+        <Card.Content style={{ gap: 4 }}>
+          <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+            {t("tools.lcr.feedsHint")}
+          </Text>
+          <Label>{t("tools.lcr.rough")}</Label>
+          {RATION_FEEDS.filter((id) => FEEDS[id].rough).map(feedRow)}
+          <Label>{t("tools.lcr.conc")}</Label>
+          {RATION_FEEDS.filter((id) => !FEEDS[id].rough).map(feedRow)}
+        </Card.Content>
+      </Card>
+      {!r ? (
+        <Empty />
+      ) : r.error ? (
+        <Text variant="bodyMedium" style={{ color: theme.colors.error }} testID="lcr-error">
+          {t(r.error === "noFeeds" ? "tools.lcr.noFeeds" : "tools.lcr.noRoughage")}
+        </Text>
+      ) : (
+        <Result>
+          <Text variant="titleSmall">{t("tools.lcr.perDay")}</Text>
+          <View testID="lcr-table">
+            <Rows rows={r.items.map((it) => [t(`tools.feed.${it.id}` as MessageKey), `${kg(it.kg)} · ${money(Math.round(it.cost), "BDT")}`])} />
+          </View>
+          <Text variant="titleMedium" testID="lcr-cost">
+            {t("tools.lcr.costDay", { amount: money(r.costDay, "BDT") })}
+          </Text>
+          {r.costPerLitre !== null && <Text variant="titleSmall">{t("tools.lcr.costLitre", { amount: money(r.costPerLitre, "BDT") })}</Text>}
+          {(r.short.cp > 0 || r.short.tdn > 0 || r.short.dm > 0) && (
+            <View style={{ gap: 2 }} testID="lcr-short">
+              <Text variant="titleSmall" style={{ color: theme.colors.error }}>
+                {t("tools.lcr.shortTitle")}
+              </Text>
+              {r.short.cp > 0 && <Text variant="bodySmall">{`• ${t("tools.lcr.shortProtein", { g: n(Math.round(r.short.cp * 1000)) })}`}</Text>}
+              {r.short.tdn > 0 && <Text variant="bodySmall">{`• ${t("tools.lcr.shortEnergy", { kg: n(r.short.tdn, 2) })}`}</Text>}
+              {r.short.dm > 0 && <Text variant="bodySmall">{`• ${t("tools.lcr.shortDm", { kg: n(r.short.dm, 1) })}`}</Text>}
+            </View>
+          )}
+          <Text variant="titleSmall">{t("tools.lcr.checkTitle")}</Text>
+          <Rows
+            rows={[
+              [t("tools.lcr.energy"), t("tools.lcr.gets", { have: n(r.supply.tdn, 2), need: n(r.need.tdn, 2) })],
+              [t("tools.lcr.protein"), t("tools.lcr.gets", { have: n(r.supply.cp, 2), need: n(r.need.cp, 2) })],
+              [t("tools.lcr.dm"), t("tools.lcr.dmRange", { have: n(r.supply.dm, 1), low: n(r.need.dmMin, 1), high: n(r.need.dmMax, 1) })],
+              [t("tools.lcr.roughShare"), t("tools.lcr.roughPct", { have: n(r.supply.roughPct), min: n(r.need.roughMin) })],
+            ]}
+          />
+          <Text variant="bodySmall">{t("tools.lcr.extras", { water: n(r.waterL), salt: n(r.saltG), mineral: n(r.mineralG) })}</Text>
+          {r.mix.length > 1 && (
+            <View style={{ gap: 4 }} testID="lcr-mix">
+              <Text variant="titleSmall">{t("tools.lcr.mixTitle")}</Text>
+              <Text variant="bodySmall">{t("tools.lcr.mixHint", { kg: n(r.concentrateKg, 1) })}</Text>
+              <Rows rows={r.mix.map((m) => [t(`tools.feed.${m.id}` as MessageKey), `${n(m.pct, 1)}%`])} />
+            </View>
+          )}
+        </Result>
+      )}
+      <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+        {t("tools.lcr.how")}
+      </Text>
     </>
   );
 }
@@ -516,6 +653,8 @@ export function FarmTool({ slug, params = TOOL_DEFAULTS }: { slug: ToolSlug; par
   switch (slug) {
     case "cattle-weight":
       return <WeightTool p={params.weight} />;
+    case "least-cost-ration":
+      return <LeastCostTool p={params.feedPrice} />;
     case "feed-ration":
       return <RationTool p={params} />;
     case "poultry-feed":
@@ -540,4 +679,5 @@ const styles = StyleSheet.create({
   card: { borderRadius: 20 },
   row: { flexDirection: "row", alignItems: "center", gap: 12 },
   price: { width: 110 },
+  check: { paddingHorizontal: 0, paddingVertical: 2 },
 });

@@ -112,7 +112,10 @@ export default async function SalesPage({ searchParams }: PageProps<"/dashboard/
                       {money(Number(s.amount))}
                       {owed > 0 && <span className="block text-xs text-amber-800">{t("sales.owedShort", { amount: money(owed) })}</span>}
                     </Td>
-                    <Td>
+                    <Td className="whitespace-nowrap">
+                      <Link href={`/dashboard/sales/memo/${s.id}`} className="mr-2 text-sm text-emerald-700 hover:underline">
+                        {t("bill.memoLink")}
+                      </Link>
                       {canDelete && (
                         <ConfirmForm action={deleteSale} fields={{ id: s.id }} confirm={t("sales.confirmDeleteSale")} label={t("common.delete")} variant="ghost" />
                       )}

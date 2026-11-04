@@ -7,6 +7,7 @@ import { TOOL_PARAM_SPEC, type ParamSpec, type ToolParamGroup } from "@/lib/tool
 export const GROUP_TOOL: Record<ToolParamGroup, ToolSlug> = {
   weight: "cattle-weight",
   ration: "feed-ration",
+  feedPrice: "least-cost-ration",
   mixDairy: "feed-ration",
   mixFattening: "feed-ration",
   poultry: "poultry-feed",
@@ -25,6 +26,7 @@ const UNIT_BASE: Record<string, "kg" | "cm" | "m2"> = { maund: "kg", seer: "kg",
 
 export function fieldLabel(t: I18n["t"], group: ToolParamGroup, key: string) {
   if (group === "mixDairy" || group === "mixFattening") return t(`tools.ing.${key}` as MessageKey);
+  if (group === "feedPrice") return t(`tools.feed.${key}` as MessageKey);
   if (group.startsWith("preg")) return t(`tadm.f.preg.${key}` as MessageKey);
   if (group === "units") return t("tadm.f.units", { unit: t(`tools.unit.${key}` as MessageKey), base: t(`tadm.base.${UNIT_BASE[key]}` as MessageKey) });
   return t(`tadm.f.${group}.${key}` as MessageKey);

@@ -18,6 +18,24 @@ export type ParamSpec = { def: number | readonly number[]; min: number; max: num
 
 export const MIX_INGREDIENTS = ["wheat_bran", "maize", "oil_cake", "pulse_husk", "salt", "minerals"] as const;
 export type Ingredient = (typeof MIX_INGREDIENTS)[number];
+/** Feeds the least-cost ration can choose from (FEEDS below has what is in each). */
+export const RATION_FEEDS = [
+  "rice_straw",
+  "napier",
+  "local_grass",
+  "maize_silage",
+  "legume_fodder",
+  "wheat_bran",
+  "rice_polish",
+  "maize",
+  "broken_rice",
+  "mustard_cake",
+  "soybean_meal",
+  "pulse_husk",
+  "molasses",
+  "ready_feed",
+] as const;
+export type FeedId = (typeof RATION_FEEDS)[number];
 export type Species = "cattle" | "buffalo" | "goat" | "sheep";
 export const PREG_SPECIES = ["cattle", "buffalo", "goat", "sheep"] as const;
 /** Units whose size is a local custom (and can be adjusted); the rest are exact. */
@@ -53,6 +71,23 @@ export const TOOL_PARAM_SPEC = {
     concPerKgGain: { def: 1.5, min: 0, max: 5 },
   },
   mixDairy: mixSpec({ wheat_bran: 40, maize: 25, oil_cake: 20, pulse_husk: 12, salt: 1, minerals: 2 }),
+  /** Starting price of each feed, taka per kg as bought (the farmer can type their own). */
+  feedPrice: {
+    rice_straw: { def: 8, min: 0, max: 1000 },
+    napier: { def: 4, min: 0, max: 1000 },
+    local_grass: { def: 3, min: 0, max: 1000 },
+    maize_silage: { def: 9, min: 0, max: 1000 },
+    legume_fodder: { def: 5, min: 0, max: 1000 },
+    wheat_bran: { def: 52, min: 0, max: 1000 },
+    rice_polish: { def: 32, min: 0, max: 1000 },
+    maize: { def: 38, min: 0, max: 1000 },
+    broken_rice: { def: 40, min: 0, max: 1000 },
+    mustard_cake: { def: 62, min: 0, max: 1000 },
+    soybean_meal: { def: 75, min: 0, max: 1000 },
+    pulse_husk: { def: 42, min: 0, max: 1000 },
+    molasses: { def: 35, min: 0, max: 1000 },
+    ready_feed: { def: 55, min: 0, max: 1000 },
+  },
   mixFattening: mixSpec({ maize: 30, wheat_bran: 30, oil_cake: 20, pulse_husk: 17, salt: 1, minerals: 2 }),
   poultry: {
     layer: { def: [10, 18, 25, 31, 38, 43, 48, 53, 58, 58, 63, 63, 68, 68, 73, 73, 80, 90, 112], min: 1, max: 300, maxLen: 30 },
@@ -398,3 +433,220 @@ export function milkPrice(fatPct: number, snfPct: number, fatRatePerKg: number, 
   const perLitre = perKg * p.kgPerLitre;
   return { perKg: r2(perKg), perLitre: r2(perLitre), total: litres > 0 ? Math.round(perLitre * litres) : null };
 }
+
+// ---------------------------------------------------------------- 10. least-cost ration
+
+/**
+ * What is in each feed: dry matter (% of the feed as bought), and crude
+ * protein and TDN (energy) as % of the dry matter. Typical values for
+ * Bangladesh (BLRI / ICAR feed tables); a real feed can differ.
+ * `rough` = roughage (straw, grass, silage). `maxPct` = most it should be of
+ * the day's dry matter, for the animal's health (fat, palatability, bloat).
+ */
+export const FEEDS: Record<FeedId, { dm: number; cp: number; tdn: number; rough: boolean; maxPct: number }> = {
+  rice_straw: { dm: 90, cp: 3.5, tdn: 40, rough: true, maxPct: 60 },
+  napier: { dm: 18, cp: 9, tdn: 55, rough: true, maxPct: 100 },
+  local_grass: { dm: 25, cp: 8, tdn: 52, rough: true, maxPct: 100 },
+  maize_silage: { dm: 30, cp: 8, tdn: 65, rough: true, maxPct: 100 },
+  legume_fodder: { dm: 20, cp: 18, tdn: 60, rough: true, maxPct: 40 },
+  wheat_bran: { dm: 89, cp: 15.5, tdn: 68, rough: false, maxPct: 50 },
+  rice_polish: { dm: 90, cp: 12.5, tdn: 70, rough: false, maxPct: 20 },
+  maize: { dm: 89, cp: 9, tdn: 80, rough: false, maxPct: 40 },
+  broken_rice: { dm: 88, cp: 8, tdn: 78, rough: false, maxPct: 25 },
+  mustard_cake: { dm: 90, cp: 34, tdn: 72, rough: false, maxPct: 15 },
+  soybean_meal: { dm: 90, cp: 46, tdn: 80, rough: false, maxPct: 15 },
+  pulse_husk: { dm: 90, cp: 14, tdn: 60, rough: false, maxPct: 30 },
+  molasses: { dm: 75, cp: 4, tdn: 72, rough: false, maxPct: 8 },
+  ready_feed: { dm: 89, cp: 18, tdn: 70, rough: false, maxPct: 60 },
+};
+
+export type RationAnimal = {
+  /** milking cow / dry cow / growing or fattening animal (cattle or buffalo). */
+  kind: "milking" | "dry" | "growing";
+  weightKg: number;
+  milkL?: number;
+  fatPct?: number;
+  /** Daily gain wanted, kg (growing / fattening). */
+  gainKg?: number;
+  /** In the last 3 months of pregnancy. */
+  pregnant?: boolean;
+};
+
+/**
+ * What the animal needs in a day (kg): dry matter it can eat (a range), TDN and
+ * crude protein, and the least share of roughage in the dry matter. Simplified
+ * from NRC (1989) dairy and beef tables: maintenance from metabolic weight
+ * (kg^0.75), plus milk by its fat %, plus daily gain, plus late pregnancy.
+ */
+export function rationNeeds(a: RationAnimal) {
+  if (!ok(a.weightKg)) return null;
+  const w = a.weightKg;
+  const mw = Math.pow(w, 0.75);
+  let tdn = 0.0353 * mw;
+  let cp = 0.00355 * mw;
+  let dm: number;
+  let roughMin: number;
+  if (a.kind === "milking") {
+    const milkKg = Math.max(0, a.milkL ?? 0) * 1.03;
+    const fat = a.fatPct && a.fatPct > 0 ? a.fatPct : 4;
+    tdn += milkKg * (0.196 + 0.0315 * fat);
+    cp += milkKg * (0.054 + 0.009 * fat);
+    dm = 0.025 * w + 0.1 * milkKg;
+    roughMin = 40;
+  } else if (a.kind === "dry") {
+    dm = 0.02 * w;
+    roughMin = 60;
+  } else {
+    const gain = Math.max(0, a.gainKg ?? 0);
+    tdn += gain * 3;
+    cp += gain * 0.4;
+    dm = 0.027 * w;
+    roughMin = 35;
+  }
+  if (a.pregnant && a.kind !== "growing") {
+    tdn += (0.7 * w) / 400;
+    cp += (0.15 * w) / 400;
+  }
+  return { dmMin: 0.9 * dm, dmMax: Math.min(1.15 * dm, 0.04 * w), tdn, cp, roughMin };
+}
+
+/**
+ * Minimise c·x subject to A·x = b (b ≥ 0), x ≥ 0, starting from a feasible basis
+ * whose columns form an identity. Dense tableau, Bland's rule (no cycling).
+ */
+function simplex(A: number[][], b: number[], c: number[], basis: number[]) {
+  const m = A.length;
+  const n = c.length;
+  const T = A.map((r) => [...r]);
+  const rhs = [...b];
+  const B = [...basis];
+  for (let iter = 0; iter < 1000; iter++) {
+    let enter = -1;
+    for (let j = 0; j < n; j++) {
+      let d = c[j];
+      for (let i = 0; i < m; i++) d -= c[B[i]] * T[i][j];
+      if (d < -1e-9) {
+        enter = j;
+        break;
+      }
+    }
+    if (enter < 0) break;
+    let leave = -1;
+    let best = Infinity;
+    for (let i = 0; i < m; i++) {
+      if (T[i][enter] > 1e-9) {
+        const ratio = rhs[i] / T[i][enter];
+        if (ratio < best - 1e-12 || (Math.abs(ratio - best) <= 1e-12 && leave >= 0 && B[i] < B[leave])) {
+          best = ratio;
+          leave = i;
+        }
+      }
+    }
+    if (leave < 0) return null; // unbounded: cannot happen here (dry matter has a ceiling)
+    const pv = T[leave][enter];
+    for (let j = 0; j < n; j++) T[leave][j] /= pv;
+    rhs[leave] /= pv;
+    for (let i = 0; i < m; i++) {
+      if (i === leave || Math.abs(T[i][enter]) < 1e-15) continue;
+      const k = T[i][enter];
+      for (let j = 0; j < n; j++) T[i][j] -= k * T[leave][j];
+      rhs[i] -= k * rhs[leave];
+    }
+    B[leave] = enter;
+  }
+  const x = Array(n).fill(0) as number[];
+  B.forEach((col, i) => (x[col] = Math.max(0, rhs[i])));
+  return x;
+}
+
+export type FeedChoice = { id: FeedId; price: number; /** Most the farm has per animal per day, kg as bought (optional). */ maxKg?: number };
+
+/**
+ * The cheapest daily ration from the feeds the farmer has, at their prices,
+ * that gives the animal its energy (TDN) and protein, inside what it can eat,
+ * with enough roughage and no feed above its safe share. When the feeds can't
+ * meet a need (e.g. no protein feed), the closest ration is returned with what
+ * is short, so the farmer knows what to add.
+ */
+export function leastCostRation(animal: RationAnimal, choices: FeedChoice[]) {
+  const need = rationNeeds(animal);
+  if (!need) return null;
+  const feeds = choices.filter((c, i) => RATION_FEEDS.includes(c.id) && Number.isFinite(c.price) && c.price >= 0 && choices.findIndex((d) => d.id === c.id) === i);
+  if (feeds.length === 0) return { error: "noFeeds" as const };
+  if (!feeds.some((c) => FEEDS[c.id].rough)) return { error: "noRoughage" as const };
+
+  // Columns: dry matter (kg) of each feed, then shortfalls of TDN, protein and
+  // dry matter (heavily penalised, so they are used only when unavoidable),
+  // then one slack / surplus per row.
+  const n = feeds.length;
+  const SHORT_T = n;
+  const SHORT_C = n + 1;
+  const SHORT_D = n + 2;
+  type Row = { a: number[]; extra: [number, number][]; rhs: number; basic: number | "slack" };
+  const rows: Row[] = [];
+  const f = feeds.map((c) => FEEDS[c.id]);
+  // ≥ rows carry their shortfall as the starting basic column and a surplus (−1).
+  rows.push({ a: f.map((x) => x.tdn / 100), extra: [[SHORT_T, 1]], rhs: need.tdn, basic: SHORT_T });
+  rows.push({ a: f.map((x) => x.cp / 100), extra: [[SHORT_C, 1]], rhs: need.cp, basic: SHORT_C });
+  rows.push({ a: f.map(() => 1), extra: [[SHORT_D, 1]], rhs: need.dmMin, basic: SHORT_D });
+  // ≤ rows start with their slack (+1) as the basic column.
+  rows.push({ a: f.map(() => 1), extra: [], rhs: need.dmMax, basic: "slack" });
+  rows.push({ a: f.map((x) => need.roughMin / 100 - (x.rough ? 1 : 0)), extra: [], rhs: 0, basic: "slack" });
+  f.forEach((x, i) => {
+    if (x.maxPct < 100) rows.push({ a: f.map((_, j) => (j === i ? 1 : 0) - x.maxPct / 100), extra: [], rhs: 0, basic: "slack" });
+    const max = feeds[i].maxKg;
+    if (max !== undefined && Number.isFinite(max) && max >= 0) rows.push({ a: f.map((_, j) => (j === i ? 1 : 0)), extra: [], rhs: (max * x.dm) / 100, basic: "slack" });
+  });
+  const first = n + 3;
+  const cols = first + rows.length;
+  const A: number[][] = [];
+  const basis: number[] = [];
+  rows.forEach((r, i) => {
+    const line = Array(cols).fill(0) as number[];
+    r.a.forEach((v, j) => (line[j] = v));
+    for (const [col, v] of r.extra) line[col] = v;
+    line[first + i] = r.basic === "slack" ? 1 : -1;
+    A.push(line);
+    basis.push(r.basic === "slack" ? first + i : r.basic);
+  });
+  const cost = Array(cols).fill(0) as number[];
+  feeds.forEach((c, j) => (cost[j] = c.price / (f[j].dm / 100)));
+  cost[SHORT_T] = 1e5;
+  cost[SHORT_C] = 1e5;
+  cost[SHORT_D] = 1e4;
+  const x = simplex(A, rows.map((r) => r.rhs), cost, basis);
+  if (!x) return null;
+
+  const items = feeds
+    .map((c, j) => ({ id: c.id, dmKg: x[j], kg: (x[j] * 100) / f[j].dm, price: c.price }))
+    .filter((it) => it.kg >= 0.05)
+    .map((it) => ({ id: it.id, kg: r1(it.kg), dmKg: r2(it.dmKg), cost: r1(it.kg * it.price), rough: FEEDS[it.id].rough }))
+    .sort((p, q) => Number(q.rough) - Number(p.rough) || q.kg - p.kg);
+  const dm = feeds.reduce((s, _, j) => s + x[j], 0);
+  const tdn = feeds.reduce((s, _, j) => s + (x[j] * f[j].tdn) / 100, 0);
+  const cp = feeds.reduce((s, _, j) => s + (x[j] * f[j].cp) / 100, 0);
+  const roughDm = feeds.reduce((s, _, j) => s + (f[j].rough ? x[j] : 0), 0);
+  const costDay = feeds.reduce((s, c, j) => s + (x[j] * 100 * c.price) / f[j].dm, 0);
+  // The concentrate part as a mix to make in bulk (% as bought).
+  const conc = items.filter((it) => !it.rough);
+  const concKg = conc.reduce((s, it) => s + it.kg, 0);
+  const mix = concKg > 0 ? conc.map((it) => ({ id: it.id, pct: r1((it.kg / concKg) * 100) })) : [];
+  const milkL = animal.kind === "milking" ? Math.max(0, animal.milkL ?? 0) : 0;
+  return {
+    error: null,
+    items,
+    costDay: Math.round(costDay),
+    costPerLitre: milkL > 0 ? r2(costDay / milkL) : null,
+    supply: { dm: r1(dm), tdn: r2(tdn), cp: r2(cp), roughPct: dm > 0 ? Math.round((roughDm / dm) * 100) : 0 },
+    need: { dmMin: r1(need.dmMin), dmMax: r1(need.dmMax), tdn: r2(need.tdn), cp: r2(need.cp), roughMin: need.roughMin },
+    short: { tdn: r2(Math.max(0, x[SHORT_T])), cp: r2(Math.max(0, x[SHORT_C])), dm: r1(Math.max(0, x[SHORT_D])) },
+    mix,
+    concentrateKg: r1(concKg),
+    waterL: Math.round(animal.weightKg * 0.1 + milkL * 4),
+    saltG: Math.round(30 + milkL * 2),
+    mineralG: milkL > 0 ? 50 : 30,
+  };
+}
+
+/** Default choices: every feed at the (admin-set) starting price. */
+export const defaultFeedChoices = (prices: ToolParams["feedPrice"] = TOOL_DEFAULTS.feedPrice): FeedChoice[] => RATION_FEEDS.map((id) => ({ id, price: prices[id] }));

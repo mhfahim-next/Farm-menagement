@@ -3,6 +3,7 @@ import type { MessageKey } from "./i18n/en";
 /** The farm tools (same list and order as the website's Tools menu). */
 export const TOOLS = [
   { slug: "cattle-weight", key: "weight", icon: "tape-measure" },
+  { slug: "least-cost-ration", key: "lcr", icon: "calculator-variant" },
   { slug: "feed-ration", key: "ration", icon: "barley" },
   { slug: "poultry-feed", key: "poultry", icon: "egg-outline" },
   { slug: "calving-date", key: "preg", icon: "calendar-heart" },

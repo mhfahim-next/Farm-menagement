@@ -3,6 +3,7 @@ import { ActionForm } from "@/components/action-form";
 import { AvatarUploader } from "@/components/avatar-uploader";
 import { Badge, Card, Field, Input, PageHeader, Select } from "@/components/ui";
 import { requireDoctor } from "@/lib/auth";
+import { DISTRICTS } from "@/lib/districts";
 import { getI18n } from "@/lib/i18n/server";
 import { changePassword, updateProfile } from "@/app/dashboard/profile/actions";
 import { updateDoctorDetails } from "./actions";
@@ -13,8 +14,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function DoctorProfilePage() {
-  const { user, profile } = await requireDoctor();
-  const { t, options } = await getI18n();
+  const { user, profile, supabase } = await requireDoctor();
+  const { t, options, locale } = await getI18n();
+  // Read on their own, so the page still opens before the doctor-list migration is applied.
+  const { data: listing } = await supabase.from("profiles").select("doctor_district, doctor_area, doctor_listed, doctor_show_phone").eq("id", user.id).maybeSingle();
 
   return (
     <>
@@ -36,6 +39,35 @@ export default async function DoctorProfilePage() {
                 options={[{ value: "", label: t("doctor.chooseSpecialty") }, ...options("doctor_specialty", profile.doctor_specialty)]}
               />
             </Field>
+            {listing && (
+              <>
+                <Field label={t("vets.district")}>
+                  <Select
+                    name="doctor_district"
+                    defaultValue={listing.doctor_district ?? ""}
+                    options={[{ value: "", label: t("vets.chooseDistrict") }, ...DISTRICTS.map((d) => ({ value: d.key, label: locale === "bn" ? d.bn : d.en }))]}
+                    data-testid="doctor-district"
+                  />
+                </Field>
+                <Field label={t("vets.area")} hint={t("vets.areaHint")}>
+                  <Input name="doctor_area" defaultValue={listing.doctor_area ?? ""} maxLength={80} data-testid="doctor-area" />
+                </Field>
+                <label className="flex items-start gap-2 text-sm">
+                  <input type="checkbox" name="doctor_listed" defaultChecked={listing.doctor_listed} className="mt-0.5 accent-emerald-700" data-testid="doctor-listed" />
+                  <span>
+                    {t("vets.listedLabel")}
+                    <span className="block text-xs text-stone-500">{t("vets.listedHint")}</span>
+                  </span>
+                </label>
+                <label className="flex items-start gap-2 text-sm">
+                  <input type="checkbox" name="doctor_show_phone" defaultChecked={listing.doctor_show_phone} className="mt-0.5 accent-emerald-700" data-testid="doctor-show-phone" />
+                  <span>
+                    {t("vets.showPhoneLabel")}
+                    <span className="block text-xs text-stone-500">{t("vets.showPhoneHint")}</span>
+                  </span>
+                </label>
+              </>
+            )}
           </ActionForm>
         </Card>
 

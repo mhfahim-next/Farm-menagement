@@ -75,4 +75,5 @@ export const toolsadmin = {
   "tadm.base.kg": "kg",
   "tadm.base.cm": "cm",
   "tadm.base.m2": "m²",
+  "tadm.g.feedPrice": "🧮 Least-cost ration: starting feed prices (৳/kg)",
 };

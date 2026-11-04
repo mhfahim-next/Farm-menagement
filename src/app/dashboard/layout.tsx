@@ -78,6 +78,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
         { href: "/dashboard/approvals", label: t("nav.approvals"), icon: "approvals" },
         { href: "/dashboard/notifications", label: t("nav.reminders"), icon: "reminders" },
         { href: "/dashboard/tools", label: t("nav.tools"), icon: "tools" },
+        { href: "/dashboard/diseases", label: t("nav.diseases"), icon: "flockHealth" },
         { href: "/doctor", label: t("doctor.consoleNav"), icon: "back" },
       ]
     : [
@@ -85,6 +86,8 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
         ...(isStaff ? [{ href: "/dashboard/quick", label: t("nav.quick"), icon: "quick" as const }] : []),
         { href: "/dashboard/notifications", label: t("nav.reminders"), icon: "reminders" },
         { href: "/dashboard/tools", label: t("nav.tools"), icon: "tools" },
+        { href: "/dashboard/diseases", label: t("nav.diseases"), icon: "flockHealth" },
+        { href: "/dashboard/doctors", label: t("nav.doctors"), icon: "doctor" },
         ...(keepsAnimals(farm)
           ? [
               ...(keepsCattle(farm) ? [{ href: "/dashboard/cattle", label: t("nav.cattle"), icon: "cattle" as const }] : []),

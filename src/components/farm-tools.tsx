@@ -1,12 +1,15 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { MessageKey } from "@/lib/i18n/core";
 import type { ToolSlug } from "@/lib/tool-list";
 import {
   convertUnit,
   dairyRation,
   doseFor,
+  FEEDS,
+  leastCostRation,
+  RATION_FEEDS,
   fatteningRation,
   fodderPlan,
   meatValue,
@@ -18,6 +21,8 @@ import {
   TOOL_DEFAULTS,
   unitGroups,
   type BirdKind,
+  type FeedId,
+  type RationAnimal,
   type Ingredient,
   type LengthUnit,
   type Species,
@@ -231,6 +236,162 @@ function RationTool({ p }: { p: ToolParams }) {
           </p>
         )}
       </Card2>
+    </div>
+  );
+}
+
+/** Feeds ticked at first: what most Bangladeshi cattle farms have. */
+const LCR_START: FeedId[] = ["rice_straw", "napier", "wheat_bran", "maize", "mustard_cake"];
+const LCR_STORE = "ff.lcr.v1";
+type LcrFeedState = { on: boolean; price: string; max: string };
+
+function LeastCostTool({ p }: { p: ToolParams["feedPrice"] }) {
+  const { t, f } = useI18n();
+  const [kind, setKind] = useState<RationAnimal["kind"]>("milking");
+  const [weight, setWeight] = useState("");
+  const [milk, setMilk] = useState("");
+  const [fat, setFat] = useState("4");
+  const [gain, setGain] = useState("0.8");
+  const [pregnant, setPregnant] = useState(false);
+  const [feeds, setFeeds] = useState<Record<FeedId, LcrFeedState>>(
+    () => Object.fromEntries(RATION_FEEDS.map((id) => [id, { on: LCR_START.includes(id), price: String(p[id]), max: "" }])) as Record<FeedId, LcrFeedState>,
+  );
+  // The farmer's own feeds and prices are remembered on this device.
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(LCR_STORE) ?? "null") as Partial<Record<FeedId, LcrFeedState>> | null;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- read once after mount (no localStorage on the server)
+      if (saved) setFeeds((cur) => Object.fromEntries(RATION_FEEDS.map((id) => [id, { ...cur[id], ...(saved[id] ?? {}) }])) as Record<FeedId, LcrFeedState>);
+    } catch {}
+  }, []);
+  const change = (id: FeedId, patch: Partial<LcrFeedState>) =>
+    setFeeds((cur) => {
+      const next = { ...cur, [id]: { ...cur[id], ...patch } };
+      try {
+        localStorage.setItem(LCR_STORE, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  const choices = RATION_FEEDS.filter((id) => feeds[id].on && Number.isFinite(num(feeds[id].price))).map((id) => ({
+    id,
+    price: num(feeds[id].price),
+    maxKg: Number.isFinite(num(feeds[id].max)) ? num(feeds[id].max) : undefined,
+  }));
+  const animal: RationAnimal = { kind, weightKg: num(weight), milkL: Number.isNaN(num(milk)) ? 0 : num(milk), fatPct: num(fat) || 4, gainKg: Number.isNaN(num(gain)) ? 0 : num(gain), pregnant };
+  const r = leastCostRation(animal, choices);
+  const kg = (v: number) => `${f.number(v, 1)} ${t("tools.unit.kg")}`;
+  const feedRow = (id: FeedId) => (
+    <div key={id} className="grid grid-cols-[1fr_5.5rem_5.5rem] items-center gap-2 text-sm">
+      <label className="flex min-w-0 items-center gap-2">
+        <input type="checkbox" checked={feeds[id].on} onChange={(e) => change(id, { on: e.target.checked })} data-testid={`lcr-on-${id}`} />
+        <span className="truncate">{t(`tools.feed.${id}` as MessageKey)}</span>
+      </label>
+      <Input inputMode="decimal" aria-label={`${t(`tools.feed.${id}` as MessageKey)} ${t("tools.lcr.price")}`} value={feeds[id].price} onChange={(e) => change(id, { price: e.target.value })} disabled={!feeds[id].on} data-testid={`lcr-price-${id}`} />
+      <Input inputMode="decimal" aria-label={`${t(`tools.feed.${id}` as MessageKey)} ${t("tools.lcr.max")}`} placeholder="—" value={feeds[id].max} onChange={(e) => change(id, { max: e.target.value })} disabled={!feeds[id].on} data-testid={`lcr-max-${id}`} />
+    </div>
+  );
+  const group = (rough: boolean) => (
+    <div className="grid gap-2">
+      <div className="grid grid-cols-[1fr_5.5rem_5.5rem] gap-2 text-xs font-semibold uppercase tracking-wide text-stone-500">
+        <span>{t(rough ? "tools.lcr.rough" : "tools.lcr.conc")}</span>
+        <span>{t("tools.lcr.price")}</span>
+        <span>{t("tools.lcr.max")}</span>
+      </div>
+      {RATION_FEEDS.filter((id) => FEEDS[id].rough === rough).map(feedRow)}
+    </div>
+  );
+  return (
+    <div className="grid gap-4">
+      <Choice
+        label={t("tools.lcr.kind")}
+        value={kind}
+        onChange={setKind}
+        testId="lcr-kind"
+        options={(["milking", "dry", "growing"] as const).map((k) => ({ value: k, label: t(`tools.lcr.${k}`) }))}
+      />
+      <div className="grid gap-3 sm:grid-cols-3">
+        <NumberBox label={t("tools.ration.weight")} value={weight} onChange={setWeight} testId="lcr-weight" />
+        {kind === "milking" && (
+          <>
+            <NumberBox label={t("tools.ration.milk")} value={milk} onChange={setMilk} testId="lcr-milk" />
+            <NumberBox label={t("tools.ration.fat")} value={fat} onChange={setFat} testId="lcr-fat" />
+          </>
+        )}
+        {kind === "growing" && <NumberBox label={t("tools.ration.gain")} value={gain} onChange={setGain} testId="lcr-gain" />}
+      </div>
+      {kind !== "growing" && (
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={pregnant} onChange={(e) => setPregnant(e.target.checked)} data-testid="lcr-pregnant" /> {t("tools.lcr.pregnant")}
+        </label>
+      )}
+      <Card2 title={t("tools.lcr.feedsTitle")}>
+        <p className="mb-3 text-xs text-stone-600">{t("tools.lcr.feedsHint")}</p>
+        <div className="grid gap-4">
+          {group(true)}
+          {group(false)}
+        </div>
+      </Card2>
+      {!r ? (
+        <Empty />
+      ) : r.error ? (
+        <p className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900" data-testid="lcr-error">
+          {t(r.error === "noFeeds" ? "tools.lcr.noFeeds" : "tools.lcr.noRoughage")}
+        </p>
+      ) : (
+        <Result>
+          <p className="mb-2 text-sm font-medium">{t("tools.lcr.perDay")}</p>
+          <table className="w-full text-sm" data-testid="lcr-table">
+            <thead>
+              <tr className="text-left text-xs text-emerald-900/70">
+                <th className="py-1 font-medium">{t("tools.lcr.feed")}</th>
+                <th className="py-1 text-right font-medium">{t("tools.lcr.kg")}</th>
+                <th className="py-1 text-right font-medium">{t("tools.lcr.cost")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {r.items.map((it) => (
+                <tr key={it.id} className="border-t border-emerald-200" data-testid={`lcr-row-${it.id}`}>
+                  <td className="py-1.5">{t(`tools.feed.${it.id}` as MessageKey)}</td>
+                  <td className="py-1.5 text-right font-semibold tabular-nums">{kg(it.kg)}</td>
+                  <td className="py-1.5 text-right tabular-nums">{f.money(Math.round(it.cost), "BDT")}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="mt-3 text-lg font-bold" data-testid="lcr-cost">
+            {t("tools.lcr.costDay", { amount: f.money(r.costDay, "BDT") })}
+          </p>
+          {r.costPerLitre !== null && <p className="text-sm font-semibold">{t("tools.lcr.costLitre", { amount: f.moneyExact(r.costPerLitre, "BDT") })}</p>}
+          {(r.short.cp > 0 || r.short.tdn > 0 || r.short.dm > 0) && (
+            <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900" data-testid="lcr-short">
+              <p className="font-semibold">{t("tools.lcr.shortTitle")}</p>
+              <ul className="mt-1 list-disc space-y-0.5 pl-5">
+                {r.short.cp > 0 && <li>{t("tools.lcr.shortProtein", { g: f.number(Math.round(r.short.cp * 1000)) })}</li>}
+                {r.short.tdn > 0 && <li>{t("tools.lcr.shortEnergy", { kg: f.number(r.short.tdn, 2) })}</li>}
+                {r.short.dm > 0 && <li>{t("tools.lcr.shortDm", { kg: f.number(r.short.dm, 1) })}</li>}
+              </ul>
+            </div>
+          )}
+          <h3 className="mt-4 text-sm font-semibold">{t("tools.lcr.checkTitle")}</h3>
+          <Rows
+            rows={[
+              [t("tools.lcr.energy"), t("tools.lcr.gets", { have: f.number(r.supply.tdn, 2), need: f.number(r.need.tdn, 2) })],
+              [t("tools.lcr.protein"), t("tools.lcr.gets", { have: f.number(r.supply.cp, 2), need: f.number(r.need.cp, 2) })],
+              [t("tools.lcr.dm"), t("tools.lcr.dmRange", { have: f.number(r.supply.dm, 1), low: f.number(r.need.dmMin, 1), high: f.number(r.need.dmMax, 1) })],
+              [t("tools.lcr.roughShare"), t("tools.lcr.roughPct", { have: f.number(r.supply.roughPct), min: f.number(r.need.roughMin) })],
+            ]}
+          />
+          <p className="mt-3 text-sm">{t("tools.lcr.extras", { water: f.number(r.waterL), salt: f.number(r.saltG), mineral: f.number(r.mineralG) })}</p>
+          {r.mix.length > 1 && (
+            <div className="mt-4 border-t border-emerald-200 pt-3" data-testid="lcr-mix">
+              <h3 className="text-sm font-semibold">{t("tools.lcr.mixTitle")}</h3>
+              <p className="mb-2 text-xs text-emerald-900/70">{t("tools.lcr.mixHint", { kg: f.number(r.concentrateKg, 1) })}</p>
+              <Rows rows={r.mix.map((m) => [t(`tools.feed.${m.id}` as MessageKey), `${f.number(m.pct, 1)}% · ${kg(m.pct)} / 100 ${t("tools.unit.kg")}`])} />
+            </div>
+          )}
+        </Result>
+      )}
+      <p className="text-xs text-stone-500">{t("tools.lcr.how")}</p>
     </div>
   );
 }
@@ -521,6 +682,8 @@ export function FarmTool({
     switch (slug) {
       case "cattle-weight":
         return <WeightTool animals={animals} saveWeight={saveWeight} today={today} p={params.weight} />;
+      case "least-cost-ration":
+        return <LeastCostTool p={params.feedPrice} />;
       case "feed-ration":
         return <RationTool p={params} />;
       case "poultry-feed":

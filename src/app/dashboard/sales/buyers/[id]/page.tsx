@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ActionForm } from "@/components/action-form";
 import { BuyerFields } from "@/components/buyer-fields";
@@ -57,6 +58,9 @@ export default async function BuyerPage({ params }: PageProps<"/dashboard/sales/
           <span className="flex flex-wrap gap-2">
             <ButtonLink href={`/dashboard/sales/new?buyer=${buyer.id}`}>+ {t("sales.newSale")}</ButtonLink>
             <ButtonLink href={`/dashboard/sales/payment?buyer=${buyer.id}`} variant="secondary">{t("sales.receivePayment")}</ButtonLink>
+            <ButtonLink href={`/dashboard/sales/buyers/${buyer.id}/bill`} variant="secondary" data-testid="buyer-bill">
+              {t("bill.title")}
+            </ButtonLink>
             <a href={waHref} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-600 px-4 py-2.5 text-sm font-medium text-emerald-800 hover:bg-emerald-50 sm:py-2">
               {t("sales.sendWhatsapp")}
             </a>
@@ -115,7 +119,12 @@ export default async function BuyerPage({ params }: PageProps<"/dashboard/sales/
                     {l.kind === "sale" ? money(Number(l.sale.amount)) : `−${money(Number(l.payment.amount))}`}
                   </Td>
                   <Td className={`text-right font-medium tabular-nums ${l.balance > 0 ? "text-amber-800" : "text-stone-700"}`}>{money(l.balance)}</Td>
-                  <Td>
+                  <Td className="whitespace-nowrap">
+                    {l.kind === "sale" && (
+                      <Link href={`/dashboard/sales/memo/${l.id}`} className="mr-2 text-sm text-emerald-700 hover:underline" data-testid={`memo-${l.id}`}>
+                        {t("bill.memoLink")}
+                      </Link>
+                    )}
                     {canDelete && (
                       <ConfirmForm
                         action={l.kind === "sale" ? deleteSale : deletePayment}

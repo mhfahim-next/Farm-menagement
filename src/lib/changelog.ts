@@ -53,14 +53,6 @@ export const UPCOMING: Upcoming[] = [
   },
   {
     status: "exploring",
-    title: { en: "Feed ration calculator", bn: "খাবারের রেশন ক্যালকুলেটর" },
-    body: {
-      en: "Suggest a balanced daily ration from the feeds you have and their prices.",
-      bn: "আপনার হাতের খাবার আর দাম অনুযায়ী প্রতিদিনের সুষম রেশন সাজেস্ট করবে।",
-    },
-  },
-  {
-    status: "exploring",
     title: { en: "Fodder plots and crops", bn: "ঘাসের জমি ও ফসল" },
     body: {
       en: "Track your Napier and maize plots: sowing, cuts, yield and cost per kg of grass.",
@@ -70,6 +62,21 @@ export const UPCOMING: Upcoming[] = [
 ];
 
 export const RELEASES: Release[] = [
+  {
+    id: "2026-11-06-ration-bills-diseases-vets",
+    date: "2026-11-06",
+    title: { en: "Cheapest feed ration, buyer bills, disease guide and Find a vet", bn: "সবচেয়ে কম খরচের রেশন, ক্রেতার বিল, রোগ চেনার গাইড আর ডাক্তার খুঁজুন" },
+    summary: {
+      en: "Save money on feed, send buyers a proper memo and monthly bill, recognise diseases early and reach a vet near you.",
+      bn: "খাবারে টাকা বাঁচান, ক্রেতাকে ঠিকঠাক মেমো ও মাসিক বিল পাঠান, রোগ আগেভাগে চিনুন আর কাছের ডাক্তারের কাছে পৌঁছান।",
+    },
+    changes: [
+      { type: "new", en: "Least-cost ration: tick the feeds you have, type your prices, and get the cheapest daily ration that gives enough energy and protein, with a mix to make in bulk.", bn: "সবচেয়ে কম খরচের রেশন: আপনার কাছে যে খাবার আছে তাতে টিক দিন, দাম লিখুন, আর যথেষ্ট শক্তি ও আমিষসহ সবচেয়ে সস্তা দৈনিক রেশন পান, সাথে একসাথে বানানোর মিশ্রণ।" },
+      { type: "new", en: "Cash memo for every sale and a monthly bill for each buyer: print, save as PDF or send on WhatsApp.", bn: "প্রতিটা বিক্রির ক্যাশ মেমো আর প্রতিটা ক্রেতার মাসিক বিল: প্রিন্ট, PDF বা WhatsApp-এ পাঠান।" },
+      { type: "new", en: "Disease guide for cattle, goats and poultry: tick the signs you see, then read what to do now and how to prevent it.", bn: "গরু, ছাগল ও হাঁস-মুরগির রোগ চেনার গাইড: যে লক্ষণ দেখছেন তাতে টিক দিন, তারপর এখনই কী করবেন আর কীভাবে প্রতিরোধ করবেন পড়ুন।" },
+      { type: "new", en: "Find a vet: verified doctors in your district; invite one to your farm in one tap. Doctors choose whether to be listed and whether to show their phone.", bn: "ডাক্তার খুঁজুন: আপনার জেলার যাচাই করা ডাক্তার; এক চাপে খামারে আমন্ত্রণ। ডাক্তার নিজেই ঠিক করেন তালিকায় থাকবেন কিনা আর ফোন নম্বর দেখাবেন কিনা।" },
+    ],
+  },
   {
     id: "2026-11-05-faster-pages",
     date: "2026-11-05",

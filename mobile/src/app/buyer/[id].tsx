@@ -6,7 +6,9 @@ import { OfflineNote } from "@/components/offline-note";
 import { useCached } from "@/lib/cache";
 import { RecordMenu } from "@/components/record-menu";
 import { useRemove } from "@/lib/outbox";
-import { fetchSales, isManager, useBuyers } from "@/lib/data";
+import { memoHtml, memoText, whatsappLink } from "@/lib/bill-doc";
+import { fetchSales, isManager, useBuyers, type SaleRow } from "@/lib/data";
+import { sharePdf } from "@/lib/share";
 import { useToast } from "@/lib/toast";
 import { usePrefs } from "@/lib/prefs";
 import { useSession } from "@/lib/session";
@@ -15,6 +17,7 @@ import { useSession } from "@/lib/session";
 export default function BuyerPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t, n, money, date } = usePrefs();
+  const fmt = { t, n, money, date: (d: string | null | undefined) => date(d) };
   const theme = useTheme();
   const farm = useSession().current?.farm;
   const currency = farm?.currency ?? "BDT";
@@ -44,6 +47,7 @@ export default function BuyerPage() {
       icon: "receipt-text-outline",
       payment: false,
       id: s.id,
+      sale: s as SaleRow | null,
     })),
     ...(history.data?.payments ?? []).map((p) => ({
       key: `p${p.id}`,
@@ -54,6 +58,7 @@ export default function BuyerPage() {
       icon: "cash-check",
       payment: true,
       id: p.id,
+      sale: null as SaleRow | null,
     })),
   ].sort((x, y) => y.date.localeCompare(x.date));
 
@@ -62,6 +67,7 @@ export default function BuyerPage() {
       <Appbar.Header mode="small" elevated={false}>
         <Appbar.BackAction onPress={back} accessibilityLabel={t("animal.back")} />
         <Appbar.Content title={b?.name ?? ""} />
+        <Appbar.Action icon="file-document-outline" onPress={() => router.push({ pathname: "/bill/[id]", params: { id } })} accessibilityLabel={t("bill.title")} testID="buyer-bill" />
         {b?.phone ? <Appbar.Action icon="phone" onPress={() => Linking.openURL(`tel:${b.phone}`)} accessibilityLabel={t("sale.call")} /> : null}
       </Appbar.Header>
       <ScrollView contentContainerStyle={styles.content}>
@@ -102,9 +108,25 @@ export default function BuyerPage() {
                     <Text variant="titleSmall" style={[styles.center, { color: l.payment ? theme.colors.primary : theme.colors.onSurface }]}>
                       {`${l.payment ? "−" : ""}${money(l.amount, currency)}`}
                     </Text>
-                    {manager && (
+                    {(manager || l.sale) && (
                       <RecordMenu
-                        onDelete={async () => {
+                        extras={
+                          l.sale && farm && b
+                            ? [
+                                {
+                                  icon: "file-pdf-box",
+                                  title: t("bill.memoShare"),
+                                  onPress: () =>
+                                    sharePdf(`memo-${l.id.slice(0, 8)}.pdf`, memoHtml(l.sale!, { name: farm.name, location: farm.location, currency }, b, fmt)).catch((e: unknown) =>
+                                      toast(`${t("common.error")} ${e instanceof Error ? e.message : ""}`),
+                                    ),
+                                  testID: "menu-memo",
+                                },
+                                { icon: "whatsapp", title: t("bill.memoWhatsapp"), onPress: () => Linking.openURL(whatsappLink(b.phone, memoText(l.sale!, { name: farm.name, location: farm.location, currency }, b, fmt))), testID: "menu-memo-wa" },
+                              ]
+                            : undefined
+                        }
+                        onDelete={!manager ? undefined : async () => {
                           const r = await remove(l.payment ? "buyer_payments" : "sales", l.id, `${t("rec.delete")} · ${money(l.amount, currency)}`);
                           toast(r.error ? `${t("common.error")} ${r.error}` : r.queued ? t("entry.queued") : t("rec.deleted"));
                           reloadBuyers();

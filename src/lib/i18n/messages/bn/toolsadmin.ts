@@ -77,4 +77,5 @@ export const toolsadmin: Record<keyof typeof en, string> = {
   "tadm.base.kg": "কেজি",
   "tadm.base.cm": "সেমি",
   "tadm.base.m2": "বর্গমিটার",
+  "tadm.g.feedPrice": "🧮 কম খরচের রেশন: খাবারের শুরুর দাম (৳/কেজি)",
 };
