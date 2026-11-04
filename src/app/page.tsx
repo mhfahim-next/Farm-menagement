@@ -23,7 +23,7 @@ import { currencyFor } from "@/lib/payments";
 import { JsonLd } from "@/components/json-ld";
 import { ReviewsSection } from "@/components/reviews-section";
 import { getApprovedReviews, getPublicStats, safe } from "@/lib/public-data";
-import { langAlternates, SITE_NAME, SITE_URL } from "@/lib/site";
+import { langAlternates, ORGANIZATION, SITE_NAME, SITE_URL } from "@/lib/site";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { locale } = await getI18n();
@@ -89,7 +89,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
               "@type": "WebSite",
               "@id": `${SITE_URL}/#website`,
               name: SITE_NAME,
-              alternateName: ["FarmFlow", "FarmFlows App", "ফার্মফ্লোজ"],
+              alternateName: ["FarmFlows App", "ফার্মফ্লোজ"],
               url: SITE_URL,
               inLanguage: ["bn", "en"],
             },
@@ -99,6 +99,17 @@ export default async function Home({ searchParams }: PageProps<"/">) {
               name: SITE_NAME,
               url: SITE_URL,
               logo: { "@type": "ImageObject", url: `${SITE_URL}/icons/icon-512.png`, width: 512, height: 512 },
+              sameAs: ORGANIZATION.sameAs,
+              email: ORGANIZATION.email,
+              contactPoint: {
+                "@type": "ContactPoint",
+                contactType: "customer support",
+                email: ORGANIZATION.email,
+                telephone: ORGANIZATION.phone,
+                areaServed: ORGANIZATION.country,
+                availableLanguage: ["bn", "en"],
+              },
+              address: { "@type": "PostalAddress", addressLocality: ORGANIZATION.locality, addressCountry: ORGANIZATION.country },
             },
             {
               "@type": "SoftwareApplication",
@@ -114,9 +125,21 @@ export default async function Home({ searchParams }: PageProps<"/">) {
                 "Income, expenses and profit per litre and per egg", "Works offline", "Import from Excel or CSV",
                 "AI assistant in Bangla and English", "Vet approvals", "Weight and growth tracking", "QR tags for animals", "PDF report per animal", "Bangla and English",
               ],
-              offers: plans
-                .filter((p) => p.price_monthly !== null)
-                .map((p) => ({ "@type": "Offer", name: planName(p, locale, p.key), price: p.price_monthly, priceCurrency: "BDT" })),
+              // The same plans, prices and currency the visitor sees in the pricing section
+              // (taka in Bangladesh, dollars elsewhere); a plan without a price is "contact us".
+              offers: plans.map((p) => {
+                const offer = { "@type": "Offer", name: planName(p, locale, p.key), url: `${SITE_URL}/#pricing` };
+                if (p.price_monthly === null) return { ...offer, description: t("plans.priceCustom"), url: `${SITE_URL}/contact` };
+                const usd = currency === "USD" && p.price_monthly_usd !== null && p.price_monthly_usd !== undefined;
+                const price = Number(usd ? p.price_monthly_usd : p.price_monthly);
+                const priceCurrency = usd ? "USD" : "BDT";
+                return {
+                  ...offer,
+                  price,
+                  priceCurrency,
+                  priceSpecification: { "@type": "UnitPriceSpecification", price, priceCurrency, billingDuration: "P1M", referenceQuantity: { "@type": "QuantitativeValue", value: 1, unitCode: "MON" } },
+                };
+              }),
             },
           ],
         }}
