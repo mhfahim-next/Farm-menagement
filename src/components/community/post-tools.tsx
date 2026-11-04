@@ -4,6 +4,7 @@ import { deletePost, editPost, reportPost } from "@/app/(site)/[lang]/community/
 import { REPORT_REASONS } from "@/lib/community";
 import { ActionForm } from "../action-form";
 import { ConfirmForm } from "../confirm-form";
+import { useCommunityMe } from "./community-viewer";
 import { useI18n } from "../i18n-provider";
 import { Field, Input, Select, Textarea } from "../ui";
 
@@ -41,7 +42,7 @@ export function ReportPost({ target }: { target: Target }) {
 /** Edit and delete for the author (delete also for super admins). */
 export function OwnPostTools({
   target,
-  canEdit,
+  authorId,
   title,
   body,
   topicId,
@@ -49,7 +50,8 @@ export function OwnPostTools({
   afterDeleteHref,
 }: {
   target: Target;
-  canEdit: boolean;
+  /** Shown to this author (edit + delete) and to super admins (delete); worked out in the browser. */
+  authorId: string;
   title?: string;
   body: string;
   topicId?: string | null;
@@ -57,6 +59,10 @@ export function OwnPostTools({
   afterDeleteHref?: string;
 }) {
   const { t } = useI18n();
+  const me = useCommunityMe(target.questionId);
+  if (!me) return null;
+  const canEdit = me.viewer.id === authorId;
+  if (!canEdit && !me.isAdmin) return null;
   return (
     <div className="flex flex-wrap items-start gap-3 text-sm">
       {canEdit && (

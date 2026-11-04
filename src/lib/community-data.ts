@@ -2,7 +2,6 @@ import "server-only";
 import { cache } from "react";
 import type { CommunityAnswer, CommunityAuthor, CommunityQuestion, CommunityTopic, Sort } from "@/lib/community";
 import { createPublicClient } from "@/lib/supabase/public";
-import { createClient } from "@/lib/supabase/server";
 
 export const PAGE_SIZE = 20;
 
@@ -41,23 +40,22 @@ export async function listQuestions(opts: { topicId?: string; q?: string; sort: 
   return { questions: (data ?? []) as CommunityQuestion[], total: count ?? 0 };
 }
 
-/** A question with its answers. Uses the signed-in client so authors see their own pending posts. */
+/**
+ * A published question with its published answers, read without cookies so
+ * the question page can be cached for everyone (RLS hides everything else).
+ * Throws when the database can't be read, so a failure is never cached as
+ * "not found".
+ */
 export async function getQuestion(id: string) {
-  const supabase = await createClient();
-  const { data: question } = await supabase.from("community_questions").select("*").eq("id", id).maybeSingle();
+  const supabase = createPublicClient();
+  const { data: question, error } = await supabase.from("community_questions").select("*").eq("id", id).maybeSingle();
+  if (error) throw new Error(`question ${id}: ${error.message}`);
   if (!question) return null;
-  const { data: answers } = await supabase
+  const { data: answers, error: e2 } = await supabase
     .from("community_answers")
     .select("*")
     .eq("question_id", id)
     .order("created_at", { ascending: true });
+  if (e2) throw new Error(`answers ${id}: ${e2.message}`);
   return { question: question as CommunityQuestion, answers: (answers ?? []) as CommunityAnswer[] };
-}
-
-/** Which of these posts the signed-in member already marked helpful. */
-export async function getMyHelpful(userId: string | undefined, ids: string[]) {
-  if (!userId || !ids.length) return new Set<string>();
-  const supabase = await createClient();
-  const { data } = await supabase.from("community_votes").select("target_id").eq("user_id", userId).in("target_id", ids);
-  return new Set((data ?? []).map((v) => v.target_id as string));
 }

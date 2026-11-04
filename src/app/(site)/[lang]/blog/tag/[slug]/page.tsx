@@ -11,6 +11,11 @@ import { fitDescription, langAlternates } from "@/lib/site";
 // Static page, rebuilt at most once an hour (admin changes refresh it sooner).
 export const revalidate = 3600;
 
+// Made on the first visit, then cached.
+export function generateStaticParams() {
+  return [];
+}
+
 
 
 export async function generateMetadata({ params }: PageProps<"/[lang]/blog/tag/[slug]">): Promise<Metadata> {

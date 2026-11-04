@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { toggleHelpful } from "@/app/(site)/[lang]/community/actions";
 import { useI18n } from "../i18n-provider";
 import { useToast } from "../toast";
+import { useCommunityMe } from "./community-viewer";
 
 /** "Helpful" mark with a count. Visitors are sent to log in; authors can't mark their own posts. */
 export function HelpfulButton({
@@ -12,19 +13,21 @@ export function HelpfulButton({
   id,
   questionId,
   count,
-  on,
-  mode,
+  authorId,
 }: {
   type: "question" | "answer";
   id: string;
   questionId: string;
   count: number;
-  on: boolean;
-  mode: "vote" | "own" | "login";
+  authorId: string;
 }) {
   const { t, f } = useI18n();
   const { toast } = useToast();
-  const [state, setState] = useState({ on, count });
+  // Who is looking is known only in the browser (the page is cached for everyone).
+  const me = useCommunityMe(questionId);
+  const mode: "vote" | "own" | "login" = !me ? "login" : me.viewer.id === authorId ? "own" : "vote";
+  const [mine, setState] = useState<{ on: boolean; count: number } | null>(null);
+  const state = mine ?? { on: !!me?.votes.has(id), count };
   const [pending, start] = useTransition();
   const label = `${t("community.helpful")} · ${f.number(state.count)}`;
   const cls = `inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium transition ${
@@ -57,7 +60,7 @@ export function HelpfulButton({
         start(async () => {
           const r = await toggleHelpful(type, id, questionId);
           if ("error" in r && r.error) {
-            setState(state);
+            setState(mine);
             toast("error", r.error);
           }
         });

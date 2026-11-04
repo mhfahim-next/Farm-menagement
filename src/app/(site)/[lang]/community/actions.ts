@@ -40,7 +40,8 @@ function images(formData: FormData, userId: string) {
 }
 
 function refresh(questionId?: string) {
-  revalidateSite("/community");
+  // The list, topic pages and this question are cached pages: refresh them now.
+  revalidateSite("/community", "layout");
   if (questionId) revalidateSite(`/community/q/${questionId}`);
   revalidatePath("/admin/community");
 }
