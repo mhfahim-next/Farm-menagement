@@ -37,6 +37,7 @@ export async function SiteFooter() {
     {
       title: t("footer.support"),
       links: [
+        { href: "/about", label: t("about.nav") },
         { href: "/contact", label: t("contact.title") },
         ...(viewer
           ? [{ href: viewer.home, label: t("landing.goDashboard") }]

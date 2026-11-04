@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BlogForm } from "@/components/blog-form";
-import { Card, PageHeader } from "@/components/ui";
+import { ActionForm } from "@/components/action-form";
+import { Card, Field, Input, PageHeader, Textarea } from "@/components/ui";
 import { requireSuperAdmin } from "@/lib/auth";
 import type { BlogCategory, BlogImage, BlogPost, BlogTag } from "@/lib/blog";
 import { getI18n } from "@/lib/i18n/server";
-import { updateBlogPost } from "../actions";
+import { saveBlogCredits, updateBlogPost } from "../actions";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -48,6 +49,37 @@ export default async function EditBlogPostPage({ params }: PageProps<"/admin/blo
           tags={(tags ?? []) as BlogTag[]}
           images={(images ?? []) as BlogImage[]}
         />
+      </Card>
+      <Card className="mt-6 max-w-3xl" title={t("admin.blog.creditsTitle")} description={t("admin.blog.creditsDesc")}>
+        <ActionForm action={saveBlogCredits} submitLabel={t("admin.blog.saveCredits")}>
+          <input type="hidden" name="id" value={post.id} />
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" name="health_topic" defaultChecked={post.health_topic ?? false} className="accent-emerald-700" data-testid="credits-health" />
+            {t("admin.blog.healthTopic")}
+          </label>
+          <Field label={t("admin.blog.authorName")} hint={t("admin.blog.authorHint")}>
+            <Input name="author_name" defaultValue={post.author_name ?? ""} maxLength={100} />
+          </Field>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label={t("admin.blog.reviewerName")} hint={t("admin.blog.reviewerHint")}>
+              <Input name="reviewer_name" defaultValue={post.reviewer_name ?? ""} maxLength={100} data-testid="credits-reviewer" />
+            </Field>
+            <Field label={t("admin.blog.reviewerCredentials")}>
+              <Input name="reviewer_credentials" defaultValue={post.reviewer_credentials ?? ""} maxLength={200} placeholder="DVM, BVC reg. …" />
+            </Field>
+          </div>
+          <Field label={t("admin.blog.reviewedOn")}>
+            <Input type="date" name="reviewed_on" defaultValue={post.reviewed_on ?? ""} className="max-w-48" />
+          </Field>
+          <Field label={t("admin.blog.sourcesField")} hint={t("admin.blog.sourcesHint")}>
+            <Textarea
+              name="sources"
+              rows={5}
+              defaultValue={(post.sources ?? []).map((s) => `${s.title_en ?? ""} | ${s.title_bn ?? ""} | ${s.url}`).join("\n")}
+              data-testid="credits-sources"
+            />
+          </Field>
+        </ActionForm>
       </Card>
     </>
   );

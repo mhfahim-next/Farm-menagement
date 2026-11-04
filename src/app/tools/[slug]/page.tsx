@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FarmTool } from "@/components/farm-tools";
+import { guideArticle, ToolGuide } from "@/components/tool-guide";
 import { JsonLd } from "@/components/json-ld";
 import { PublicFooter, PublicHeader } from "@/components/public-header";
 import { ButtonLink } from "@/components/ui";
@@ -9,6 +10,7 @@ import { getViewer } from "@/lib/auth";
 import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import { DEFAULT_OG_IMAGE, langAlternates, SITE_NAME, SITE_URL } from "@/lib/site";
+import { TOOL_GUIDES } from "@/lib/tool-guides";
 import { TOOLS, toolBySlug, toolName, toolShort } from "@/lib/tool-list";
 import { getToolParams } from "@/lib/tool-params";
 
@@ -33,8 +35,10 @@ export async function generateMetadata({ params }: PageProps<"/tools/[slug]">): 
 export default async function PublicToolPage({ params }: PageProps<"/tools/[slug]">) {
   const tool = toolBySlug((await params).slug);
   if (!tool) notFound();
-  const { t, locale } = await getI18n();
-  const [viewer, { params: toolParams }] = await Promise.all([getViewer(), getToolParams()]);
+  const i18n = await getI18n();
+  const { t, locale } = i18n;
+  const [viewer, { params: toolParams }, article] = await Promise.all([getViewer(), getToolParams(), guideArticle(tool.slug)]);
+  const guide = TOOL_GUIDES[tool.slug];
   const url = `${SITE_URL}/tools/${tool.slug}`;
   return (
     <div className="flex flex-1 flex-col">
@@ -61,6 +65,10 @@ export default async function PublicToolPage({ params }: PageProps<"/tools/[slug
                 { "@type": "ListItem", position: 3, name: t(toolName(tool.key)), item: url },
               ],
             },
+            {
+              "@type": "FAQPage",
+              mainEntity: guide.faq.map((x) => ({ "@type": "Question", name: x.q[locale], acceptedAnswer: { "@type": "Answer", text: x.a[locale] } })),
+            },
           ],
         }}
       />
@@ -76,6 +84,7 @@ export default async function PublicToolPage({ params }: PageProps<"/tools/[slug
         <div className="mt-6 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:p-6">
           <FarmTool slug={tool.slug} today={today()} params={toolParams} />
         </div>
+        <ToolGuide slug={tool.slug} params={toolParams} i18n={i18n} article={article} />
         <section className="mt-10 rounded-2xl bg-emerald-50 p-6">
           <h2 className="text-lg font-semibold text-emerald-950">{t("tools.ctaTitle")}</h2>
           <p className="mt-1 text-emerald-900">{t("tools.ctaBody")}</p>
