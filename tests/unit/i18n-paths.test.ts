@@ -1,6 +1,6 @@
 import { strict as assert } from "node:assert";
 import { test } from "node:test";
-import { isSitePath, localePath, splitLocale } from "../../src/lib/i18n/paths.ts";
+import { isMissingFile, isSitePath, localePath, splitLocale } from "../../src/lib/i18n/paths.ts";
 
 test("public pages get /bn in Bangla and no prefix in English", () => {
   assert.equal(localePath("/", "bn"), "/bn");
@@ -27,4 +27,9 @@ test("splitLocale reads the language prefix only as a whole segment", () => {
   assert.deepEqual(splitLocale("/en/blog"), { locale: "en", path: "/blog" });
   assert.deepEqual(splitLocale("/bnx/blog"), { locale: null, path: "/bnx/blog" });
   assert.deepEqual(splitLocale("/blog"), { locale: null, path: "/blog" });
+});
+
+test("addresses that look like files but are not ours go to the 404 page", () => {
+  for (const p of ["/xyz.a", "/abc.df", "/x.y.z", "/blog/x.y", "/community/q/a.b"]) assert.equal(isMissingFile(p), true, p);
+  for (const p of ["/robots.txt", "/sitemap.xml", "/llms.txt", "/sw.js", "/icons/icon-192.png", "/brand/logo.svg", "/api/x.json", "/dashboard/a.b", "/blog", "/"]) assert.equal(isMissingFile(p), false, p);
 });
