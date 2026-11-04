@@ -39,7 +39,9 @@ export async function generateMetadata({ params }: PageProps<"/[lang]/community/
   if (!data) return { robots: { index: false, follow: false } };
   const { t, locale } = await getI18n();
   const { question: q, answers } = data;
-  const description = fitDescription(excerpt(q.body, 400), t("community.metaExtra"));
+  // The question itself, then its details, then a line about the community: 120–155 characters.
+  const title = /[?？।.!]$/.test(q.title.trim()) ? q.title.trim() : `${q.title.trim()}.`;
+  const description = fitDescription(`${title} ${excerpt(q.body, 400)}`, t("community.metaExtra"));
   const live = answers.filter((a) => a.status === "published").length;
   return {
     title: q.title,

@@ -21,6 +21,10 @@ export type BlogPost = {
   /** An animal-health article: it shows who wrote it and, once added, the vet who reviewed it. */
   health_topic?: boolean;
   author_name?: string | null;
+  /** Shown after the author's name and as schema.org jobTitle. */
+  author_job_title?: string | null;
+  /** The author's profile page (schema.org url / sameAs). */
+  author_url?: string | null;
   reviewer_name?: string | null;
   reviewer_credentials?: string | null;
   reviewed_on?: string | null;

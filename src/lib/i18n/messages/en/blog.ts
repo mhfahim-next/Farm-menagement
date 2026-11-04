@@ -120,7 +120,7 @@ export const blog = {
   "blog.tagMetaDesc": "FarmFlows articles about {name}: practical, tested advice for dairy, cattle, goat and poultry farmers, with checklists and examples.",
   "blog.writtenBy": "Written by {name}",
   "blog.team": "the FarmFlows team",
-  "blog.reviewedBy": "Reviewed by {name}",
+  "blog.reviewedBy": "Reviewed by veterinarian {name}",
   "blog.sources": "Sources",
   "blog.sourcesNote": "Official guidance can change; for your animals, follow your vet and your Upazila Livestock Office.",
   "admin.blog.creditsTitle": "Author, vet review and sources",
@@ -136,4 +136,8 @@ export const blog = {
   "admin.blog.sourcesHint": "English title | Bangla title | https://link — at most 10.",
   "admin.blog.saveCredits": "Save author and sources",
   "admin.blog.errSource": "Check this source line: \"{line}\". Write: English title | Bangla title | https://link",
+  "blog.writtenByLabel": "Written by",
+  "admin.blog.authorJobTitle": "Author job title",
+  "admin.blog.authorUrl": "Author profile link",
+  "admin.blog.authorUrlHint": "A page about the author (e.g. LinkedIn or Facebook). Optional.",
 } as const;

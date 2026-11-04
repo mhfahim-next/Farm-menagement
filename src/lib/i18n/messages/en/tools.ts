@@ -222,4 +222,5 @@ export const tools = {
   "tguide.read": "Read the full guide",
   "tguide.tryTitle": "Work it out with the free tool",
   "tguide.tryOpen": "Open the tool",
+  "tools.metaExtra": "A free FarmFlows calculator for farmers, in Bangla and English, on any phone.",
 } as const;

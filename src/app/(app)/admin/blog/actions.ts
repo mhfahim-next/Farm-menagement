@@ -335,6 +335,12 @@ export async function saveBlogCredits(_: ActionState, formData: FormData): Promi
     p_sources: sources.slice(0, 10),
   });
   if (error) return { error: error.message };
+  const { error: authorError } = await supabase.rpc("admin_set_blog_author", {
+    p_id: id,
+    p_job_title: str(formData, "author_job_title"),
+    p_url: str(formData, "author_url"),
+  });
+  if (authorError) return { error: authorError.message };
   revalidateSite("/blog", "layout");
   return { success: t("admin.blog.saved") };
 }
