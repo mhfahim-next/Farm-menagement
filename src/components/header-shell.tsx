@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import { localePath } from "@/lib/i18n/paths";
+import { useI18n } from "./i18n-provider";
 
 /** Sticky public header that turns into a blurred, bordered bar once the page scrolls. */
 export function HeaderShell({ children }: { children: ReactNode }) {
@@ -27,9 +29,10 @@ export function HeaderShell({ children }: { children: ReactNode }) {
 
 /** Center nav link that highlights when its page is open. */
 export function NavLink({ href, children }: { href: string; children: ReactNode }) {
+  const { locale } = useI18n();
   return (
     <a
-      href={href}
+      href={localePath(href, locale)}
       className="whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium text-stone-600 transition-colors hover:bg-emerald-50 hover:text-emerald-800"
     >
       {children}

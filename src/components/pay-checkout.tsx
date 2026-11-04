@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/local-link";
 import { useRouter } from "next/navigation";
 import { startTransition, useActionState, useState } from "react";
-import { payManual, payOnline } from "@/app/dashboard/plan/pay/actions";
+import { payManual, payOnline } from "@/app/(app)/dashboard/plan/pay/actions";
 import type { Currency, MethodKind } from "@/lib/payments";
 import { styleOf } from "@/lib/payments";
 import type { ActionState } from "@/lib/types";

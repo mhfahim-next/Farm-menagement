@@ -8,6 +8,8 @@ const nextConfig: NextConfig = {
   experimental: {
     // Import only the parts of these libraries a page actually uses.
     optimizePackageImports: ["motion"],
+    // One 404 page for addresses that match nothing (there are two root layouts).
+    globalNotFound: true,
   },
   async headers() {
     return [

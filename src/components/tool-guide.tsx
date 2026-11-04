@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/local-link";
 import { localized, type BlogPost } from "@/lib/blog";
 import type { I18n } from "@/lib/i18n/core";
 import { createPublicClient } from "@/lib/supabase/public";

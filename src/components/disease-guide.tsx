@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/local-link";
 import { DiseaseChecker } from "@/components/disease-checker";
 import { DISEASE_SPECIES, DISEASES, SYMPTOMS, symptomsFor, type Bi, type Disease } from "@/lib/diseases";
 import type { I18n, Locale } from "@/lib/i18n/core";

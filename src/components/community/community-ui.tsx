@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/local-link";
 import { Fragment } from "react";
 import { Avatar } from "@/components/avatar";
 import { communityImageUrl, excerpt, postLang, type CommunityAuthor, type CommunityQuestion, type CommunityTopic } from "@/lib/community";

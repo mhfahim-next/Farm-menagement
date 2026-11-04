@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/local-link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { switchFarm } from "@/lib/farm-actions";
 import { useI18n } from "./i18n-provider";

@@ -1,4 +1,4 @@
-import { askAssistant, confirmProposal } from "@/app/dashboard/assistant/actions";
+import { askAssistant, confirmProposal } from "@/app/(app)/dashboard/assistant/actions";
 import { bodyOf, json, preflight, withAppFarm } from "@/lib/app-api";
 import { STAFF } from "@/lib/auth";
 

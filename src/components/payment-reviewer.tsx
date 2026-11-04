@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { reviewPayment } from "@/app/admin/payments/actions";
+import { reviewPayment } from "@/app/(app)/admin/payments/actions";
 import { useI18n } from "./i18n-provider";
 import { useToast } from "./toast";
 import { Button, Input, Spinner } from "./ui";

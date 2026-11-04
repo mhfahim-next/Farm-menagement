@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/local-link";
 import { FarmScene } from "@/components/farm-scene";
 import { Logo } from "@/components/logo";
 import { TextHoverEffect } from "@/components/velora/text-hover-effect";

@@ -1,4 +1,4 @@
-import { signInWithGoogle } from "@/app/(auth)/actions";
+import { signInWithGoogle } from "@/app/(site)/[lang]/(auth)/actions";
 import { getI18n } from "@/lib/i18n/server";
 import { GoogleSubmit } from "./google-submit";
 

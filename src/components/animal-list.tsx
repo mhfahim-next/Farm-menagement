@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/local-link";
 import { ClickRow } from "@/components/click-row";
 import { Badge, ButtonLink, Card, EmptyState, Input, PageHeader, Select, Table, Td } from "@/components/ui";
 import { requireFarm } from "@/lib/auth";

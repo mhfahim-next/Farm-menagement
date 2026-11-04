@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { DISEASES } from "@/lib/diseases";
 import { createPublicClient } from "@/lib/supabase/public";
-import { SITE_URL } from "@/lib/site";
+import { SITE_URL, siteUrl } from "@/lib/site";
 import { TOOLS } from "@/lib/tool-list";
 
 // Rebuilt at most once an hour.
@@ -72,6 +72,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   } catch {
     // The sitemap still lists the main pages if the database is unreachable.
   }
-  // Each page also exists in Bangla at ?lang=bn.
-  return pages.map((p) => ({ ...p, alternates: { languages: { en: p.url, bn: `${p.url}${p.url.includes("?") ? "&" : "?"}lang=bn` } } }));
+  // Every page exists in English (/x) and Bangla (/bn/x): list both, each with
+  // the pair as hreflang alternates (English is also x-default).
+  return pages.flatMap((p) => {
+    const path = p.url.slice(SITE_URL.length) || "/";
+    const en = siteUrl(path, "en");
+    const bn = siteUrl(path, "bn");
+    const alternates = { languages: { en, bn, "x-default": en } };
+    return [
+      { ...p, url: en, alternates },
+      { ...p, url: bn, alternates },
+    ];
+  });
 }

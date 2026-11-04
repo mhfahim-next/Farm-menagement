@@ -1,6 +1,6 @@
 "use client";
 
-import { deletePost, editPost, reportPost } from "@/app/community/actions";
+import { deletePost, editPost, reportPost } from "@/app/(site)/[lang]/community/actions";
 import { REPORT_REASONS } from "@/lib/community";
 import { ActionForm } from "../action-form";
 import { ConfirmForm } from "../confirm-form";

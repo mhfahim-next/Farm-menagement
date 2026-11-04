@@ -1,4 +1,4 @@
-import { approveEntry, cancelEntry, rejectEntry } from "@/app/dashboard/approvals/actions";
+import { approveEntry, cancelEntry, rejectEntry } from "@/app/(app)/dashboard/approvals/actions";
 import { bodyOf, formOf, json, preflight, withAppFarm } from "@/lib/app-api";
 import type { PendingEntry } from "@/lib/approvals";
 import { describeEntries } from "@/lib/approvals-describe";

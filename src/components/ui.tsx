@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/local-link";
 import type { ComponentProps, CSSProperties, ReactNode } from "react";
 import { OrbitLoader } from "./velora/loaders";
 import { TextShimmer } from "./velora/text-shimmer";

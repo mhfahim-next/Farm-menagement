@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/local-link";
 import type { FarmContext } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
 import { loadMyReminders } from "@/lib/reminders-data";

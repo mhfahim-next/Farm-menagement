@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/local-link";
 
 /**
  * FarmFlows logo (files in public/brand). The horizontal logo has a light and

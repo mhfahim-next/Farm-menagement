@@ -1,7 +1,7 @@
-import { saveDailyLog } from "@/app/dashboard/flocks/actions";
-import { addMove } from "@/app/dashboard/inventory/actions";
-import { saveMilkSession } from "@/app/dashboard/milk/actions";
-import { saveAttendance } from "@/app/dashboard/staff/actions";
+import { saveDailyLog } from "@/app/(app)/dashboard/flocks/actions";
+import { addMove } from "@/app/(app)/dashboard/inventory/actions";
+import { saveMilkSession } from "@/app/(app)/dashboard/milk/actions";
+import { saveAttendance } from "@/app/(app)/dashboard/staff/actions";
 import type { OutboxKind } from "@/lib/offline/outbox";
 import type { ActionState } from "@/lib/types";
 

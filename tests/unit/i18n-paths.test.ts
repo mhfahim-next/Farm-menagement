@@ -1,0 +1,30 @@
+import { strict as assert } from "node:assert";
+import { test } from "node:test";
+import { isSitePath, localePath, splitLocale } from "../../src/lib/i18n/paths.ts";
+
+test("public pages get /bn in Bangla and no prefix in English", () => {
+  assert.equal(localePath("/", "bn"), "/bn");
+  assert.equal(localePath("/", "en"), "/");
+  assert.equal(localePath("/blog/my-post?x=1#top", "bn"), "/bn/blog/my-post?x=1#top");
+  assert.equal(localePath("/bn/blog", "en"), "/blog");
+  assert.equal(localePath("/bn/blog", "bn"), "/bn/blog");
+  assert.equal(localePath("/en/tools", "en"), "/tools");
+  assert.equal(localePath("/doctor/signup", "bn"), "/bn/doctor/signup");
+  assert.equal(localePath("/login", "bn"), "/bn/login");
+});
+
+test("app pages, files and other sites keep one address", () => {
+  for (const href of ["/dashboard", "/dashboard/cattle/1", "/admin", "/doctor", "/doctor/profile", "/api/csp-report", "/auth/confirm", "/sitemap.xml", "/icons/icon-512.png", "/opengraph-image", "https://example.com/x", "//evil.com", "#faq", "mailto:a@b.c"]) {
+    assert.equal(localePath(href, "bn"), href, href);
+  }
+  assert.equal(isSitePath("/dashboard"), false);
+  assert.equal(isSitePath("/community/q/123"), true);
+});
+
+test("splitLocale reads the language prefix only as a whole segment", () => {
+  assert.deepEqual(splitLocale("/bn"), { locale: "bn", path: "/" });
+  assert.deepEqual(splitLocale("/bn/blog/x"), { locale: "bn", path: "/blog/x" });
+  assert.deepEqual(splitLocale("/en/blog"), { locale: "en", path: "/blog" });
+  assert.deepEqual(splitLocale("/bnx/blog"), { locale: null, path: "/bnx/blog" });
+  assert.deepEqual(splitLocale("/blog"), { locale: null, path: "/blog" });
+});

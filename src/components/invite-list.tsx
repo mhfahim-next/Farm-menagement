@@ -1,7 +1,7 @@
 import { ActionForm } from "@/components/action-form";
 import { Card } from "@/components/ui";
 import type { I18n } from "@/lib/i18n/core";
-import { respondInvite } from "@/app/invites/actions";
+import { respondInvite } from "@/app/(app)/invites/actions";
 
 export type PendingInvite = {
   id: string;

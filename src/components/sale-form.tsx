@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/local-link";
 import { useState } from "react";
-import { addSale } from "@/app/dashboard/sales/actions";
+import { addSale } from "@/app/(app)/dashboard/sales/actions";
 import { eggCount, PRODUCT_DEFAULTS, PRODUCTS, SALE_UNITS, type Product, type SaleUnit } from "@/lib/trade";
 import { ActionForm } from "./action-form";
 import { useI18n } from "./i18n-provider";

@@ -3,6 +3,8 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { appRequest, tokenUserId } from "@/lib/app-request";
+import { getLocale } from "@/lib/i18n/server";
+import { localePath } from "@/lib/i18n/paths";
 import { createClient } from "@/lib/supabase/server";
 import type { Farm, Role } from "@/lib/types";
 
@@ -35,9 +37,14 @@ const sessionUserId = cache(async (): Promise<string | null> => {
   }
 });
 
+/** The login page in the visitor's language. */
+async function loginPath() {
+  return localePath("/login", await getLocale());
+}
+
 export async function requireUser() {
   const user = await getUser();
-  if (!user) redirect("/login");
+  if (!user) redirect(await loginPath());
   return user;
 }
 
@@ -128,7 +135,7 @@ export type FarmContext = {
  */
 export const requireFarm = cache(async (): Promise<FarmContext> => {
   const id = await sessionUserId();
-  if (!id) redirect("/login");
+  if (!id) redirect(await loginPath());
   const supabase = await createClient();
 
   // Verify the session and read the farms in the same round trip.
@@ -136,7 +143,7 @@ export const requireFarm = cache(async (): Promise<FarmContext> => {
     getUser(),
     supabase.from("farm_members").select("role, created_at, farms(*)").eq("user_id", id).order("created_at", { ascending: true }),
   ]);
-  if (!user || user.id !== id) redirect("/login");
+  if (!user || user.id !== id) redirect(await loginPath());
   if (error) throw new Error(error.message);
 
   const memberships = (data ?? [])

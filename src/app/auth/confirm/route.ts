@@ -2,6 +2,8 @@ import type { EmailOtpType, User } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 import { recordPresence } from "@/lib/geo";
 import { createClient } from "@/lib/supabase/server";
+import { savedLocale } from "@/lib/i18n/core";
+import { localePath } from "@/lib/i18n/paths";
 
 // Accounts that existed before Google login (or whose profile row was made without
 // the Google data) get their empty name and photo filled in. Existing values are kept.
@@ -25,7 +27,7 @@ export async function GET(request: NextRequest) {
   const type = searchParams.get("type") as EmailOtpType | null;
   const code = searchParams.get("code");
   // Google (or the user) cancelled / refused the sign-in.
-  if (searchParams.get("error")) return NextResponse.redirect(new URL("/login?error=oauth", origin));
+  if (searchParams.get("error")) return NextResponse.redirect(new URL(`${localePath("/login", savedLocale(request))}?error=oauth`, origin));
   const nextParam = searchParams.get("next") ?? "/dashboard";
   const next = nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : "/dashboard";
 
@@ -48,5 +50,5 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.redirect(new URL("/login?error=link", origin));
+  return NextResponse.redirect(new URL(`${localePath("/login", savedLocale(request))}?error=link`, origin));
 }

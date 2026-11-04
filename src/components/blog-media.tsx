@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import { registerBlogImage, reserveBlogImagePath } from "@/app/admin/blog/actions";
+import { registerBlogImage, reserveBlogImagePath } from "@/app/(app)/admin/blog/actions";
 import { BLOG_BUCKET, imageBaseName, imageUrl, pickLang, type BlogImage } from "@/lib/blog";
 import { createClient } from "@/lib/supabase/client";
 import { useI18n } from "./i18n-provider";

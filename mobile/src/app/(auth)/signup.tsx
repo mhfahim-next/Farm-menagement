@@ -7,12 +7,12 @@ import { Brand } from "@/components/brand";
 import { FormError } from "@/components/form-error";
 import { Screen } from "@/components/screen";
 import { authErrorKey, errorDetail, isEmail } from "@/lib/auth";
-import { siteLink } from "@/lib/env";
+import { sitePage } from "@/lib/env";
 import { usePrefs } from "@/lib/prefs";
 import { supabase } from "@/lib/supabase";
 
 export default function Signup() {
-  const { t } = usePrefs();
+  const { t, locale } = usePrefs();
   const theme = useTheme();
   const router = useRouter();
   const [name, setName] = useState("");
@@ -93,11 +93,11 @@ export default function Signup() {
         </Button>
         <Text variant="bodySmall" style={[styles.terms, { color: theme.colors.onSurfaceVariant }]}>
           {t("auth.terms")}{" "}
-          <Text variant="bodySmall" style={{ color: theme.colors.primary }} onPress={() => WebBrowser.openBrowserAsync(siteLink("/terms"))}>
+          <Text variant="bodySmall" style={{ color: theme.colors.primary }} onPress={() => WebBrowser.openBrowserAsync(sitePage("/terms", locale))}>
             {t("auth.termsLink")}
           </Text>
           {" · "}
-          <Text variant="bodySmall" style={{ color: theme.colors.primary }} onPress={() => WebBrowser.openBrowserAsync(siteLink("/privacy"))}>
+          <Text variant="bodySmall" style={{ color: theme.colors.primary }} onPress={() => WebBrowser.openBrowserAsync(sitePage("/privacy", locale))}>
             {t("auth.privacyLink")}
           </Text>
         </Text>
