@@ -120,6 +120,11 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
+  // The visitor's country for prices in taka or dollars on the (static) home page.
+  const country = (request.headers.get("x-vercel-ip-country") ?? request.headers.get("cf-ipcountry"))?.toUpperCase();
+  if (country && /^[A-Z]{2}$/.test(country) && country !== "XX" && request.cookies.get("ff-cc")?.value !== country) {
+    response.cookies.set("ff-cc", country, { path: "/", maxAge: 60 * 60 * 24, sameSite: "lax" });
+  }
   if (route.kind === "app" && lang) response.cookies.set(LOCALE_COOKIE, lang, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
   return response;
 }

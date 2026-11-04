@@ -3,10 +3,14 @@ import { JsonLd } from "@/components/json-ld";
 import { PublicFooter, PublicHeader } from "@/components/public-header";
 import { ToolGrid } from "@/components/tool-grid";
 import { ButtonLink } from "@/components/ui";
-import { getViewer } from "@/lib/auth";
+import { ForViewer } from "@/components/viewer";
 import { getI18n } from "@/lib/i18n/server";
 import { DEFAULT_OG_IMAGE, langAlternates, SITE_NAME, SITE_URL, siteUrl } from "@/lib/site";
 import { TOOLS, toolName } from "@/lib/tool-list";
+
+// Static page, rebuilt at most once an hour (admin changes refresh it sooner).
+export const revalidate = 3600;
+
 
 const PATH = "/tools";
 
@@ -23,7 +27,6 @@ export async function generateMetadata(): Promise<Metadata> {
 /** Free farm calculators, open to everyone (they bring farmers in from search). */
 export default async function ToolsPage() {
   const { t, locale } = await getI18n();
-  const viewer = await getViewer();
   return (
     <div className="flex flex-1 flex-col">
       <PublicHeader />
@@ -45,9 +48,11 @@ export default async function ToolsPage() {
         <section className="mt-12 rounded-2xl bg-emerald-50 p-6">
           <h2 className="text-xl font-semibold text-emerald-950">{t("tools.ctaTitle")}</h2>
           <p className="mt-1 text-emerald-900">{t("tools.ctaBody")}</p>
-          <ButtonLink href={viewer ? viewer.home : "/signup"} className="mt-4 rounded-full px-6">
-            {viewer ? SITE_NAME : t("tools.ctaButton")}
-          </ButtonLink>
+          <ForViewer
+            guest={<ButtonLink href="/signup" className="mt-4 rounded-full px-6">{t("tools.ctaButton")}</ButtonLink>}
+            member={<ButtonLink href="/dashboard" className="mt-4 rounded-full px-6">{SITE_NAME}</ButtonLink>}
+            doctor={<ButtonLink href="/doctor" className="mt-4 rounded-full px-6">{SITE_NAME}</ButtonLink>}
+          />
         </section>
       </main>
       <PublicFooter />

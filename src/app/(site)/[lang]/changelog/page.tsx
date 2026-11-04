@@ -7,6 +7,10 @@ import { RELEASES, UPCOMING, type ChangeType, type UpcomingStatus } from "@/lib/
 import { getI18n } from "@/lib/i18n/server";
 import { langAlternates } from "@/lib/site";
 
+// Static page, rebuilt at most once an hour (admin changes refresh it sooner).
+export const revalidate = 3600;
+
+
 export async function generateMetadata(): Promise<Metadata> {
   const { t, locale } = await getI18n();
   return {

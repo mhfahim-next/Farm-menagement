@@ -6,13 +6,17 @@ import { guideArticle, ToolGuide } from "@/components/tool-guide";
 import { JsonLd } from "@/components/json-ld";
 import { PublicFooter, PublicHeader } from "@/components/public-header";
 import { ButtonLink } from "@/components/ui";
-import { getViewer } from "@/lib/auth";
+import { ForViewer } from "@/components/viewer";
 import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import { DEFAULT_OG_IMAGE, langAlternates, SITE_NAME, SITE_URL, siteUrl } from "@/lib/site";
 import { TOOL_GUIDES } from "@/lib/tool-guides";
 import { TOOLS, toolBySlug, toolName, toolShort } from "@/lib/tool-list";
 import { getToolParams } from "@/lib/tool-params";
+
+// Static page, rebuilt at most once an hour (admin changes refresh it sooner).
+export const revalidate = 3600;
+
 
 export function generateStaticParams() {
   return TOOLS.map((t) => ({ slug: t.slug }));
@@ -37,7 +41,7 @@ export default async function PublicToolPage({ params }: PageProps<"/[lang]/tool
   if (!tool) notFound();
   const i18n = await getI18n();
   const { t, locale } = i18n;
-  const [viewer, { params: toolParams }, article] = await Promise.all([getViewer(), getToolParams(), guideArticle(tool.slug)]);
+  const [{ params: toolParams }, article] = await Promise.all([getToolParams(), guideArticle(tool.slug)]);
   const guide = TOOL_GUIDES[tool.slug];
   const url = siteUrl(`/tools/${tool.slug}`, locale);
   return (
@@ -88,9 +92,11 @@ export default async function PublicToolPage({ params }: PageProps<"/[lang]/tool
         <section className="mt-10 rounded-2xl bg-emerald-50 p-6">
           <h2 className="text-lg font-semibold text-emerald-950">{t("tools.ctaTitle")}</h2>
           <p className="mt-1 text-emerald-900">{t("tools.ctaBody")}</p>
-          <ButtonLink href={viewer ? `${viewer.home === "/doctor" ? "/doctor" : "/dashboard/tools/" + tool.slug}` : "/signup"} className="mt-4 rounded-full px-6">
-            {viewer ? SITE_NAME : t("tools.ctaButton")}
-          </ButtonLink>
+          <ForViewer
+            guest={<ButtonLink href="/signup" className="mt-4 rounded-full px-6">{t("tools.ctaButton")}</ButtonLink>}
+            member={<ButtonLink href={`/dashboard/tools/${tool.slug}`} className="mt-4 rounded-full px-6">{SITE_NAME}</ButtonLink>}
+            doctor={<ButtonLink href="/doctor" className="mt-4 rounded-full px-6">{SITE_NAME}</ButtonLink>}
+          />
         </section>
       </main>
       <PublicFooter />

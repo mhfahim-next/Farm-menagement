@@ -2,18 +2,37 @@ import Link from "@/components/local-link";
 import { FarmScene } from "@/components/farm-scene";
 import { Logo } from "@/components/logo";
 import { TextHoverEffect } from "@/components/velora/text-hover-effect";
-import { getViewer } from "@/lib/auth";
+import { ForViewer } from "@/components/viewer";
 import { getI18n } from "@/lib/i18n/server";
 import { getSiteInfo, safe } from "@/lib/public-data";
 
 /** Footer for public pages: link columns, a big FarmFlows wordmark, and a farm landscape underneath. */
 export async function SiteFooter() {
   const { t } = await getI18n();
-  const viewer = await getViewer();
   const info = await safe(() => getSiteInfo(), null);
   const year = new Date().getFullYear();
 
-  const columns: { title: string; links: { href: string; label: string }[] }[] = [
+  type FooterLink = { href: string; label: string };
+  const item = (l: FooterLink) => (
+    <li key={l.label}>
+      <Link href={l.href} className="text-stone-600 transition-colors hover:text-emerald-700">
+        {l.label}
+      </Link>
+    </li>
+  );
+  // Visitors see sign-up links, signed-in people a link to their dashboard (filled in by the browser).
+  const account = (
+    <ForViewer
+      guest={[
+        { href: "/signup", label: t("landing.startFree") },
+        { href: "/login", label: t("landing.login") },
+        { href: "/doctor/signup", label: t("footer.forDoctors") },
+      ].map(item)}
+      member={item({ href: "/dashboard", label: t("landing.goDashboard") })}
+      doctor={item({ href: "/doctor", label: t("landing.goDashboard") })}
+    />
+  );
+  const columns: { title: string; links: FooterLink[]; extra?: React.ReactNode }[] = [
     {
       title: t("footer.product"),
       links: [
@@ -39,14 +58,8 @@ export async function SiteFooter() {
       links: [
         { href: "/about", label: t("about.nav") },
         { href: "/contact", label: t("contact.title") },
-        ...(viewer
-          ? [{ href: viewer.home, label: t("landing.goDashboard") }]
-          : [
-              { href: "/signup", label: t("landing.startFree") },
-              { href: "/login", label: t("landing.login") },
-              { href: "/doctor/signup", label: t("footer.forDoctors") },
-            ]),
       ],
+      extra: account,
     },
     {
       title: t("footer.legal"),
@@ -87,13 +100,8 @@ export async function SiteFooter() {
           <nav key={c.title} aria-label={c.title}>
             <h2 className="text-sm font-semibold text-stone-900">{c.title}</h2>
             <ul className="mt-4 space-y-2.5 text-sm">
-              {c.links.map((l) => (
-                <li key={l.label}>
-                  <Link href={l.href} className="text-stone-600 transition-colors hover:text-emerald-700">
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
+              {c.links.map(item)}
+              {c.extra}
             </ul>
           </nav>
         ))}

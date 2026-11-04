@@ -4,10 +4,14 @@ import { notFound } from "next/navigation";
 import { DiseaseArticle } from "@/components/disease-guide";
 import { JsonLd } from "@/components/json-ld";
 import { PublicFooter, PublicHeader } from "@/components/public-header";
-import { getViewer } from "@/lib/auth";
+import { ForViewer } from "@/components/viewer";
 import { DISEASES, diseaseBySlug } from "@/lib/diseases";
 import { getI18n } from "@/lib/i18n/server";
 import { DEFAULT_OG_IMAGE, langAlternates, SITE_NAME, SITE_URL, siteUrl } from "@/lib/site";
+
+// Static page, rebuilt at most once an hour (admin changes refresh it sooner).
+export const revalidate = 3600;
+
 
 export function generateStaticParams() {
   return DISEASES.map((d) => ({ slug: d.slug }));
@@ -32,7 +36,7 @@ export async function generateMetadata({ params }: PageProps<"/[lang]/diseases/[
 export default async function DiseasePage({ params }: PageProps<"/[lang]/diseases/[slug]">) {
   const d = diseaseBySlug((await params).slug);
   if (!d) notFound();
-  const [{ t, locale }, viewer] = await Promise.all([getI18n(), getViewer()]);
+  const { t, locale } = await getI18n();
   const name = locale === "bn" ? d.name.bn : d.name.en;
   const url = siteUrl(`/diseases/${d.slug}`, locale);
   return (
@@ -60,7 +64,7 @@ export default async function DiseasePage({ params }: PageProps<"/[lang]/disease
         </Link>
         <h1 className="mt-3 text-2xl font-bold tracking-tight text-stone-900 sm:text-3xl">{name}</h1>
         <div className="mt-4">
-          <DiseaseArticle d={d} t={t} locale={locale} base="/diseases" vetHref={viewer && viewer.home !== "/doctor" ? "/dashboard/doctors" : "/signup"} />
+          <DiseaseArticle d={d} t={t} locale={locale} base="/diseases" vetHref="/signup" vetHrefMember="/dashboard/doctors" />
         </div>
       </main>
       <PublicFooter />
