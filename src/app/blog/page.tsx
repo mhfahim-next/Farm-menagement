@@ -10,7 +10,7 @@ export async function generateMetadata({ searchParams }: PageProps<"/blog">): Pr
   const { t, locale } = await getI18n();
   const { q } = await searchParams;
   return {
-    title: t("blog.title"),
+    title: t("blog.metaTitle"),
     description: t("blog.desc"),
     alternates: langAlternates("/blog", locale),
     // Search result pages are thin duplicates: keep them out of the index.

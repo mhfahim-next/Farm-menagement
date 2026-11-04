@@ -16,6 +16,8 @@ export type BlogPost = {
   updated_at: string;
   category_id?: string | null;
   cover_image_id?: string | null;
+  /** When the article's text, cover or category last changed (null before that migration). */
+  content_updated_at?: string | null;
 };
 
 export type BlogImage = {
@@ -79,6 +81,23 @@ export function imageBaseName(name: string) {
 }
 
 /** Picks the reader's language, falling back to the other one when it is empty. */
+/**
+ * Alt text for a post's cover: the image's own alt text when it describes the
+ * picture (three words or more), otherwise the post's title, so a one-word alt
+ * such as "corn" is never all a reader or search engine gets.
+ */
+/** The article's real "last modified" time: its last content change, never before it was published. */
+export function modifiedAt(post: BlogPost) {
+  const published = post.published_at ?? post.created_at;
+  const changed = post.content_updated_at ?? post.updated_at ?? published;
+  return changed > published ? changed : published;
+}
+
+export function coverAlt(post: BlogPost & { cover: BlogImage | null }, locale: Locale) {
+  const alt = post.cover ? pickLang(post.cover, "alt", locale).trim() : "";
+  return alt.split(/\s+/).filter(Boolean).length >= 3 ? alt : localized(post, locale).title;
+}
+
 export function localized(post: BlogPost, locale: Locale) {
   const other = locale === "bn" ? "en" : "bn";
   const pick = (field: "title" | "summary" | "body") =>

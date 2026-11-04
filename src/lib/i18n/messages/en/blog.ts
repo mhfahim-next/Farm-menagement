@@ -114,4 +114,8 @@ export const blog = {
   "admin.blog.errName": "Fill in the name in both languages.",
   "admin.blog.confirmDeleteCategory": "Delete the category \"{name}\"? Its articles stay, without a category.",
   "admin.blog.confirmDeleteTag": "Delete the tag \"{name}\"? It is removed from all articles.",
+  "blog.metaTitle": "Farming guides: dairy, cattle, goat & poultry",
+  "blog.categoryMetaDesc": "{name}: practical guides for dairy, cattle, goat and poultry farmers in Bangladesh, with checklists and examples, from FarmFlows.",
+  "blog.metaExtra": "Practical guides for dairy, cattle, goat and poultry farmers, from FarmFlows.",
+  "blog.tagMetaDesc": "FarmFlows articles about {name}: practical, tested advice for dairy, cattle, goat and poultry farmers, with checklists and examples.",
 } as const;

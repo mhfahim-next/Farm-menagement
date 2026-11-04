@@ -29,6 +29,20 @@ export const DEFAULT_OG_IMAGE = { url: "/opengraph-image", width: 1200, height: 
  * Canonical + hreflang for a public page. English lives at the plain path,
  * Bangla at `?lang=bn` (see the proxy), so search engines index both.
  */
+/**
+ * A meta description of 120–155 characters: `text` (one line), followed by
+ * `extra` when it is too short, and cut at a word with "…" when too long.
+ */
+export function fitDescription(text: string, extra: string, min = 120, max = 155) {
+  let s = text.replace(/\s+/g, " ").trim();
+  if (s.length < min && extra) s = s ? `${/[.!?।…]$/.test(s) ? s : s + "."} ${extra}` : extra;
+  if (s.length > max) {
+    const cut = s.slice(0, max - 1);
+    s = cut.slice(0, cut.lastIndexOf(" ") > min ? cut.lastIndexOf(" ") : cut.length).replace(/[\s,;:.\-–—]+$/, "") + "…";
+  }
+  return s;
+}
+
 export function langAlternates(path: string, locale: "en" | "bn") {
   const bn = `${path}${path.includes("?") ? "&" : "?"}lang=bn`;
   return {

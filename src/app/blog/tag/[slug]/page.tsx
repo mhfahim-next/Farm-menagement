@@ -6,7 +6,7 @@ import { PublicFooter, PublicHeader } from "@/components/public-header";
 import { pickLang } from "@/lib/blog";
 import { getPublishedPosts, getTagBySlug } from "@/lib/blog-data";
 import { getI18n } from "@/lib/i18n/server";
-import { langAlternates } from "@/lib/site";
+import { fitDescription, langAlternates } from "@/lib/site";
 
 export async function generateMetadata({ params }: PageProps<"/blog/tag/[slug]">): Promise<Metadata> {
   const { slug } = await params;
@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: PageProps<"/blog/tag/[slug]">
   const posts = await getPublishedPosts({ tagId: tag.id });
   return {
     title: t("blog.tagTitle", { name }),
-    description: t("blog.tagDesc", { name }),
+    description: fitDescription(t("blog.tagMetaDesc", { name }), t("blog.metaExtra")),
     alternates: langAlternates(`/blog/tag/${tag.slug}`, locale),
     // A tag with a single article would only duplicate that article.
     robots: posts.length < 2 ? { index: false, follow: true } : undefined,

@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: { absolute: `${title} | ${SITE_NAME}` },
     description: GUIDE.metaDescription[locale],
     alternates: langAlternates(PATH, locale),
-    openGraph: { title, description: GUIDE.metaDescription[locale], type: "article", url: PATH, images: [DEFAULT_OG_IMAGE] },
+    openGraph: { title, description: GUIDE.metaDescription[locale], type: "website", url: PATH, images: [DEFAULT_OG_IMAGE] },
   };
 }
 

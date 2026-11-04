@@ -7,7 +7,7 @@ import { PublicFooter, PublicHeader } from "@/components/public-header";
 import { pickLang } from "@/lib/blog";
 import { getBlogCategories, getCategoryBySlug, getPublishedPosts } from "@/lib/blog-data";
 import { getI18n } from "@/lib/i18n/server";
-import { langAlternates, SITE_URL } from "@/lib/site";
+import { fitDescription, langAlternates, SITE_URL } from "@/lib/site";
 
 export async function generateMetadata({ params }: PageProps<"/blog/category/[slug]">): Promise<Metadata> {
   const { slug } = await params;
@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: PageProps<"/blog/category/[sl
   const name = pickLang(category, "name", locale);
   return {
     title: `${name} · ${t("blog.title")}`,
-    description: pickLang(category, "description", locale) || t("blog.desc"),
+    description: fitDescription(pickLang(category, "description", locale) || t("blog.categoryMetaDesc", { name }), t("blog.metaExtra")),
     alternates: langAlternates(`/blog/category/${category.slug}`, locale),
   };
 }

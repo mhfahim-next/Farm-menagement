@@ -116,4 +116,8 @@ export const blog: Record<keyof typeof en, string> = {
   "admin.blog.errName": "দুই ভাষাতেই নাম লিখুন।",
   "admin.blog.confirmDeleteCategory": "\"{name}\" বিভাগটি মুছবেন? এর লেখাগুলো থাকবে, বিভাগ ছাড়া।",
   "admin.blog.confirmDeleteTag": "\"{name}\" ট্যাগটি মুছবেন? সব লেখা থেকে সরে যাবে।",
+  "blog.metaTitle": "খামারের গাইড: ডেইরি, গরু, ছাগল ও মুরগি",
+  "blog.categoryMetaDesc": "{name}: বাংলাদেশের ডেইরি, গরু, ছাগল ও মুরগির খামারিদের জন্য কাজের গাইড, চেকলিস্ট আর উদাহরণসহ, FarmFlows থেকে। বাংলা ও ইংরেজিতে পড়ুন।",
+  "blog.metaExtra": "ডেইরি, গরু, ছাগল ও মুরগির খামারিদের জন্য চেকলিস্ট ও উদাহরণসহ কাজের গাইড, বাংলা ও ইংরেজিতে, FarmFlows থেকে।",
+  "blog.tagMetaDesc": "{name} নিয়ে FarmFlows-এর লেখা: ডেইরি, গরু, ছাগল ও মুরগির খামারিদের জন্য পরীক্ষিত পরামর্শ, চেকলিস্ট আর উদাহরণসহ, বাংলা ও ইংরেজিতে।",
 };

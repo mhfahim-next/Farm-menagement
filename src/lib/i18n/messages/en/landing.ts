@@ -1,6 +1,5 @@
 export const landing = {
   "meta.title": "FarmFlows — Free Farm Management App for Dairy & Layer Farms",
-  "meta.keywords": "farm management, farm management system, farm management software, free farm management app, dairy farm management software, cattle management app, livestock management app, poultry farm management software, layer farm software, milk record app, egg production tracker, farm record keeping app, farm accounting app, farm management software Bangladesh, FarmFlows",
   "meta.description": "Free farm management app for dairy, cattle, goat and poultry farms: milk, eggs, vaccines, breeding, feed stock, sales and profit. In Bangla and English.",
   "landing.login": "Log in",
   "landing.startFree": "Start free",

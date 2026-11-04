@@ -906,6 +906,7 @@ export const CLIENT_KEYS: readonly string[] = [
   "tools.lcr.shortEnergy",
   "tools.lcr.shortProtein",
   "tools.lcr.shortTitle",
+  "tools.metaTitle",
   "tools.milk.fat",
   "tools.milk.fatRate",
   "tools.milk.litres",

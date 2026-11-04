@@ -125,4 +125,5 @@ export const community: Record<keyof typeof en, string> = {
   "admin.community.banned": "সদস্যকে কমিউনিটি থেকে নিষিদ্ধ করা হয়েছে।",
   "admin.community.unbanned": "সদস্য আবার লিখতে পারবেন।",
   "admin.community.done": "হয়ে গেছে।",
+  "community.metaExtra": "FarmFlows কমিউনিটিতে খামারি ও যাচাই করা ডাক্তারদের উত্তর পড়ুন, বাংলা বা ইংরেজিতে।",
 };
