@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs/config";
+import { securityHeaders } from "./src/lib/security-headers";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
@@ -25,10 +26,12 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/:path*",
-        headers: [
-          { key: "X-Content-Type-Options", value: "nosniff" },
-          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-        ],
+        headers: securityHeaders({
+          supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+          sentryDsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+          dev: process.env.NODE_ENV === "development",
+          enforce: process.env.CSP_ENFORCE === "1",
+        }),
       },
     ];
   },
