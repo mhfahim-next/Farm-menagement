@@ -12,6 +12,7 @@ import { UserMenu } from "./user-menu";
  * Supabase session cookie cost nothing: no request is made.
  */
 export type Viewer = {
+  id: string;
   name: string | null;
   email: string | null;
   avatarUrl: string | null;
@@ -48,6 +49,7 @@ function start() {
       const { data: p } = await supabase.from("profiles").select("full_name, avatar_url, is_super_admin, account_type").eq("id", user.id).maybeSingle();
       const isDoctor = p?.account_type === "doctor";
       set({
+        id: user.id,
         name: p?.full_name ?? null,
         email: user.email ?? null,
         avatarUrl: p?.avatar_url ?? null,

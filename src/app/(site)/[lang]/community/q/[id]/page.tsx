@@ -4,27 +4,39 @@ import { notFound } from "next/navigation";
 import { ActionForm } from "@/components/action-form";
 import { AuthorLine, PlainText, PostImages, VetBadge } from "@/components/community/community-ui";
 import { HelpfulButton } from "@/components/community/helpful-button";
-import { CommunityImagePicker } from "@/components/community/image-picker";
 import { OwnPostTools, ReportPost } from "@/components/community/post-tools";
 import { ConfirmForm } from "@/components/confirm-form";
 import { JsonLd } from "@/components/json-ld";
 import { PublicFooter, PublicHeader } from "@/components/public-header";
 import { Badge, ButtonLink, Card, Field, Textarea } from "@/components/ui";
-import { getUser } from "@/lib/auth";
 import { communityImageUrl, excerpt, postLang, type CommunityAnswer } from "@/lib/community";
-import { getAuthors, getMyHelpful, getQuestion, getTopics } from "@/lib/community-data";
+import { getAuthors, getQuestion, getTopics } from "@/lib/community-data";
+import { AnswerGate, CommunityGate, MemberImagePicker } from "@/components/community/community-viewer";
+import { PendingQuestion } from "@/components/community/pending-question";
 import { getI18n } from "@/lib/i18n/server";
+import { localePath } from "@/lib/i18n/paths";
 import { DEFAULT_OG_IMAGE, fitDescription, langAlternates, SITE_URL, siteUrl } from "@/lib/site";
-import { createClient } from "@/lib/supabase/server";
 import { postAnswer, setBestAnswer } from "../../actions";
 
 const UUID = /^[0-9a-f-]{36}$/i;
+
+// The same cached page for everyone, rebuilt at most every 10 minutes and
+// whenever someone posts, votes or moderates (the community actions refresh
+// it). Member controls (helpful, report, edit, best answer, the answer form)
+// are filled in by the browser.
+export const revalidate = 600;
+
+// Made on the first visit, then cached.
+export function generateStaticParams() {
+  return [];
+}
 
 export async function generateMetadata({ params }: PageProps<"/[lang]/community/q/[id]">): Promise<Metadata> {
   const { id } = await params;
   if (!UUID.test(id)) return {};
   const data = await getQuestion(id);
-  if (!data) return {};
+  // Not public (waiting for review, hidden or gone): only its author sees it, in the browser.
+  if (!data) return { robots: { index: false, follow: false } };
   const { t, locale } = await getI18n();
   const { question: q, answers } = data;
   const description = fitDescription(excerpt(q.body, 400), t("community.metaExtra"));
@@ -49,18 +61,20 @@ export default async function QuestionPage({ params }: PageProps<"/[lang]/commun
   const { id } = await params;
   if (!UUID.test(id)) notFound();
   const data = await getQuestion(id);
-  if (!data) notFound();
+  if (!data)
+    return (
+      <div className="flex flex-1 flex-col">
+        <PublicHeader />
+        <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-12">
+          <PendingQuestion id={id} />
+        </main>
+        <PublicFooter />
+      </div>
+    );
   const { question: q } = data;
   const i18n = await getI18n();
   const { t, f, locale } = i18n;
-  const user = await getUser();
-  const supabase = await createClient();
-  const [topics, { data: me }] = await Promise.all([
-    getTopics(),
-    user ? supabase.from("profiles").select("is_super_admin, community_banned").eq("id", user.id).maybeSingle() : Promise.resolve({ data: null }),
-  ]);
-  const isAdmin = !!me?.is_super_admin;
-  const canPost = !!user && !me?.community_banned;
+  const topics = await getTopics();
 
   // Best answer first, then vets, then the most helpful, then oldest.
   const authors = await getAuthors([q.author_id, ...data.answers.map((a) => a.author_id)]);
@@ -72,12 +86,9 @@ export default async function QuestionPage({ params }: PageProps<"/[lang]/commun
       a.created_at.localeCompare(b.created_at),
   );
   const published = answers.filter((a) => a.status === "published");
-  const mine = await getMyHelpful(user?.id, [q.id, ...answers.map((a) => a.id)]);
   const topic = topics.find((x) => x.id === q.topic_id);
   const topicName = topic ? (locale === "bn" ? topic.name_bn : topic.name_en) : null;
-  const isAsker = user?.id === q.author_id;
   const url = siteUrl(`/community/q/${q.id}`, locale);
-  const mode = (authorId: string) => (!user ? "login" : user.id === authorId ? "own" : "vote") as "login" | "own" | "vote";
 
   const statusNote = (s: CommunityAnswer["status"]) =>
     s === "pending" ? <Badge tone="amber">{t("community.statusPending")}</Badge> : s === "hidden" ? <Badge tone="red">{t("community.statusHidden")}</Badge> : null;
@@ -120,7 +131,7 @@ export default async function QuestionPage({ params }: PageProps<"/[lang]/commun
           {topic && (
             <>
               <span aria-hidden>/</span>
-              <Link href={`/community?topic=${topic.slug}`} className="hover:text-stone-900">{topicName}</Link>
+              <Link href={`/community/topic/${topic.slug}`} className="hover:text-stone-900">{topicName}</Link>
             </>
           )}
         </nav>
@@ -140,12 +151,14 @@ export default async function QuestionPage({ params }: PageProps<"/[lang]/commun
             <PostImages images={q.images} alt={q.title} />
           </div>
           <div className="mt-5 flex flex-wrap items-center gap-4 border-b border-stone-200 pb-4">
-            <HelpfulButton type="question" id={q.id} questionId={q.id} count={q.helpful_count} on={mine.has(q.id)} mode={mode(q.author_id)} />
-            {user && !isAsker && q.status === "published" && <ReportPost target={{ type: "question", id: q.id, questionId: q.id }} />}
-            {(isAsker || isAdmin) && (
+            <HelpfulButton type="question" id={q.id} questionId={q.id} count={q.helpful_count} authorId={q.author_id} />
+            <CommunityGate questionId={q.id} need="other" authorId={q.author_id}>
+              <ReportPost target={{ type: "question", id: q.id, questionId: q.id }} />
+            </CommunityGate>
+            {(
               <OwnPostTools
                 target={{ type: "question", id: q.id, questionId: q.id }}
-                canEdit={isAsker}
+                authorId={q.author_id}
                 title={q.title}
                 body={q.body}
                 topicId={q.topic_id}
@@ -163,7 +176,6 @@ export default async function QuestionPage({ params }: PageProps<"/[lang]/commun
             {answers.map((a) => {
               const author = authors.get(a.author_id);
               const isBest = a.id === q.best_answer_id;
-              const isMine = user?.id === a.author_id;
               return (
                 <li key={a.id} id={`answer-${a.id}`} className="scroll-mt-24">
                   <div className={`rounded-xl border p-4 sm:p-5 ${isBest ? "border-emerald-500 bg-emerald-50/50" : author?.is_vet ? "border-sky-300" : "border-stone-200"} bg-white`}>
@@ -179,19 +191,23 @@ export default async function QuestionPage({ params }: PageProps<"/[lang]/commun
                       <PostImages images={a.images} alt={t("community.answerPhoto")} />
                     </div>
                     <div className="mt-4 flex flex-wrap items-center gap-4">
-                      <HelpfulButton type="answer" id={a.id} questionId={q.id} count={a.helpful_count} on={mine.has(a.id)} mode={mode(a.author_id)} />
-                      {(isAsker || isAdmin) && a.status === "published" && (
+                      <HelpfulButton type="answer" id={a.id} questionId={q.id} count={a.helpful_count} authorId={a.author_id} />
+                      {a.status === "published" && (
+                        <CommunityGate questionId={q.id} need="asker" authorId={q.author_id}>
                         <ConfirmForm
                           action={setBestAnswer}
                           fields={{ question_id: q.id, answer_id: isBest ? "" : a.id }}
                           label={isBest ? t("community.unmarkBest") : t("community.markBest")}
                           variant="secondary"
                         />
+                        </CommunityGate>
                       )}
-                      {user && !isMine && a.status === "published" && <ReportPost target={{ type: "answer", id: a.id, questionId: q.id }} />}
-                      {(isMine || isAdmin) && (
-                        <OwnPostTools target={{ type: "answer", id: a.id, questionId: q.id }} canEdit={isMine} body={a.body} />
+                      {a.status === "published" && (
+                        <CommunityGate questionId={q.id} need="other" authorId={a.author_id}>
+                          <ReportPost target={{ type: "answer", id: a.id, questionId: q.id }} />
+                        </CommunityGate>
                       )}
+                      <OwnPostTools target={{ type: "answer", id: a.id, questionId: q.id }} authorId={a.author_id} body={a.body} />
                     </div>
                   </div>
                 </li>
@@ -202,26 +218,29 @@ export default async function QuestionPage({ params }: PageProps<"/[lang]/commun
 
         <section aria-labelledby="your-answer" className="mt-10">
           <h2 id="your-answer" className="text-lg font-bold text-stone-900">{t("community.yourAnswer")}</h2>
-          {!user ? (
-            <Card className="mt-3 text-center">
-              <p className="text-stone-600">{t("community.loginToAnswer")}</p>
-              <ButtonLink href={`/login?next=${encodeURIComponent(`/community/q/${q.id}`)}`} className="mt-3">{t("landing.login")}</ButtonLink>
-            </Card>
-          ) : !canPost ? (
-            <p className="mt-3 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{t("community.errBanned")}</p>
-          ) : q.status !== "published" ? (
-            <p className="mt-3 text-sm text-stone-600">{t("community.answersClosed")}</p>
-          ) : (
-            <Card className="mt-3">
-              <ActionForm action={postAnswer} submitLabel={t("community.postAnswer")}>
-                <input type="hidden" name="question_id" value={q.id} />
-                <Field label={t("community.fieldAnswer")} hint={t("community.answerHint")}>
-                  <Textarea name="body" rows={6} required minLength={2} maxLength={10000} />
-                </Field>
-                <CommunityImagePicker userId={user.id} />
-              </ActionForm>
-            </Card>
-          )}
+          <AnswerGate
+            questionId={q.id}
+            open={q.status === "published"}
+            guest={
+              <Card className="mt-3 text-center">
+                <p className="text-stone-600">{t("community.loginToAnswer")}</p>
+                <ButtonLink href={`/login?next=${encodeURIComponent(localePath(`/community/q/${q.id}`, locale))}`} className="mt-3">{t("landing.login")}</ButtonLink>
+              </Card>
+            }
+            banned={<p className="mt-3 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{t("community.errBanned")}</p>}
+            closed={<p className="mt-3 text-sm text-stone-600">{t("community.answersClosed")}</p>}
+            form={
+              <Card className="mt-3">
+                <ActionForm action={postAnswer} submitLabel={t("community.postAnswer")}>
+                  <input type="hidden" name="question_id" value={q.id} />
+                  <Field label={t("community.fieldAnswer")} hint={t("community.answerHint")}>
+                    <Textarea name="body" rows={6} required minLength={2} maxLength={10000} />
+                  </Field>
+                  <MemberImagePicker />
+                </ActionForm>
+              </Card>
+            }
+          />
           <p className="mt-6 flex flex-col items-start gap-2 rounded-lg bg-sky-50 px-4 py-3 text-sm text-sky-900 sm:flex-row">
             <VetBadge t={t} />
             <span>{t("community.vetNote")}</span>

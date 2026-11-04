@@ -58,6 +58,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     for (const [slug, n] of tagCounts) {
       if (n >= 2) pages.push({ url: `${SITE_URL}/blog/tag/${slug}`, lastModified: now, changeFrequency: "weekly", priority: 0.4 });
     }
+    const { data: topics } = await createPublicClient().from("community_topics").select("slug");
+    for (const t of topics ?? []) pages.push({ url: `${SITE_URL}/community/topic/${t.slug}`, lastModified: now, changeFrequency: "daily", priority: 0.6 });
     // Community questions that have at least one answer (unanswered ones are noindex).
     const { data: qs } = await createPublicClient()
       .from("community_questions")

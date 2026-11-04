@@ -18,12 +18,17 @@ import { langAlternates, SITE_NAME, SITE_URL, siteUrl } from "@/lib/site";
 // Static page, rebuilt at most once an hour (admin changes refresh it sooner).
 export const revalidate = 3600;
 
-
+// Made on the first visit, then cached.
+export function generateStaticParams() {
+  return [];
+}
 
 async function load(slug: string) {
   const supabase = createPublicClient();
   // Cookie-free, so the page can be cached: only published posts are visible (RLS).
-  const { data } = await supabase.from("blog_posts").select(POST_SELECT).eq("slug", slug).maybeSingle();
+  const { data, error } = await supabase.from("blog_posts").select(POST_SELECT).eq("slug", slug).maybeSingle();
+  // A failed read must not be cached as "not found": the cache keeps the last good page instead.
+  if (error) throw new Error(`blog post ${slug}: ${error.message}`);
   return data as unknown as BlogPostFull | null;
 }
 

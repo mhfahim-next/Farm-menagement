@@ -35,6 +35,25 @@ function localeRoute(request: NextRequest): LocaleRoute {
     return { kind: "redirect", response: NextResponse.redirect(url, 301) };
   }
   const locale: Locale = prefix === "bn" ? "bn" : "en";
+  // Lists with a query moved off the cached pages: /blog?q= → /blog/search?q=,
+  // /community?topic=x → /community/topic/x, other /community?… → /community/list?….
+  if (readOnly && path === "/blog" && searchParams.has("q")) {
+    const url = request.nextUrl.clone();
+    url.pathname = localePath("/blog/search", locale);
+    return { kind: "redirect", response: NextResponse.redirect(url, 308) };
+  }
+  if (readOnly && path === "/community" && ["topic", "q", "sort", "page"].some((k) => searchParams.has(k))) {
+    const url = request.nextUrl.clone();
+    const topic = searchParams.get("topic");
+    const onlyTopic = topic && /^[a-z0-9-]{1,60}$/.test(topic) && [...searchParams.keys()].every((k) => k === "topic");
+    if (onlyTopic) {
+      url.pathname = localePath(`/community/topic/${topic}`, locale);
+      url.search = "";
+      return { kind: "redirect", response: NextResponse.redirect(url, 301) };
+    }
+    url.pathname = localePath("/community/list", locale);
+    return { kind: "redirect", response: NextResponse.redirect(url, 308) };
+  }
   if (prefix) return { kind: "site", locale, rewrite: null };
   const url = request.nextUrl.clone();
   url.pathname = path === "/" ? "/en" : `/en${path}`;
