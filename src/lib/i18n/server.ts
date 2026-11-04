@@ -54,11 +54,18 @@ export const getLocale = cache(async (): Promise<Locale> => {
   return first.startsWith("bn") ? "bn" : DEFAULT_LOCALE;
 });
 
-/** The [lang] of a public page; null in the signed-in app, server actions and route handlers. */
+/**
+ * The [lang] of a public page; null in the signed-in app, server actions and
+ * route handlers. Inside the public pages an unknown value (an address like
+ * /abc.df, which the proxy leaves alone because it looks like a file, reaches
+ * the route with lang = "abc.df") is English: the page is a 404, and reading
+ * the request headers here would turn that static page into a 500.
+ */
 async function routeLocale(): Promise<Locale | null> {
   try {
     const value = await lang();
-    return isLocale(value) ? value : null;
+    if (typeof value !== "string") return null;
+    return isLocale(value) ? value : DEFAULT_LOCALE;
   } catch {
     return null;
   }

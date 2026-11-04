@@ -30,6 +30,22 @@ export function isSitePath(href: string) {
   return true;
 }
 
+/**
+ * Real files the proxy sees (images, sw.js and the like never reach it). Any
+ * other address that merely looks like a file (/abc.df) is not a page either,
+ * so the proxy sends it to the public 404 page instead.
+ */
+const SERVED_FILES = new Set(["/robots.txt", "/sitemap.xml", "/llms.txt", "/manifest.webmanifest", "/favicon.ico", "/sw.js"]);
+const FILE_DIRS = new Set(["brand", "icons"]);
+
+/** An address that looks like a file but is none of ours: show the 404 page. */
+export function isMissingFile(path: string) {
+  if (isSitePath(path) || SERVED_FILES.has(path)) return false;
+  const first = path.split("/")[1] ?? "";
+  if (APP_ROOTS.has(first) || FILE_DIRS.has(first) || first === "opengraph-image") return false;
+  return (path.split("/").pop() ?? "").includes(".");
+}
+
 /** Splits "/bn/blog" into { locale: "bn", path: "/blog" }; other paths are English. */
 export function splitLocale(pathname: string): { locale: Locale | null; path: string } {
   const m = /^\/(bn|en)(?=\/|$)(.*)$/.exec(pathname);

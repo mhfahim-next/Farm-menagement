@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { isLocale, LOCALE_COOKIE, type Locale } from "@/lib/i18n/core";
-import { isSitePath, localePath, splitLocale } from "@/lib/i18n/paths";
+import { isMissingFile, isSitePath, localePath, splitLocale } from "@/lib/i18n/paths";
 import { normalizeSiteUrl } from "@/lib/site";
 import { SUPABASE_KEY, SUPABASE_URL } from "./env";
 
@@ -25,6 +25,12 @@ function localeRoute(request: NextRequest): LocaleRoute {
   const { locale: prefix, path } = splitLocale(pathname);
   const param = searchParams.get("lang");
   const asked = isLocale(param) ? param : null;
+  // /abc.df: no such file or page; the English (or /bn/…) 404 page answers it.
+  if (isMissingFile(path)) {
+    const url = request.nextUrl.clone();
+    url.pathname = prefix === "bn" ? pathname : `/en${path}`;
+    return { kind: "site", locale: prefix === "bn" ? "bn" : "en", rewrite: url };
+  }
   if (!isSitePath(path)) return { kind: "app", forced: prefix ? null : asked };
 
   const readOnly = request.method === "GET" || request.method === "HEAD";
