@@ -25,7 +25,6 @@
       },
       "predictiveBackGestureEnabled": true,
       "blockedPermissions": [
-        "android.permission.RECORD_AUDIO",
         "android.permission.SYSTEM_ALERT_WINDOW",
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
@@ -82,7 +81,14 @@
           "cameraPermission": "FarmFlows uses the camera to take a picture of an animal or scan an ear tag."
         }
       ],
-      "expo-sharing"
+      "expo-sharing",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "FarmFlows uses the microphone only after you tap the mic button, so you can tell the AI assistant what happened instead of typing.",
+          "speechRecognitionPermission": "FarmFlows turns what you say into text for the AI assistant."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

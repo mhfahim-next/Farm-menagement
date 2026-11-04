@@ -63,6 +63,20 @@ export const UPCOMING: Upcoming[] = [
 
 export const RELEASES: Release[] = [
   {
+    id: "2026-11-07-app-ai-community-blog",
+    date: "2026-11-07",
+    title: { en: "In the app: speak to the AI assistant, the community and the blog", bn: "অ্যাপে: এআই সহকারীকে বলে দিন, কমিউনিটি আর ব্লগ" },
+    summary: {
+      en: "The Android app now has the AI assistant (type or speak), the farmers' community and the blog, like the website.",
+      bn: "Android অ্যাপে এখন ওয়েবসাইটের মতোই এআই সহকারী (লিখে বা বলে), খামারিদের কমিউনিটি আর ব্লগ আছে।",
+    },
+    changes: [
+      { type: "new", en: "AI assistant in the app: tap the mic and say what happened, in Bangla or English; check the prepared record and press Confirm.", bn: "অ্যাপে এআই সহকারী: মাইকে চাপ দিয়ে বাংলা বা ইংরেজিতে কী হয়েছে বলুন; তৈরি রেকর্ড দেখে নিশ্চিত করুন চাপুন।" },
+      { type: "new", en: "Community in the app: read, ask, answer with photos, mark helpful answers and pick the best one.", bn: "অ্যাপে কমিউনিটি: পড়ুন, প্রশ্ন করুন, ছবিসহ উত্তর দিন, কাজের উত্তরে সাহায্যকারী দিন আর সেরা উত্তর বাছুন।" },
+      { type: "new", en: "Blog and What's new in the app, readable offline once opened.", bn: "অ্যাপে ব্লগ আর কী নতুন, একবার খুললে অফলাইনেও পড়া যায়।" },
+    ],
+  },
+  {
     id: "2026-11-06-ration-bills-diseases-vets",
     date: "2026-11-06",
     title: { en: "Cheapest feed ration, buyer bills, disease guide and Find a vet", bn: "সবচেয়ে কম খরচের রেশন, ক্রেতার বিল, রোগ চেনার গাইড আর ডাক্তার খুঁজুন" },

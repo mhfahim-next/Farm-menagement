@@ -31,7 +31,9 @@ providers), which Google does not count as sharing, so every type below is
 | App activity → Other user-generated content (farm records: animals, milk, eggs, health, breeding, stock, notes) | Yes | Required | App functionality |
 | Device or other IDs (notification token) | Yes | Optional (only if notifications are allowed) | App functionality |
 
-Not collected: precise location, contacts, messages, audio, files and docs,
+Not collected: precise location, contacts, messages, audio (speaking to the AI
+assistant uses the phone's speech-to-text; only the resulting text is sent, as
+part of the message to the assistant), files and docs,
 calendar, health and fitness (of people), web browsing, installed apps,
 crash logs from the app, advertising ID.
 
@@ -74,8 +76,9 @@ The app needs an account, so give reviewers one:
 | Notifications | Vaccine, calving and other farm reminders |
 | Internet | Syncing with your account |
 | Network state | Knowing when the internet is back, to send entries made offline at once |
+| Microphone | Only when the person taps the mic in the AI assistant: Android's speech service turns what they say into text. The app gets the text only; no recording is kept or sent to FarmFlows. |
 
-The app does **not** request location, microphone, contacts or access to
+The app does **not** request location, contacts or access to
 the photo library (pictures are chosen with Android's photo picker). These
 are blocked in `app.json` (`android.blockedPermissions`), so a library update
 can't add them by accident.
