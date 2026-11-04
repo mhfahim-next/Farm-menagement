@@ -2,7 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { requireFarm } from "@/lib/auth";
 import { getCachedPlans } from "@/lib/public-data";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import {
   limitOf,
   limitState,
@@ -20,7 +20,7 @@ export const getPlans = cache(async (): Promise<Plan[]> => {
   } catch {
     // fall back to a direct read
   }
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data, error } = await supabase.from("plans").select("*").order("sort_order");
   if (error) {
     console.error("Could not load plans:", error.message);

@@ -4,6 +4,8 @@ import dynamic from "next/dynamic";
 import { useMemo } from "react";
 import type { GlobeArc, GlobeMarker } from "@/components/velora/globe";
 import { NumberTicker } from "@/components/velora/number-ticker";
+import { globeCopy } from "@/lib/country-copy";
+import { useVisitorCountry } from "./visitor-country";
 
 const Globe = dynamic(() => import("@/components/velora/globe").then((m) => m.Globe), {
   ssr: false,
@@ -37,25 +39,29 @@ const DAIRY_HUBS: { lat: number; lng: number; en: string; bn: string; quiet?: bo
   { lat: -21.76, lng: -43.35, en: "Minas Gerais, Brazil", bn: "মিনাস জেরাইস, ব্রাজিল" },
 ];
 
-/** Velora "hero-globe" layout: copy + live numbers beside a dotted globe centred on Bangladesh. */
+type Stat = { value: number; label: string };
+
+/**
+ * Velora "hero-globe" layout: copy + live numbers beside a dotted globe. The
+ * words and the side the globe faces follow the visitor's country, worked out
+ * in the browser (the page itself is the same static HTML for everyone;
+ * Bangladesh until the country is known).
+ */
 export function HomeGlobe({
   locale,
-  kicker,
-  title,
-  body,
   stats,
+  statsAbroad,
   globeLabel,
-  center = [24, 70],
 }: {
   locale: "en" | "bn";
-  kicker: string;
-  title: string;
-  body: string;
-  stats: { value: number; label: string }[];
+  /** Numbers shown in Bangladesh, and elsewhere (no "64 districts" abroad). */
+  stats: Stat[];
+  statsAbroad: Stat[];
   globeLabel: string;
-  /** [lat, lng] facing the visitor first (their own country). */
-  center?: [number, number];
 }) {
+  const copy = globeCopy(useVisitorCountry(), locale);
+  const { kicker, title, body, center } = copy;
+  if (copy.country !== "BD") stats = statsAbroad;
   const markers: GlobeMarker[] = useMemo(
     () => [
       // Bangladesh's cities sit close together at globe scale, so only Dhaka is named; the rest are dots.

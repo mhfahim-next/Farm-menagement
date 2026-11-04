@@ -1,5 +1,6 @@
 import Link from "@/components/local-link";
 import { DiseaseChecker } from "@/components/disease-checker";
+import { ForViewer } from "@/components/viewer";
 import { DISEASE_SPECIES, DISEASES, SYMPTOMS, symptomsFor, type Bi, type Disease } from "@/lib/diseases";
 import type { I18n, Locale } from "@/lib/i18n/core";
 
@@ -44,7 +45,20 @@ function Badges({ d, t }: { d: Disease; t: I18n["t"] }) {
 }
 
 /** One disease: signs, what to do now, prevention, and where to get a vet. */
-export function DiseaseArticle({ d, t, locale, vetHref, base }: { d: Disease; t: I18n["t"]; locale: Locale; vetHref: string; base: string }) {
+export function DiseaseArticle({ d, t, locale, vetHref, vetHrefMember, base }: {
+  d: Disease;
+  t: I18n["t"];
+  locale: Locale;
+  vetHref: string;
+  /** On public pages: where the button goes for signed-in farmers (visitors get vetHref; vets get none). */
+  vetHrefMember?: string;
+  base: string;
+}) {
+  const vetLink = (href: string) => (
+    <Link href={href} className="rounded-full bg-emerald-700 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-800" data-testid="dis-find-vet">
+      {t("dis.findVet")}
+    </Link>
+  );
   const list = (items: Bi[], testId: string) => (
     <ul className="list-disc space-y-1.5 pl-5 text-stone-800" data-testid={testId}>
       {items.map((x, i) => (
@@ -87,9 +101,7 @@ export function DiseaseArticle({ d, t, locale, vetHref, base }: { d: Disease; t:
           <p className="font-semibold text-emerald-950">{t("dis.vetTitle")}</p>
           <p className="text-sm text-emerald-900">{t("dis.vetBody")}</p>
         </div>
-        <Link href={vetHref} className="rounded-full bg-emerald-700 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-800" data-testid="dis-find-vet">
-          {t("dis.findVet")}
-        </Link>
+        {vetHrefMember ? <ForViewer guest={vetLink(vetHref)} member={vetLink(vetHrefMember)} doctor={vetLink(vetHref)} /> : vetLink(vetHref)}
       </section>
       <p className="text-xs text-stone-500">{t("dis.notDiagnosis")}</p>
       <Link href={base} className="text-sm font-medium text-emerald-700 hover:underline">

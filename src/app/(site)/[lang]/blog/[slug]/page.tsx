@@ -10,14 +10,19 @@ import { getRelatedPosts } from "@/lib/blog-data";
 import { getI18n } from "@/lib/i18n/server";
 import { toolsForPost } from "@/lib/tool-guides";
 import { TOOLS, toolName } from "@/lib/tool-list";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import { ScrollProgress } from "@/components/velora/scroll-progress";
 import { JsonLd } from "@/components/json-ld";
 import { langAlternates, SITE_NAME, SITE_URL, siteUrl } from "@/lib/site";
 
+// Static page, rebuilt at most once an hour (admin changes refresh it sooner).
+export const revalidate = 3600;
+
+
+
 async function load(slug: string) {
-  const supabase = await createClient();
-  // RLS: visitors only get published posts; super admins can also preview drafts.
+  const supabase = createPublicClient();
+  // Cookie-free, so the page can be cached: only published posts are visible (RLS).
   const { data } = await supabase.from("blog_posts").select(POST_SELECT).eq("slug", slug).maybeSingle();
   return data as unknown as BlogPostFull | null;
 }
@@ -29,7 +34,7 @@ async function embeddedImages(body: string) {
     .filter((u) => u.startsWith(BLOG_IMAGE_PREFIX))
     .map((u) => u.slice(BLOG_IMAGE_PREFIX.length));
   if (!paths.length) return new Map<string, BlogImage>();
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data } = await supabase.from("blog_images").select("*").in("path", paths);
   return new Map(((data ?? []) as BlogImage[]).map((i) => [i.path, i]));
 }

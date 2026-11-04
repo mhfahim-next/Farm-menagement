@@ -3,10 +3,14 @@ import Link from "@/components/local-link";
 import { JsonLd } from "@/components/json-ld";
 import { PublicFooter, PublicHeader } from "@/components/public-header";
 import { ButtonLink } from "@/components/ui";
-import { getViewer } from "@/lib/auth";
+import { ForViewer } from "@/components/viewer";
 import { getI18n } from "@/lib/i18n/server";
 import { GUIDE } from "@/lib/seo-content";
 import { DEFAULT_OG_IMAGE, langAlternates, SITE_NAME, SITE_URL, siteUrl } from "@/lib/site";
+
+// Static page, rebuilt at most once an hour (admin changes refresh it sooner).
+export const revalidate = 3600;
+
 
 const PATH = "/farm-management-software";
 
@@ -23,7 +27,13 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function FarmManagementSoftwarePage() {
   const { t, locale } = await getI18n();
-  const viewer = await getViewer();
+  const cta = (className: string) => (
+    <ForViewer
+      guest={<ButtonLink href="/signup" className={className}>{t("landing.startFree")}</ButtonLink>}
+      member={<ButtonLink href="/dashboard" className={className}>{t("landing.goDashboard")}</ButtonLink>}
+      doctor={<ButtonLink href="/doctor" className={className}>{t("landing.goDashboard")}</ButtonLink>}
+    />
+  );
   const g = (x: { en: string; bn: string }) => x[locale];
   const url = siteUrl(PATH, locale);
 
@@ -72,9 +82,7 @@ export default async function FarmManagementSoftwarePage() {
         <h1 className="mt-3 text-3xl font-bold tracking-tight text-stone-900 sm:text-4xl">{g(GUIDE.h1)}</h1>
         <p className="mt-4 text-lg text-stone-600">{g(GUIDE.intro)}</p>
         <div className="mt-6 flex flex-wrap gap-3">
-          <ButtonLink href={viewer ? viewer.home : "/signup"} className="rounded-full px-6">
-            {viewer ? t("landing.goDashboard") : t("landing.startFree")}
-          </ButtonLink>
+          {cta("rounded-full px-6")}
           <ButtonLink href="/#features" variant="secondary" className="rounded-full px-6">{t("footer.features")}</ButtonLink>
         </div>
 
@@ -171,7 +179,7 @@ export default async function FarmManagementSoftwarePage() {
         <div className="mt-10 rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-center">
           <p className="text-lg font-semibold text-stone-900">{g(GUIDE.ctaTitle)}</p>
           <p className="mt-1 text-stone-600">{g(GUIDE.ctaBody)}</p>
-          <ButtonLink href={viewer ? viewer.home : "/signup"} className="mt-4">{viewer ? t("landing.goDashboard") : t("landing.startFree")}</ButtonLink>
+          {cta("mt-4")}
         </div>
       </main>
       <PublicFooter />

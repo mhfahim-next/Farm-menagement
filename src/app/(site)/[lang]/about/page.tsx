@@ -5,6 +5,10 @@ import { PublicFooter, PublicHeader } from "@/components/public-header";
 import { getI18n } from "@/lib/i18n/server";
 import { DEFAULT_OG_IMAGE, langAlternates, ORGANIZATION, SITE_NAME, SITE_URL, siteUrl } from "@/lib/site";
 
+// Static page, rebuilt at most once an hour (admin changes refresh it sooner).
+export const revalidate = 3600;
+
+
 export async function generateMetadata(): Promise<Metadata> {
   const { t, locale } = await getI18n();
   return {

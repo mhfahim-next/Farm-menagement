@@ -2,7 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { appRequest } from "@/lib/app-request";
 import { getCachedOptionRows } from "@/lib/public-data";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import type { OptionRow } from "../options";
 import { cookies, headers } from "next/headers";
 import { lang } from "next/root-params";
@@ -71,7 +71,7 @@ export const getOptionRows = cache(async (): Promise<OptionRow[]> => {
   } catch {
     // Cache miss that failed: fall back to a direct read.
   }
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("dropdown_options")
     .select("list_key, value, label_en, label_bn, sort_order, active, can_hide, meta")

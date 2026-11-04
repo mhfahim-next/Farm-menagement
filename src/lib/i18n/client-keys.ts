@@ -249,6 +249,7 @@ export const CLIENT_KEYS: readonly string[] = [
   "community.vetBadge",
   "contact.title",
   "del.nav",
+  "del.requested",
   "dis.aka",
   "dis.all",
   "dis.animal",

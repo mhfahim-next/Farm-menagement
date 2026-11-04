@@ -11,15 +11,13 @@ import { ShimmerLink } from "@/components/velora/shimmer-link";
 import { SpotlightCard } from "@/components/velora/spotlight-card";
 import { ToolGrid } from "@/components/tool-grid";
 import { WordRotate } from "@/components/velora/word-rotate";
-import { getViewer } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
 import { planFeatures, planName, priceText } from "@/lib/plan-utils";
 import { getPlans } from "@/lib/plans";
 import { FaqSection } from "@/components/faq-section";
 import { HomeGlobe } from "@/components/home-globe";
-import { globeCopy } from "@/lib/country-copy";
-import { readGeo } from "@/lib/geo";
-import { currencyFor } from "@/lib/payments";
+import { GeoPrice } from "@/components/visitor-country";
+import { ForViewer } from "@/components/viewer";
 import { JsonLd } from "@/components/json-ld";
 import { ReviewsSection } from "@/components/reviews-section";
 import { getApprovedReviews, getPublicStats, safe } from "@/lib/public-data";
@@ -30,9 +28,14 @@ export async function generateMetadata(): Promise<Metadata> {
   return { alternates: langAlternates("/", locale) };
 }
 
-export default async function Home({ searchParams }: PageProps<"/[lang]">) {
+// The same page for everyone, rebuilt at most once an hour (and when an admin
+// changes plans, reviews or site info). What differs per visitor is filled in
+// by the browser: signed-in buttons (ForViewer) and taka/dollar prices and the
+// globe's wording by country (GeoPrice, HomeGlobe).
+export const revalidate = 3600;
+
+export default async function Home() {
   const i18n = await getI18n();
-  const viewer = await getViewer();
   const { t, f, locale } = i18n;
   const [allPlans, reviews, live] = await Promise.all([
     getPlans(),
@@ -40,27 +43,25 @@ export default async function Home({ searchParams }: PageProps<"/[lang]">) {
     safe(() => getPublicStats(), null),
   ]);
   const plans = allPlans.filter((p) => p.active);
-  // Globe section worded for the visitor's country (?cc=IN previews another country).
-  const sp = await searchParams;
-  const preview = typeof sp.cc === "string" && /^[A-Za-z]{2}$/.test(sp.cc) ? sp.cc : null;
-  const country = (await readGeo()).country;
-  const copy = globeCopy(preview ?? country, locale);
-  // Prices in taka for Bangladesh, dollars elsewhere.
-  const currency = currencyFor(preview ? preview.toUpperCase() : country);
+  // Prices in taka for Bangladesh, dollars elsewhere (chosen in the browser);
+  // without JavaScript, Bangla pages show taka and English pages dollars.
+  const defaultCurrency = locale === "bn" ? "BDT" : "USD";
   // Real platform numbers once there are enough farms; until then, plain facts.
   // "64 districts" is about Bangladesh, so other countries don't get it.
-  const stats =
+  const facts = [
+    { value: 2, label: t("globe.languages") },
+    { value: 24, label: t("globe.hours") },
+  ];
+  const liveStats =
     live && live.farms >= 10
       ? [
           { value: live.farms, label: t("globe.farms") },
           { value: live.animals + live.birds, label: t("globe.animals") },
           { value: live.records, label: t("globe.records") },
         ]
-      : [
-          ...(copy.country === "BD" ? [{ value: 64, label: t("globe.districts") }] : []),
-          { value: 2, label: t("globe.languages") },
-          { value: 24, label: t("globe.hours") },
-        ];
+      : null;
+  const stats = liveStats ?? [{ value: 64, label: t("globe.districts") }, ...facts];
+  const statsAbroad = liveStats ?? facts;
   // The middle paid plan is highlighted as the recommended one.
   const highlightKey = plans.length >= 3 ? plans[1].key : null;
 
@@ -125,20 +126,24 @@ export default async function Home({ searchParams }: PageProps<"/[lang]">) {
                 "Income, expenses and profit per litre and per egg", "Works offline", "Import from Excel or CSV",
                 "AI assistant in Bangla and English", "Vet approvals", "Weight and growth tracking", "QR tags for animals", "PDF report per animal", "Bangla and English",
               ],
-              // The same plans, prices and currency the visitor sees in the pricing section
-              // (taka in Bangladesh, dollars elsewhere); a plan without a price is "contact us".
-              offers: plans.map((p) => {
+              // The plans and prices of the pricing section: each paid plan in taka (for
+              // Bangladesh) and in dollars (elsewhere), the two prices the page shows;
+              // a plan without a price is "contact us".
+              offers: plans.flatMap((p): Record<string, unknown>[] => {
                 const offer = { "@type": "Offer", name: planName(p, locale, p.key), url: `${siteUrl("/", locale)}#pricing` };
-                if (p.price_monthly === null) return { ...offer, description: t("plans.priceCustom"), url: siteUrl("/contact", locale) };
-                const usd = currency === "USD" && p.price_monthly_usd !== null && p.price_monthly_usd !== undefined;
-                const price = Number(usd ? p.price_monthly_usd : p.price_monthly);
-                const priceCurrency = usd ? "USD" : "BDT";
-                return {
+                if (p.price_monthly === null) return [{ ...offer, description: t("plans.priceCustom"), url: siteUrl("/contact", locale) }];
+                const priced = (price: number, priceCurrency: "BDT" | "USD", extra: object = {}) => ({
                   ...offer,
+                  ...extra,
                   price,
                   priceCurrency,
                   priceSpecification: { "@type": "UnitPriceSpecification", price, priceCurrency, billingDuration: "P1M", referenceQuantity: { "@type": "QuantitativeValue", value: 1, unitCode: "MON" } },
-                };
+                });
+                // Free is free everywhere: one offer.
+                if (Number(p.price_monthly) === 0) return [priced(0, defaultCurrency)];
+                const bdt = priced(Number(p.price_monthly), "BDT", { eligibleRegion: { "@type": "Country", name: "BD" } });
+                const usd = p.price_monthly_usd ?? null;
+                return usd === null ? [bdt] : [bdt, priced(Number(usd), "USD")];
               }),
             },
           ],
@@ -166,11 +171,13 @@ export default async function Home({ searchParams }: PageProps<"/[lang]">) {
             <p className="mx-auto mt-5 max-w-2xl text-lg text-stone-600">{t("landing.heroBody")}</p>
             <BlurFade delay={0.1}>
               <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-                <ShimmerLink href={viewer ? viewer.home : "/signup"} className="text-base">
-                  {viewer ? t("landing.goDashboard") : t("landing.ctaPrimary")}
-                </ShimmerLink>
+                <ForViewer
+                  guest={<ShimmerLink href="/signup" className="text-base">{t("landing.ctaPrimary")}</ShimmerLink>}
+                  member={<ShimmerLink href="/dashboard" className="text-base">{t("landing.goDashboard")}</ShimmerLink>}
+                  doctor={<ShimmerLink href="/doctor" className="text-base">{t("landing.goDashboard")}</ShimmerLink>}
+                />
                 {/* Same pill shape and height as the main button, but quiet: outline + arrow. */}
-                {!viewer && (
+                <ForViewer guest={
                 <Link
                   href="/login"
                   className="group inline-flex h-12 items-center justify-center gap-2 rounded-full border border-emerald-700/25 bg-white px-7 text-base font-medium text-emerald-800 shadow-sm transition-[border-color,background-color,transform] duration-300 hover:-translate-y-0.5 hover:border-emerald-600 hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 active:translate-y-0"
@@ -180,16 +187,16 @@ export default async function Home({ searchParams }: PageProps<"/[lang]">) {
                     <path d="M4 10h12M11 5l5 5-5 5" />
                   </svg>
                 </Link>
-                )}
+                } />
               </div>
-              {!viewer && (
+              <ForViewer guest={
                 <p className="mt-5 text-sm text-stone-700">
                   {t("doctor.areDoctor")}{" "}
                   <Link href="/doctor/signup" className="font-semibold text-emerald-800 underline-offset-2 hover:underline">
                     {t("doctor.landingCta")}
                   </Link>
                 </p>
-              )}
+              } />
             </BlurFade>
           </div>
         </section>
@@ -299,7 +306,11 @@ export default async function Home({ searchParams }: PageProps<"/[lang]">) {
                 {t("landing.mobile.now")}
               </p>
               <div className="mt-5 flex flex-wrap gap-3">
-                <ButtonLink href={viewer ? viewer.home : "/signup"}>{viewer ? t("landing.goDashboard") : t("landing.mobile.cta")}</ButtonLink>
+                <ForViewer
+                  guest={<ButtonLink href="/signup">{t("landing.mobile.cta")}</ButtonLink>}
+                  member={<ButtonLink href="/dashboard">{t("landing.goDashboard")}</ButtonLink>}
+                  doctor={<ButtonLink href="/doctor">{t("landing.goDashboard")}</ButtonLink>}
+                />
                 <ButtonLink href="/changelog#coming" variant="secondary">
                   {t("landing.mobile.roadmap")}
                 </ButtonLink>
@@ -321,15 +332,7 @@ export default async function Home({ searchParams }: PageProps<"/[lang]">) {
 
         <section className="relative isolate overflow-hidden border-t border-stone-200">
           <div aria-hidden className="absolute inset-y-0 right-0 -z-10 w-full bg-radial-[at_75%_50%] from-emerald-200/40 to-transparent to-60% lg:w-2/3" />
-          <HomeGlobe
-            locale={locale}
-            kicker={copy.kicker}
-            title={copy.title}
-            body={copy.body}
-            center={copy.center}
-            stats={stats}
-            globeLabel={t("globe.label")}
-          />
+          <HomeGlobe locale={locale} stats={stats} statsAbroad={statsAbroad} globeLabel={t("globe.label")} />
         </section>
 
         <section id="pricing" className="scroll-mt-20 border-t border-stone-200">
@@ -346,7 +349,9 @@ export default async function Home({ searchParams }: PageProps<"/[lang]">) {
                     className={`flex h-full flex-col rounded-2xl border bg-white p-6 ${highlight ? "border-emerald-600 shadow-lg shadow-emerald-700/10 ring-2 ring-emerald-600/20" : "border-stone-200"}`}
                   >
                     <h3 className="font-semibold">{planName(p, locale, p.key)}</h3>
-                    <p className="mt-2 text-3xl font-bold">{priceText(i18n, p, currency)}</p>
+                    <p className="mt-2 text-3xl font-bold">
+                      <GeoPrice bdt={priceText(i18n, p, "BDT")} usd={priceText(i18n, p, "USD")} fallback={defaultCurrency} />
+                    </p>
                     <p className="mt-1 text-sm text-stone-500">
                       {p.price_monthly === null ? t("plans.perMonthCustom") : t("plans.perMonth")}
                     </p>
@@ -357,19 +362,19 @@ export default async function Home({ searchParams }: PageProps<"/[lang]">) {
                       <li className="text-stone-500">✓ {t("plans.feat.vets")}</li>
                     </ul>
                     {/* Signed-in farmers manage their plan inside the app; doctors have no farm plan. */}
-                    {(!viewer || viewer.profile?.account_type !== "doctor") && (
-                      <ButtonLink
-                        href={viewer ? "/dashboard/plan" : p.price_monthly === 0 ? "/signup" : `/signup?plan=${p.key}`}
-                        variant={highlight ? "primary" : "secondary"}
-                        className="mt-6 w-full"
-                      >
-                        {viewer
-                          ? t("landing.managePlan")
-                          : p.price_monthly === 0
-                            ? t("plans.getStarted")
-                            : t("plans.choose", { plan: planName(p, locale, p.key) })}
-                      </ButtonLink>
-                    )}
+                    <ForViewer
+                      guest={
+                        <ButtonLink href={p.price_monthly === 0 ? "/signup" : `/signup?plan=${p.key}`} variant={highlight ? "primary" : "secondary"} className="mt-6 w-full">
+                          {p.price_monthly === 0 ? t("plans.getStarted") : t("plans.choose", { plan: planName(p, locale, p.key) })}
+                        </ButtonLink>
+                      }
+                      member={
+                        <ButtonLink href="/dashboard/plan" variant={highlight ? "primary" : "secondary"} className="mt-6 w-full">
+                          {t("landing.managePlan")}
+                        </ButtonLink>
+                      }
+                      doctor={null}
+                    />
                   </div>
                   </BlurFade>
                 );
@@ -395,9 +400,11 @@ export default async function Home({ searchParams }: PageProps<"/[lang]">) {
               <div className="relative">
                 <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">{t("landing.ctaTitle")}</h2>
                 <p className="mx-auto mt-3 max-w-xl text-white/85">{t("landing.ctaBody")}</p>
-                <ShimmerLink href={viewer ? viewer.home : "/signup"} className="mt-8 bg-amber-300 text-base text-emerald-950 shadow-black/20">
-                  {viewer ? t("landing.goDashboard") : t("landing.ctaPrimary")}
-                </ShimmerLink>
+                <ForViewer
+                  guest={<ShimmerLink href="/signup" className="mt-8 bg-amber-300 text-base text-emerald-950 shadow-black/20">{t("landing.ctaPrimary")}</ShimmerLink>}
+                  member={<ShimmerLink href="/dashboard" className="mt-8 bg-amber-300 text-base text-emerald-950 shadow-black/20">{t("landing.goDashboard")}</ShimmerLink>}
+                  doctor={<ShimmerLink href="/doctor" className="mt-8 bg-amber-300 text-base text-emerald-950 shadow-black/20">{t("landing.goDashboard")}</ShimmerLink>}
+                />
               </div>
             </div>
           </BlurFade>

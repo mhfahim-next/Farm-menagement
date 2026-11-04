@@ -10,6 +10,10 @@ import { getSiteInfo, safe } from "@/lib/public-data";
 import { sendContactMessage } from "./actions";
 import { langAlternates } from "@/lib/site";
 
+// Static page, rebuilt at most once an hour (admin changes refresh it sooner).
+export const revalidate = 3600;
+
+
 export async function generateMetadata(): Promise<Metadata> {
   const { t, locale } = await getI18n();
   return { title: t("contact.title"), description: t("contact.desc"), alternates: langAlternates("/contact", locale) };

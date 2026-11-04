@@ -9,6 +9,11 @@ import { getBlogCategories, getCategoryBySlug, getPublishedPosts } from "@/lib/b
 import { getI18n } from "@/lib/i18n/server";
 import { fitDescription, langAlternates, SITE_URL, siteUrl } from "@/lib/site";
 
+// Static page, rebuilt at most once an hour (admin changes refresh it sooner).
+export const revalidate = 3600;
+
+
+
 export async function generateMetadata({ params }: PageProps<"/[lang]/blog/category/[slug]">): Promise<Metadata> {
   const { slug } = await params;
   const category = await getCategoryBySlug(slug);

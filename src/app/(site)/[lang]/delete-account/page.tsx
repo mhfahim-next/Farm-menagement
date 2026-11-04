@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
 import { PublicFooter, PublicHeader } from "@/components/public-header";
 import { ButtonLink } from "@/components/ui";
-import { getViewer } from "@/lib/auth";
+import { ForViewer } from "@/components/viewer";
+import { DeleteRequested } from "@/components/delete-requested";
 import type { MessageKey } from "@/lib/i18n/core";
 import { getI18n } from "@/lib/i18n/server";
 import { getSiteInfo, safe } from "@/lib/public-data";
 import { langAlternates } from "@/lib/site";
+
+// Static page, rebuilt at most once an hour (admin changes refresh it sooner).
+export const revalidate = 3600;
+
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t, locale } = await getI18n();
@@ -22,11 +27,9 @@ export async function generateMetadata(): Promise<Metadata> {
  * How to delete a FarmFlows account and what goes with it. Public (no login),
  * because Google Play asks for a web page where people can request deletion.
  */
-export default async function DeleteAccountPage({ searchParams }: PageProps<"/[lang]/delete-account">) {
-  const { t, f } = await getI18n();
-  const requested = (await searchParams).requested;
-  const due = typeof requested === "string" && /^\d{4}-\d{2}-\d{2}$/.test(requested) ? requested : null;
-  const [viewer, info] = await Promise.all([getViewer(), safe(() => getSiteInfo(), null)]);
+export default async function DeleteAccountPage() {
+  const { t } = await getI18n();
+  const info = await safe(() => getSiteInfo(), null);
   const list = (keys: MessageKey[]) => (
     <ul className="mt-3 list-disc space-y-1.5 pl-5 text-stone-700">
       {keys.map((k) => (
@@ -48,11 +51,7 @@ export default async function DeleteAccountPage({ searchParams }: PageProps<"/[l
         <p className="text-sm font-semibold text-emerald-700">FarmFlows</p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight text-stone-900 sm:text-4xl">{t("del.title")}</h1>
         <p className="mt-3 text-lg text-stone-600">{t("del.intro")}</p>
-        {due && (
-          <p className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 font-medium text-emerald-900" role="status" data-testid="delete-requested">
-            {t("del.requested", { date: f.date(due) })}
-          </p>
-        )}
+        <DeleteRequested />
 
         <section className="mt-6 rounded-2xl border border-emerald-200 bg-white p-6">
           <h2 className="text-lg font-semibold text-stone-900">⏳ {t("del.waitTitle")}</h2>
@@ -68,9 +67,10 @@ export default async function DeleteAccountPage({ searchParams }: PageProps<"/[l
             <h2 className="text-lg font-semibold text-stone-900">💻 {t("del.webTitle")}</h2>
             {steps(["del.web1", "del.web2", "del.web3"])}
             <div className="mt-4">
-              <ButtonLink href={viewer ? "/dashboard/profile" : "/login?next=/dashboard/profile"} variant="secondary">
-                {viewer ? t("del.goProfile") : t("del.login")}
-              </ButtonLink>
+              <ForViewer
+                guest={<ButtonLink href="/login?next=/dashboard/profile" variant="secondary">{t("del.login")}</ButtonLink>}
+                member={<ButtonLink href="/dashboard/profile" variant="secondary">{t("del.goProfile")}</ButtonLink>}
+              />
             </div>
           </section>
         </div>
