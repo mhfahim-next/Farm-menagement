@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/local-link";
 import { Stars } from "@/components/star-input";
 import { BlurFade } from "@/components/velora/blur-fade";
 import { Marquee } from "@/components/velora/marquee";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { removeAvatar, saveAvatar } from "@/app/dashboard/profile/actions";
+import { removeAvatar, saveAvatar } from "@/app/(app)/dashboard/profile/actions";
 import { createClient } from "@/lib/supabase/client";
 import { Avatar } from "./avatar";
 import { useI18n } from "./i18n-provider";

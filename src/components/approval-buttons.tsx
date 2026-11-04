@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { approveEntry, rejectEntry } from "@/app/dashboard/approvals/actions";
+import { approveEntry, rejectEntry } from "@/app/(app)/dashboard/approvals/actions";
 import { useI18n } from "./i18n-provider";
 import { useToast } from "./toast";
 import { Button, Spinner, Textarea } from "./ui";

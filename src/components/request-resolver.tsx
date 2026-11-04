@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { resolveRequest } from "@/app/admin/actions";
+import { resolveRequest } from "@/app/(app)/admin/actions";
 import { useI18n } from "./i18n-provider";
 import { useToast } from "./toast";
 import { Button, Spinner, Textarea } from "./ui";

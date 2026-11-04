@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { removePushSubscription, savePushSubscription, sendTestPush, type PushSub } from "@/app/dashboard/notifications/actions";
+import { removePushSubscription, savePushSubscription, sendTestPush, type PushSub } from "@/app/(app)/dashboard/notifications/actions";
 import { useI18n } from "./i18n-provider";
 import { useToast } from "./toast";
 import { Button, Spinner } from "./ui";

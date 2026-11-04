@@ -5,6 +5,7 @@ import { getCachedOptionRows } from "@/lib/public-data";
 import { createClient } from "@/lib/supabase/server";
 import type { OptionRow } from "../options";
 import { cookies, headers } from "next/headers";
+import { lang } from "next/root-params";
 import { createI18n, DEFAULT_LOCALE, isLocale, LOCALE_COOKIE, type Locale, type Messages } from "./core";
 import { CLIENT_KEYS } from "./client-keys";
 import { bn } from "./messages/bn";
@@ -31,11 +32,18 @@ export function messagesFor(locale: Locale): Messages {
   return catalogs[locale];
 }
 
-/** Locale from the cookie; on a first visit, from the browser's Accept-Language. */
+/**
+ * Public pages (app/(site)/[lang]): the language in the address (/bn/… or
+ * no prefix for English), never a cookie. Server actions and route handlers
+ * can't read the route's language, so the proxy also passes it in the
+ * x-ff-locale header. Signed-in pages: the saved cookie; on a first visit, the
+ * browser's Accept-Language.
+ */
 export const getLocale = cache(async (): Promise<Locale> => {
   const app = appRequest();
   if (app) return app.locale;
-  // ?lang=bn|en in the URL (set by the proxy) wins, so each language has its own address.
+  const fromRoute = await routeLocale();
+  if (fromRoute) return fromRoute;
   const forced = (await headers()).get("x-ff-locale");
   if (isLocale(forced)) return forced;
   const saved = (await cookies()).get(LOCALE_COOKIE)?.value;
@@ -45,6 +53,16 @@ export const getLocale = cache(async (): Promise<Locale> => {
   const first = accept.split(",")[0]?.trim().toLowerCase() ?? "";
   return first.startsWith("bn") ? "bn" : DEFAULT_LOCALE;
 });
+
+/** The [lang] of a public page; null in the signed-in app, server actions and route handlers. */
+async function routeLocale(): Promise<Locale | null> {
+  try {
+    const value = await lang();
+    return isLocale(value) ? value : null;
+  } catch {
+    return null;
+  }
+}
 
 /** All admin-managed dropdown options (cached across requests, see lib/public-data). */
 export const getOptionRows = cache(async (): Promise<OptionRow[]> => {

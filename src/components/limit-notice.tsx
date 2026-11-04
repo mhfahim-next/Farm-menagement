@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/local-link";
 import type { I18n } from "@/lib/i18n/core";
 import type { LimitState, UsageKey } from "@/lib/plan-utils";
 

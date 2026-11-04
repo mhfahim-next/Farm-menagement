@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/local-link";
 import { useState, useTransition } from "react";
-import { toggleHelpful } from "@/app/community/actions";
+import { toggleHelpful } from "@/app/(site)/[lang]/community/actions";
 import { useI18n } from "../i18n-provider";
 import { useToast } from "../toast";
 

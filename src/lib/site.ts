@@ -1,3 +1,4 @@
+import { localePath } from "./i18n/paths.ts";
 /**
  * Normalises a site address from the environment: tolerates a missing
  * "https://", spaces and trailing slashes ("farmflows.app" → "https://farmflows.app").
@@ -35,10 +36,6 @@ export const ORGANIZATION = {
 export const DEFAULT_OG_IMAGE = { url: "/opengraph-image", width: 1200, height: 630, alt: "FarmFlows — dairy, cattle and layer farm management" };
 
 /**
- * Canonical + hreflang for a public page. English lives at the plain path,
- * Bangla at `?lang=bn` (see the proxy), so search engines index both.
- */
-/**
  * A meta description of 120–155 characters: `text` (one line), followed by
  * `extra` when it is too short, and cut at a word with "…" when too long.
  */
@@ -52,12 +49,24 @@ export function fitDescription(text: string, extra: string, min = 120, max = 155
   return s;
 }
 
+/**
+ * Canonical + hreflang for a public page. English lives at the plain path
+ * (/blog), Bangla under /bn (/bn/blog); each version is its own canonical and
+ * English is the default for other languages.
+ */
 export function langAlternates(path: string, locale: "en" | "bn") {
-  const bn = `${path}${path.includes("?") ? "&" : "?"}lang=bn`;
+  const en = localePath(path, "en");
+  const bn = localePath(path, "bn");
   return {
-    canonical: locale === "bn" ? bn : path,
-    languages: { en: path, bn, "x-default": path },
+    canonical: locale === "bn" ? bn : en,
+    languages: { en, bn, "x-default": en },
   };
+}
+
+/** Full address of a public page in a language (for JSON-LD and feeds). */
+export function siteUrl(path: string, locale: "en" | "bn") {
+  const p = localePath(path, locale);
+  return `${SITE_URL}${p}`;
 }
 
 /**

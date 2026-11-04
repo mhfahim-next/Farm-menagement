@@ -6,7 +6,7 @@ import { ScrollView, StyleSheet, View } from "react-native";
 import { Avatar, Button, Dialog, Divider, List, Portal, RadioButton, SegmentedButtons, Switch, Text, useTheme } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LanguageToggle } from "@/components/language-toggle";
-import { siteLink } from "@/lib/env";
+import { siteLink, sitePage } from "@/lib/env";
 import { useOfflineDownload } from "@/lib/offline";
 import { disableNotifications, enableNotifications, notifyOn, notifySupported } from "@/lib/notify";
 import { useToast } from "@/lib/toast";
@@ -50,6 +50,7 @@ export default function More() {
     .map((w) => w[0]?.toUpperCase())
     .join("");
   const open = (path: string) => WebBrowser.openBrowserAsync(siteLink(path));
+  const openPage = (path: string) => WebBrowser.openBrowserAsync(sitePage(path, locale));
 
   return (
     <ScrollView style={{ backgroundColor: theme.colors.background }} contentContainerStyle={[styles.content, { paddingTop: insets.top + 12 }]} testID="more">
@@ -172,9 +173,9 @@ export default function More() {
         <List.Section>
           <List.Subheader>{t("more.website")}</List.Subheader>
           <List.Item title={t("more.openWeb")} left={(p) => <List.Icon {...p} icon="web" />} right={(p) => <List.Icon {...p} icon="open-in-new" />} onPress={() => open("/dashboard")} />
-          <List.Item title={t("more.help")} left={(p) => <List.Icon {...p} icon="lifebuoy" />} onPress={() => open("/contact")} />
-          <List.Item title={t("more.privacy")} left={(p) => <List.Icon {...p} icon="shield-lock-outline" />} onPress={() => open("/privacy")} />
-          <List.Item title={t("more.terms")} left={(p) => <List.Icon {...p} icon="file-document-outline" />} onPress={() => open("/terms")} />
+          <List.Item title={t("more.help")} left={(p) => <List.Icon {...p} icon="lifebuoy" />} onPress={() => openPage("/contact")} />
+          <List.Item title={t("more.privacy")} left={(p) => <List.Icon {...p} icon="shield-lock-outline" />} onPress={() => openPage("/privacy")} />
+          <List.Item title={t("more.terms")} left={(p) => <List.Icon {...p} icon="file-document-outline" />} onPress={() => openPage("/terms")} />
           <List.Item title={t("profile.deleteTitle")} description={t("more.deleteHint")} left={(p) => <List.Icon {...p} icon="account-remove-outline" />} onPress={() => router.push("/profile")} testID="open-delete-account" />
         </List.Section>
         <Divider />

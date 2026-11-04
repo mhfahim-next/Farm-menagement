@@ -1,5 +1,5 @@
-import { logBreedingEvent, updateBreedingEvent } from "@/app/dashboard/breeding/actions";
-import { recordHealth, updateHealth } from "@/app/dashboard/health/actions";
+import { logBreedingEvent, updateBreedingEvent } from "@/app/(app)/dashboard/breeding/actions";
+import { recordHealth, updateHealth } from "@/app/(app)/dashboard/health/actions";
 import { bodyOf, formOf, json, preflight, withAppFarm } from "@/lib/app-api";
 
 // A doctor's health or breeding entry from the Android app. It goes through

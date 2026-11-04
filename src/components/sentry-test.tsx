@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { sendSentryTest } from "@/app/admin/actions";
+import { sendSentryTest } from "@/app/(app)/admin/actions";
 import { useI18n } from "./i18n-provider";
 import { useToast } from "./toast";
 import { Button } from "./ui";

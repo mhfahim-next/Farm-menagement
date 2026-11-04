@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { setLocale } from "@/lib/i18n/actions";
 import type { Locale } from "@/lib/i18n/core";
+import { isSitePath, localePath, rememberLocale, splitLocale } from "@/lib/i18n/paths";
 import { useI18n } from "./i18n-provider";
 import { NAV_ICONS, type NavIconName } from "./nav-icons";
 
@@ -41,7 +42,16 @@ export function LanguageSwitcher({ className = "" }: { className?: string }) {
 
   const choose = (l: Locale) => {
     setOpen(false);
-    if (l !== locale) startTransition(() => setLocale(l));
+    if (l === locale) return;
+    const { path } = splitLocale(window.location.pathname);
+    if (isSitePath(path)) {
+      // Public pages: each language has its own address (/x and /bn/x). The
+      // choice is also remembered for the dashboard.
+      rememberLocale(l);
+      window.location.assign(localePath(path, l) + window.location.search + window.location.hash);
+      return;
+    }
+    startTransition(() => setLocale(l));
   };
 
   return (

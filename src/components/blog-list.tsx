@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/local-link";
 import { BlurFade } from "@/components/velora/blur-fade";
 import { coverAlt, imageUrl, localized, pickLang, readingMinutes, type BlogCategory, type BlogPostFull } from "@/lib/blog";
 import type { I18n } from "@/lib/i18n/core";

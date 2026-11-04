@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/local-link";
 import { useMemo, useState, useTransition } from "react";
-import { runImport, type ImportResult } from "@/app/dashboard/import/actions";
+import { runImport, type ImportResult } from "@/app/(app)/dashboard/import/actions";
 import { useI18n } from "@/components/i18n-provider";
 import { useToast } from "@/components/toast";
 import { Button, Card, Select, Spinner } from "@/components/ui";

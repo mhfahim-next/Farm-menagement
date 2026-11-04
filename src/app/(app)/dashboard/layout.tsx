@@ -1,0 +1,226 @@
+import type { Metadata } from "next";
+import Link from "@/components/local-link";
+import { Suspense } from "react";
+import { AppShell } from "@/components/app-shell";
+import type { NavItem } from "@/components/dashboard-nav";
+import { LazyAiAssistant as AiAssistant } from "@/components/ai-assistant-lazy";
+import { FarmSwitcher } from "@/components/farm-switcher";
+import { BellLink, NotificationBell } from "@/components/notification-bell";
+import { OfflineSync } from "@/components/offline/offline-sync";
+import { getProfile, MANAGERS, requireFarm, STAFF } from "@/lib/auth";
+import { getI18n } from "@/lib/i18n/server";
+import { breedsAnimals, fattens, keepsAnimals, keepsCattle, keepsPoultry } from "@/lib/modules";
+import { farmQuota, planName } from "@/lib/plan-utils";
+import { getPlanContext, getPlans } from "@/lib/plans";
+
+/** Private app area: keep it out of search results. */
+export const metadata: Metadata = { robots: { index: false, follow: false } };
+
+export default async function DashboardLayout({ children }: LayoutProps<"/dashboard">) {
+  const [{ farm, user, role, farms, supabase }, profile, { t, f, o, locale }] = await Promise.all([requireFarm(), getProfile(), getI18n()]);
+  const isManager = MANAGERS.includes(role);
+  const isStaff = STAFF.includes(role);
+  const isVet = role === "vet";
+
+  // Everything the frame needs, in one round trip to the database.
+  const [{ data: settings }, { data: invites }, plans, planCtx, pending, ai, { data: restored }] = await Promise.all([
+    supabase
+      .from("system_settings")
+      .select("announcement_en, announcement_bn, announcement_active")
+      .eq("id", 1)
+      .maybeSingle(),
+    supabase.rpc("my_pending_invites"),
+    getPlans(),
+    isManager ? getPlanContext() : null,
+    // Entries doctors submitted that wait for an owner / manager to approve.
+    isManager ? supabase.from("pending_entries").select("id", { count: "exact", head: true }).eq("farm_id", farm.id).eq("status", "pending") : null,
+    // AI assistant (staff only): how many prompts this farm has used this month.
+    isStaff ? supabase.rpc("ai_prompts_status", { p_farm: farm.id }) : null,
+    // True once after signing in cancelled an account deletion request.
+    supabase.rpc("take_deletion_notice"),
+  ]);
+  const announcement = settings?.announcement_active
+    ? ((locale === "bn" ? settings.announcement_bn : settings.announcement_en) ??
+      settings.announcement_en ??
+      settings.announcement_bn)
+    : null;
+
+  // Farm switcher: several farms, or the plan lets this owner add one.
+  const owned = farms.filter((f) => f.role === "owner").map((f) => f.plan);
+  const quota = owned.length > 0 ? farmQuota(plans, owned) : { allowed: false, cap: 1 as number | null };
+  const canAddFarm = quota.allowed && owned.length > 0;
+  const showSwitcher = farms.length > 1 || canAddFarm;
+
+  // Plan limit banner for people who can act on it.
+  let limitBanner: string | null = null;
+  if (planCtx) {
+    const { plan, usage, limits, states } = planCtx;
+    // The owner always uses the first team seat, so a full seat count is normal;
+    // only cattle/flocks being full (or the team being over its limit) is worth a banner.
+    const hit = (["cattle", "goats", "flocks", "members"] as const).filter((k) =>
+      k === "members" ? states[k] === "over" : states[k] === "full" || states[k] === "over",
+    );
+    if (hit.length > 0) {
+      limitBanner =
+        planName(plan, locale) +
+        " — " +
+        hit.map((k) => `${t(`plan.usage.${k}`)} ${t("plan.usageOf", { used: usage[k], max: limits[k] ?? 0 })}`).join(" · ");
+    }
+  }
+
+  const pendingApprovals = pending?.count ?? 0;
+
+  const nav: NavItem[] = isVet
+    ? [
+        { href: "/dashboard/cattle", label: t("nav.cattle"), icon: "cattle" },
+        { href: "/dashboard/health", label: t("nav.health"), icon: "health" },
+        { href: "/dashboard/breeding", label: t("nav.breeding"), icon: "breeding" },
+        { href: "/dashboard/approvals", label: t("nav.approvals"), icon: "approvals" },
+        { href: "/dashboard/notifications", label: t("nav.reminders"), icon: "reminders" },
+        { href: "/dashboard/tools", label: t("nav.tools"), icon: "tools" },
+        { href: "/dashboard/diseases", label: t("nav.diseases"), icon: "flockHealth" },
+        { href: "/doctor", label: t("doctor.consoleNav"), icon: "back" },
+      ]
+    : [
+        { href: "/dashboard", label: t("nav.overview"), icon: "overview" },
+        ...(isStaff ? [{ href: "/dashboard/quick", label: t("nav.quick"), icon: "quick" as const }] : []),
+        { href: "/dashboard/notifications", label: t("nav.reminders"), icon: "reminders" },
+        { href: "/dashboard/tools", label: t("nav.tools"), icon: "tools" },
+        { href: "/dashboard/diseases", label: t("nav.diseases"), icon: "flockHealth" },
+        { href: "/dashboard/doctors", label: t("nav.doctors"), icon: "doctor" },
+        ...(keepsAnimals(farm)
+          ? [
+              ...(keepsCattle(farm) ? [{ href: "/dashboard/cattle", label: t("nav.cattle"), icon: "cattle" as const }] : []),
+              ...(farm.has_goat ? [{ href: "/dashboard/goats", label: t("nav.goats"), icon: "goats" as const }] : []),
+              ...(farm.has_dairy ? [{ href: "/dashboard/milk", label: t("nav.milk"), icon: "milk" as const }] : []),
+              { href: "/dashboard/health", label: t("nav.health"), icon: "health" as const },
+              ...(breedsAnimals(farm) ? [{ href: "/dashboard/breeding", label: t("nav.breeding"), icon: "breeding" as const }] : []),
+              ...(fattens(farm) ? [{ href: "/dashboard/fattening", label: t("nav.fattening"), icon: "fattening" as const }] : []),
+            ].map((i) => ({
+              ...i,
+              group: t(keepsCattle(farm) && farm.has_goat ? "nav.group.livestock" : farm.has_goat ? "nav.group.goat" : "nav.group.cow"),
+            }))
+          : []),
+        ...(keepsPoultry(farm)
+          ? [
+              ...(farm.has_layer ? [{ href: "/dashboard/flocks", label: t("nav.flocks"), icon: "flocks" as const }] : []),
+              ...(farm.has_broiler ? [{ href: "/dashboard/broilers", label: t("nav.broilers"), icon: "broilers" as const }] : []),
+              ...(isStaff ? [{ href: "/dashboard/flock-health", label: t("nav.flockHealth"), icon: "flockHealth" as const }] : []),
+            ].map((i) => ({
+              ...i,
+              group: t(farm.has_layer && farm.has_broiler ? "nav.group.poultry" : farm.has_broiler ? "nav.group.broiler" : "nav.group.layer"),
+            }))
+          : []),
+        // Money: what comes in and goes out.
+        ...(isStaff
+          ? [
+              { href: "/dashboard/finance", label: t("nav.finance"), icon: "finance" as const },
+              { href: "/dashboard/sales", label: t("nav.sales"), icon: "sales" as const },
+              { href: "/dashboard/profit", label: t("nav.profit"), icon: "profit" as const },
+              { href: "/dashboard/reports", label: t("nav.reports"), icon: "reports" as const },
+            ].map((i) => ({ ...i, group: t("nav.group.finance") }))
+          : []),
+        // Running the farm: stock, people, approvals and settings.
+        ...[
+          ...(isStaff ? [{ href: "/dashboard/inventory", label: t("nav.inventory"), icon: "inventory" as const }] : []),
+          ...(isManager ? [{ href: "/dashboard/staff", label: t("nav.staff"), icon: "staff" as const }] : []),
+          ...(isManager ? [{ href: "/dashboard/approvals", label: t("nav.approvals"), icon: "approvals" as const, badge: pendingApprovals }] : []),
+          ...(isManager ? [{ href: "/dashboard/import", label: t("nav.import"), icon: "import" as const }] : []),
+          ...(isManager ? [{ href: "/dashboard/plan", label: t("nav.plan"), icon: "plan" as const }] : []),
+          { href: "/dashboard/settings", label: t("nav.settings"), icon: "settings" as const },
+        ].map((i) => ({ ...i, group: t("nav.group.farm") })),
+        // Everything else, used now and then.
+        ...[
+          { href: "/community", label: t("community.nav"), icon: "community" as const },
+          { href: "/changelog", label: t("changelog.nav"), icon: "changelog" as const },
+          { href: "/dashboard/review", label: t("nav.review"), icon: "review" as const },
+        ].map((i) => ({ ...i, group: t("nav.group.more") })),
+      ];
+
+  const invitesCount = invites?.length ?? 0;
+
+  const st = ai?.data as { used?: number; max?: number | null } | null | undefined;
+  const aiStatus = ai ? { used: st?.used ?? 0, max: st?.max ?? null } : null;
+
+  return (
+    <AppShell
+      logoHref={isVet ? "/doctor" : "/dashboard"}
+      title={farm.name}
+      subtitle={o("member_role", role)}
+      titleSlot={
+        showSwitcher ? (
+          <FarmSwitcher
+            farms={farms.map((f) => ({ id: f.id, name: f.name, role: f.role }))}
+            currentId={farm.id}
+            canAdd={canAddFarm}
+            addLockedHint={
+              !canAddFarm && owned.length > 0 && farms.length > 1
+                ? t("farm.addLocked", { n: quota.cap ?? 1 })
+                : null
+            }
+          />
+        ) : undefined
+      }
+      nav={nav}
+      actions={
+        <Suspense fallback={<BellLink label={t("notif.bell")} count={null} />}>
+          <NotificationBell ctx={{ supabase, farm, role, user }} />
+        </Suspense>
+      }
+      user={{
+        name: profile?.full_name ?? null,
+        email: user.email ?? null,
+        avatarUrl: profile?.avatar_url ?? null,
+        isSuperAdmin: profile?.is_super_admin ?? false,
+        isDoctor: profile?.account_type === "doctor",
+      }}
+      banner={
+        <>
+          {isStaff && <OfflineSync userId={user.id} farmId={farm.id} />}
+          {restored === true && (
+            <div role="status" className="border-b border-emerald-200 bg-emerald-50 px-4 py-2 text-center text-sm text-emerald-900" data-testid="deletion-cancelled">
+              ✓ {t("profile.deletionCancelled")}
+            </div>
+          )}
+          {announcement && (
+            <div role="status" className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-sm text-amber-900">
+              📢 {announcement}
+            </div>
+          )}
+          {invitesCount > 0 && (
+            <div role="status" className="border-b border-sky-200 bg-sky-100 px-4 py-2 text-center text-sm text-sky-800">
+              ✉ {t(invitesCount === 1 ? "invites.banner" : "invites.bannerMany", { n: invitesCount })}{" "}
+              <Link href="/invites" className="font-medium underline">
+                {t("invites.bannerLink")}
+              </Link>
+            </div>
+          )}
+          {pendingApprovals > 0 && (
+            <div role="status" data-testid="approvals-banner" className="border-b border-sky-200 bg-sky-100 px-4 py-2 text-center text-sm text-sky-800">
+              ✎ {t(pendingApprovals === 1 ? "approvals.banner" : "approvals.bannerMany", { n: f.number(pendingApprovals) })}{" "}
+              <Link href="/dashboard/approvals" className="font-medium underline">
+                {t("approvals.bannerLink")}
+              </Link>
+            </div>
+          )}
+          {limitBanner && (
+            <div role="alert" data-testid="plan-banner" className="border-b border-red-200 bg-red-50 px-4 py-2 text-center text-sm text-red-700">
+              {t("plan.banner.full", { what: limitBanner })}{" "}
+              <Link href="/dashboard/plan" className="font-medium underline">
+                {t("plan.banner.link")}
+              </Link>
+            </div>
+          )}
+        </>
+      }
+    >
+      {isVet && (
+        <p className="mb-5 rounded-lg bg-sky-100 px-4 py-2.5 text-sm text-sky-800">
+          {t("doctor.vetNotice", { farm: farm.name })}
+        </p>
+      )}
+      {children}
+      {aiStatus && <AiAssistant initial={aiStatus} />}
+    </AppShell>
+  );
+}

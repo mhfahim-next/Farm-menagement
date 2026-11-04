@@ -14,6 +14,12 @@ export function isLocale(value: unknown): value is Locale {
   return typeof value === "string" && (LOCALES as readonly string[]).includes(value);
 }
 
+/** The language saved in the cookie of a request (route handlers), English if none. */
+export function savedLocale(request: { cookies: { get(name: string): { value: string } | undefined } }): Locale {
+  const v = request.cookies.get(LOCALE_COOKIE)?.value;
+  return isLocale(v) ? v : DEFAULT_LOCALE;
+}
+
 const INTL_LOCALE: Record<Locale, string> = { en: "en-GB", bn: "bn-BD" };
 const INTL_NUMBER_LOCALE: Record<Locale, string> = { en: "en-US", bn: "bn-BD" };
 

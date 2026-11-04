@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/local-link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { askAssistant, confirmProposal } from "@/app/dashboard/assistant/actions";
+import { askAssistant, confirmProposal } from "@/app/(app)/dashboard/assistant/actions";
 import type { ChatTurn, Proposal } from "@/lib/ai/types";
 import { useI18n } from "./i18n-provider";
 import { useToast } from "./toast";

@@ -64,6 +64,20 @@ export const UPCOMING: Upcoming[] = [
 
 export const RELEASES: Release[] = [
   {
+    id: "2026-11-08-bangla-addresses",
+    date: "2026-11-08",
+    title: { en: "Bangla pages have their own address", bn: "বাংলা পাতার এখন নিজস্ব ঠিকানা" },
+    summary: {
+      en: "Every public page now has a Bangla address under /bn (for example /bn/blog), so it is easy to share and to find on Google in Bangla.",
+      bn: "প্রতিটি পাবলিক পাতার এখন /bn দিয়ে বাংলা ঠিকানা আছে (যেমন /bn/blog), তাই শেয়ার করা আর গুগলে বাংলায় খুঁজে পাওয়া সহজ।",
+    },
+    changes: [
+      { type: "improved", en: "Bangla pages live at /bn/… and English pages at the plain address; old ?lang=bn links still work and move to the new address.", bn: "বাংলা পাতা /bn/… ঠিকানায়, ইংরেজি পাতা সাধারণ ঠিকানায়; পুরনো ?lang=bn লিংকও কাজ করে আর নতুন ঠিকানায় নিয়ে যায়।" },
+      { type: "improved", en: "If your browser prefers Bangla, English pages offer a \"বাংলায় দেখুন\" button instead of switching on their own.", bn: "আপনার ব্রাউজার বাংলা পছন্দ করলে ইংরেজি পাতায় নিজে থেকে বদলানোর বদলে \"বাংলায় দেখুন\" বোতাম দেখায়।" },
+      { type: "improved", en: "Sign up or log in on a Bangla page and your dashboard opens in Bangla.", bn: "বাংলা পাতা থেকে সাইন আপ বা লগইন করলে ড্যাশবোর্ড বাংলায় খোলে।" },
+    ],
+  },
+  {
     id: "2026-11-07-app-ai-community-blog",
     date: "2026-11-07",
     title: { en: "In the app: speak to the AI assistant, the community and the blog", bn: "অ্যাপে: এআই সহকারীকে বলে দিন, কমিউনিটি আর ব্লগ" },

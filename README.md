@@ -165,13 +165,16 @@ Mobile app     ─┘     (later: same database, same rules)
 
 ```
 supabase/migrations/   SQL schema, RLS policies, functions, admin_* functions, storage bucket
-src/proxy.ts           refreshes the Supabase session, protects /dashboard
+src/proxy.ts           refreshes the Supabase session, protects /dashboard, language in the address
 src/lib/supabase/      browser / server / proxy clients
 src/lib/auth.ts        requireUser() / requireFarm() data access layer
-src/app/(auth)/        login & signup
-src/app/onboarding/    create the first farm
-src/app/dashboard/     overview, cattle, milk, health, breeding, flocks, finance, settings, profile
-src/app/admin/         super admin panel
+src/app/(site)/[lang]/ public pages (home, blog, tools, community, login & signup…), one root layout;
+                       English at /x (the proxy rewrites it to /en/x), Bangla at /bn/x
+src/app/(app)/         signed-in app, second root layout (language from the cookie):
+  onboarding/          create the first farm
+  dashboard/           overview, cattle, milk, health, breeding, flocks, finance, settings, profile
+  admin/               super admin panel
+  doctor/              vet console
 src/lib/i18n/          English + Bangla dictionaries (typed: a missing Bangla key fails the build)
                        Only the keys client code uses go to the browser (client-keys.ts, made by
                        `npm run i18n:client-keys`; a unit test fails while it is out of date)
@@ -282,7 +285,7 @@ Then redeploy. To check it works, open *Admin → Settings → Error monitoring*
 
 ### SEO
 
-`/sitemap.xml` (home, blog, every published article, blog categories and tags with 2+ articles, sign-up pages — refreshed hourly), `/robots.txt` (private areas `/dashboard`, `/admin`, `/doctor`, `/api` … are disallowed and also marked `noindex`), a share image (`/opengraph-image`), Open Graph / Twitter tags, canonical URLs, and schema.org JSON-LD (Organization + SoftwareApplication on the home page, BlogPosting with image, section and keywords plus BreadcrumbList on articles). Every public page also has a Bangla address (`?lang=bn`) with `hreflang` links and Bangla canonical URLs, and the home page has an FAQ with FAQPage data. Set `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` / `NEXT_PUBLIC_BING_SITE_VERIFICATION` (only the `content` code; a pasted full `<meta …>` tag is also accepted) to verify the site in Google Search Console / Bing Webmaster Tools, then submit `https://<your-domain>/sitemap.xml`.
+`/sitemap.xml` (home, blog, every published article, blog categories and tags with 2+ articles, sign-up pages — refreshed hourly), `/robots.txt` (private areas `/dashboard`, `/admin`, `/doctor`, `/api` … are disallowed and also marked `noindex`), a share image (`/opengraph-image`), Open Graph / Twitter tags, canonical URLs, and schema.org JSON-LD (Organization + SoftwareApplication on the home page, BlogPosting with image, section and keywords plus BreadcrumbList on articles). Every public page has an English address (`/blog`) and a Bangla one (`/bn/blog`), each its own canonical, with `hreflang` en / bn / x-default (English) in the page and the sitemap (both addresses listed). The language of a public page comes only from its address, never a cookie; nobody is redirected by browser language, but an English page shows a small "বাংলায় দেখুন" bar to browsers that prefer Bangla. Old addresses move permanently (301): `?lang=bn` → `/bn/…`, `?lang=en` and `/en/…` → the plain address. The signed-in app keeps one address and the saved language; signing in on a Bangla page saves Bangla. Code: `src/lib/i18n/paths.ts` (`localePath`), `src/components/local-link.tsx` (links keep the language), `src/lib/revalidate-site.ts`, and the home page has an FAQ with FAQPage data. Set `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` / `NEXT_PUBLIC_BING_SITE_VERIFICATION` (only the `content` code; a pasted full `<meta …>` tag is also accepted) to verify the site in Google Search Console / Bing Webmaster Tools, then submit `https://<your-domain>/sitemap.xml`.
 
 ### Analytics, IP and location
 

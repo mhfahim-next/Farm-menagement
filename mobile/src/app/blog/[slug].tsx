@@ -5,7 +5,7 @@ import { Markdown } from "@/components/markdown";
 import { OfflineNote } from "@/components/offline-note";
 import { BLOG_IMAGE_PREFIX, blogImageUrl, fetchPost, pick } from "@/lib/blog";
 import { useCached } from "@/lib/cache";
-import { siteLink } from "@/lib/env";
+import { sitePage } from "@/lib/env";
 import { readingMinutes } from "@/lib/markdown";
 import { usePrefs } from "@/lib/prefs";
 
@@ -23,7 +23,7 @@ export default function BlogPostScreen() {
       <Appbar.Header mode="small" elevated={false}>
         <Appbar.BackAction onPress={() => (router.canGoBack() ? router.back() : router.replace("/blog"))} accessibilityLabel={t("animal.back")} />
         <Appbar.Content title={t("blog.title")} />
-        {post && <Appbar.Action icon="share-variant-outline" onPress={() => Share.share({ message: `${title}\n${siteLink(`/blog/${post.slug}${locale === "bn" ? "?lang=bn" : ""}`)}` })} accessibilityLabel="Share" />}
+        {post && <Appbar.Action icon="share-variant-outline" onPress={() => Share.share({ message: `${title}\n${sitePage(`/blog/${post.slug}`, locale)}` })} accessibilityLabel="Share" />}
       </Appbar.Header>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.inner}>

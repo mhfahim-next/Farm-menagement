@@ -24,3 +24,6 @@ export const SUPABASE_ANON_KEY = cleanValue(process.env.EXPO_PUBLIC_SUPABASE_ANO
 export const SITE_URL = (cleanValue(process.env.EXPO_PUBLIC_SITE_URL) || "https://www.farmflows.app").replace(/\/+$/, "");
 
 export const siteLink = (path: string) => `${SITE_URL}${path}`;
+
+/** A public website page in the app's language: Bangla pages live under /bn (/bn/blog/…). */
+export const sitePage = (path: string, locale: "en" | "bn") => siteLink(locale === "bn" ? `/bn${path === "/" ? "" : path}` : path);
