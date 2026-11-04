@@ -215,4 +215,11 @@ export const tools = {
   "tools.feed.molasses": "Molasses (chitagur)",
   "tools.feed.ready_feed": "Ready-made cattle feed",
   "tools.metaTitle": "Free farm calculators: cattle weight, ration, Qurbani",
+  "tguide.how": "How it works",
+  "tguide.formula": "The formula",
+  "tguide.example": "Worked example",
+  "tguide.faq": "Questions farmers ask",
+  "tguide.read": "Read the full guide",
+  "tguide.tryTitle": "Work it out with the free tool",
+  "tguide.tryOpen": "Open the tool",
 } as const;

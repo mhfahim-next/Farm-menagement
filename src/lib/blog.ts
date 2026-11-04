@@ -18,7 +18,16 @@ export type BlogPost = {
   cover_image_id?: string | null;
   /** When the article's text, cover or category last changed (null before that migration). */
   content_updated_at?: string | null;
+  /** An animal-health article: it shows who wrote it and, once added, the vet who reviewed it. */
+  health_topic?: boolean;
+  author_name?: string | null;
+  reviewer_name?: string | null;
+  reviewer_credentials?: string | null;
+  reviewed_on?: string | null;
+  sources?: BlogSource[];
 };
+
+export type BlogSource = { title_en?: string | null; title_bn?: string | null; url: string };
 
 export type BlogImage = {
   id: string;

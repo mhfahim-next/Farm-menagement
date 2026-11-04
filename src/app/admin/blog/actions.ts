@@ -306,3 +306,34 @@ export async function deleteBlogTag(_: ActionState, formData: FormData): Promise
   revalidatePath("/admin/blog", "layout");
   return { success: t("admin.blog.taxDeleted") };
 }
+
+/** Author, vet reviewer and sources of an article (sources: one per line, "Title | https://…"). */
+export async function saveBlogCredits(_: ActionState, formData: FormData): Promise<ActionState> {
+  const { supabase } = await requireSuperAdmin();
+  const { t } = await getI18n();
+  const id = str(formData, "id");
+  if (!id || !UUID.test(id)) return { error: t("common.errorGeneric") };
+  const lines = (str(formData, "sources") ?? "").split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const sources: { title_en: string; title_bn: string; url: string }[] = [];
+  for (const line of lines) {
+    const [en, bn, url] = (() => {
+      const parts = line.split("|").map((x) => x.trim());
+      return parts.length >= 3 ? [parts[0], parts[1], parts[2]] : [parts[0], parts[0], parts[1] ?? ""];
+    })();
+    if (!/^https?:\/\/\S+$/.test(url) || !en) return { error: t("admin.blog.errSource", { line }) };
+    sources.push({ title_en: en.slice(0, 200), title_bn: (bn || en).slice(0, 200), url: url.slice(0, 500) });
+  }
+  const reviewed = str(formData, "reviewed_on");
+  const { error } = await supabase.rpc("admin_set_blog_credits", {
+    p_id: id,
+    p_health_topic: formData.get("health_topic") === "on",
+    p_author_name: str(formData, "author_name"),
+    p_reviewer_name: str(formData, "reviewer_name"),
+    p_reviewer_credentials: str(formData, "reviewer_credentials"),
+    p_reviewed_on: reviewed && /^\d{4}-\d{2}-\d{2}$/.test(reviewed) ? reviewed : null,
+    p_sources: sources.slice(0, 10),
+  });
+  if (error) return { error: error.message };
+  revalidatePath("/blog", "layout");
+  return { success: t("admin.blog.saved") };
+}

@@ -5,9 +5,11 @@ import { Markdown } from "@/components/markdown";
 import { PublicFooter, PublicHeader } from "@/components/public-header";
 import { ButtonLink } from "@/components/ui";
 import { BlogCards } from "@/components/blog-list";
-import { BLOG_IMAGE_PREFIX, coverAlt, imageUrl, localized, modifiedAt, pickLang, POST_SELECT, readingMinutes, type BlogImage, type BlogPostFull } from "@/lib/blog";
+import { BLOG_IMAGE_PREFIX, coverAlt, imageUrl, localized, modifiedAt, type BlogSource, pickLang, POST_SELECT, readingMinutes, type BlogImage, type BlogPostFull } from "@/lib/blog";
 import { getRelatedPosts } from "@/lib/blog-data";
 import { getI18n } from "@/lib/i18n/server";
+import { toolsForPost } from "@/lib/tool-guides";
+import { TOOLS, toolName } from "@/lib/tool-list";
 import { createClient } from "@/lib/supabase/server";
 import { ScrollProgress } from "@/components/velora/scroll-progress";
 import { JsonLd } from "@/components/json-ld";
@@ -70,6 +72,8 @@ export default async function BlogPostPage({ params }: PageProps<"/blog/[slug]">
   const v = localized(post, locale);
   const [images, related] = await Promise.all([embeddedImages(v.body), post.published ? getRelatedPosts(post) : []]);
   const minutes = readingMinutes(v.body);
+  const sources = (Array.isArray(post.sources) ? post.sources : []).filter((s): s is BlogSource => !!s && typeof s.url === "string" && /^https?:\/\//.test(s.url));
+  const tools = toolsForPost(post.slug).map((s) => TOOLS.find((x) => x.slug === s)!).filter(Boolean);
   const categoryName = post.category ? pickLang(post.category, "name", locale) : null;
   const url = `${SITE_URL}/blog/${post.slug}`;
 
@@ -113,7 +117,11 @@ export default async function BlogPostPage({ params }: PageProps<"/blog/[slug]">
             keywords: post.tags.map((x) => pickLang(x.tag, "name", locale)).join(", ") || undefined,
             wordCount: v.body.split(/\s+/).filter(Boolean).length,
             timeRequired: `PT${minutes}M`,
-            author: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
+            author: post.author_name ? { "@type": "Person", name: post.author_name } : { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
+            ...(post.reviewer_name
+              ? { reviewedBy: { "@type": "Person", name: post.reviewer_name, ...(post.reviewer_credentials ? { description: post.reviewer_credentials } : {}) }, ...(post.reviewed_on ? { lastReviewed: post.reviewed_on } : {}) }
+              : {}),
+            ...(sources.length ? { citation: sources.map((s) => ({ "@type": "CreativeWork", name: pickLang(s, "title", locale), url: s.url })) } : {}),
             publisher: { "@type": "Organization", name: SITE_NAME, logo: { "@type": "ImageObject", url: `${SITE_URL}/icons/icon-512.png` } },
           }}
         />
@@ -128,6 +136,19 @@ export default async function BlogPostPage({ params }: PageProps<"/blog/[slug]">
             <span aria-hidden>·</span>
             <span>{t("blog.minRead", { n: minutes })}</span>
           </p>
+          {(post.health_topic || post.author_name) && (
+            <p className="mt-2 text-sm text-stone-600" data-testid="blog-byline">
+              {t("blog.writtenBy", { name: post.author_name || t("blog.team") })}
+              {post.reviewer_name && (
+                <span className="block font-medium text-emerald-800" data-testid="blog-reviewer">
+                  ✓{" "}
+                  {t("blog.reviewedBy", { name: post.reviewer_name })}
+                  {post.reviewer_credentials ? `, ${post.reviewer_credentials}` : ""}
+                  {post.reviewed_on ? ` · ${f.date(post.reviewed_on)}` : ""}
+                </span>
+              )}
+            </p>
+          )}
           <h1 className="mt-1 break-words text-3xl font-bold tracking-tight text-stone-900 sm:text-4xl">{v.title}</h1>
           {v.summary && <p className="mt-3 text-lg text-stone-600">{v.summary}</p>}
           {post.cover && (
@@ -149,6 +170,38 @@ export default async function BlogPostPage({ params }: PageProps<"/blog/[slug]">
           <div className="mt-6 border-t border-stone-200 pt-2">
             <Markdown source={v.body} images={images} locale={locale} />
           </div>
+          {tools.length > 0 && (
+            <aside className="mt-8 rounded-xl border border-emerald-200 bg-emerald-50 p-5" data-testid="blog-tools">
+              <p className="font-semibold text-emerald-950">{t("tguide.tryTitle")}</p>
+              <ul className="mt-2 space-y-1">
+                {tools.map((x) => (
+                  <li key={x.slug}>
+                    <Link href={`/tools/${x.slug}`} className="font-medium text-emerald-800 hover:underline">
+                      <span aria-hidden>{x.icon} </span>
+                      {t(toolName(x.key))} →
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </aside>
+          )}
+          {sources.length > 0 && (
+            <section className="mt-8 border-t border-stone-200 pt-5" aria-labelledby="sources" data-testid="blog-sources">
+              <h2 id="sources" className="text-lg font-semibold text-stone-900">
+                {t("blog.sources")}
+              </h2>
+              <ul className="mt-2 list-disc space-y-1 pl-5">
+                {sources.map((s, i) => (
+                  <li key={i}>
+                    <a href={s.url} target="_blank" rel="noopener noreferrer" className="text-emerald-700 underline hover:text-emerald-800">
+                      {pickLang(s, "title", locale) || s.url}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 text-xs text-stone-500">{t("blog.sourcesNote")}</p>
+            </section>
+          )}
           {post.tags.length > 0 && (
             <ul aria-label={t("blog.tags")} className="mt-8 flex flex-wrap gap-2 border-t border-stone-200 pt-5">
               {post.tags.map(({ tag }) => (

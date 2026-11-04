@@ -215,4 +215,11 @@ export const tools = {
   "tools.feed.molasses": "চিটাগুড়",
   "tools.feed.ready_feed": "রেডিমেড গরুর ফিড",
   "tools.metaTitle": "ফ্রি খামার ক্যালকুলেটর: গরুর ওজন, রেশন, কুরবানির দাম",
+  "tguide.how": "কীভাবে কাজ করে",
+  "tguide.formula": "সূত্র",
+  "tguide.example": "হিসাবের উদাহরণ",
+  "tguide.faq": "খামারিদের সাধারণ প্রশ্ন",
+  "tguide.read": "পুরো গাইড পড়ুন",
+  "tguide.tryTitle": "ফ্রি টুল দিয়ে হিসাব করুন",
+  "tguide.tryOpen": "টুল খুলুন",
 } as const;
