@@ -44,3 +44,21 @@ export const decideApproval = (farmId: string, locale: Locale, id: string, actio
 /** A doctor's health or breeding entry, sent for the owner or a manager to approve. */
 export const submitForApproval = (farmId: string, locale: Locale, kind: "record_health" | "update_health" | "log_breeding" | "update_breeding", fields: [string, string][]) =>
   call<{ message: string }>("/api/app/submit", { method: "POST", body: { farm: farmId, lang: locale, kind, fields } });
+
+// ---------------------------------------------------------------- AI assistant
+
+export type AiProposal = { id: string; kind: string; title: string; lines: string[]; fields: [string, string][] };
+export type AiStatus = { used: number; max: number | null };
+export type AiTurn = { role: "user" | "assistant"; text: string };
+export type AiAnswer = { error?: string; reply?: string; proposals?: AiProposal[]; status?: AiStatus; limitReached?: boolean };
+
+/** Prompts used and allowed this month. */
+export const fetchAiStatus = (farmId: string, locale: Locale) => call<AiStatus>(`/api/app/assistant?farm=${farmId}&lang=${locale}`);
+
+/** One message to the assistant (counts as one prompt); the reply and any records it prepared. */
+export const askAi = (farmId: string, locale: Locale, history: AiTurn[], text: string) =>
+  call<AiAnswer>("/api/app/assistant", { method: "POST", body: { farm: farmId, lang: locale, action: "ask", history, text } });
+
+/** Save a prepared record the farmer confirmed (through the website's normal form action). */
+export const confirmAi = (farmId: string, locale: Locale, p: AiProposal) =>
+  call<{ message: string }>("/api/app/assistant", { method: "POST", body: { farm: farmId, lang: locale, action: "confirm", kind: p.kind, fields: p.fields } });

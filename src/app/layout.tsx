@@ -45,7 +45,6 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(SITE_URL),
     title: { default: t("meta.title"), template: "%s · FarmFlows" },
     description: t("meta.description"),
-    keywords: t("meta.keywords").split(",").map((k) => k.trim()),
     authors: [{ name: SITE_NAME }],
     creator: SITE_NAME,
     openGraph: {

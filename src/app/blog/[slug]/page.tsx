@@ -5,7 +5,7 @@ import { Markdown } from "@/components/markdown";
 import { PublicFooter, PublicHeader } from "@/components/public-header";
 import { ButtonLink } from "@/components/ui";
 import { BlogCards } from "@/components/blog-list";
-import { BLOG_IMAGE_PREFIX, imageUrl, localized, pickLang, POST_SELECT, readingMinutes, type BlogImage, type BlogPostFull } from "@/lib/blog";
+import { BLOG_IMAGE_PREFIX, coverAlt, imageUrl, localized, modifiedAt, pickLang, POST_SELECT, readingMinutes, type BlogImage, type BlogPostFull } from "@/lib/blog";
 import { getRelatedPosts } from "@/lib/blog-data";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
@@ -39,11 +39,10 @@ export async function generateMetadata({ params }: PageProps<"/blog/[slug]">): P
   const { locale } = await getI18n();
   const v = localized(post, locale);
   const image = post.cover
-    ? { url: imageUrl(post.cover.path), width: post.cover.width ?? undefined, height: post.cover.height ?? undefined, alt: pickLang(post.cover, "alt", locale) }
+    ? { url: imageUrl(post.cover.path), width: post.cover.width ?? undefined, height: post.cover.height ?? undefined, alt: coverAlt(post, locale) }
     : { url: `/blog/${post.slug}/og`, width: 1200, height: 630, alt: v.title };
   return {
     title: v.title,
-    keywords: post.tags.map((x) => pickLang(x.tag, "name", locale)),
     description: v.summary ?? undefined,
     alternates: langAlternates(`/blog/${post.slug}`, locale),
     robots: post.published ? undefined : { index: false },
@@ -53,7 +52,7 @@ export async function generateMetadata({ params }: PageProps<"/blog/[slug]">): P
       type: "article",
       url: `/blog/${post.slug}`,
       publishedTime: post.published_at ?? undefined,
-      modifiedTime: post.updated_at ?? undefined,
+      modifiedTime: modifiedAt(post),
       section: post.category ? pickLang(post.category, "name", locale) : undefined,
       tags: post.tags.map((x) => pickLang(x.tag, "name", locale)),
       images: [image],
@@ -106,7 +105,7 @@ export default async function BlogPostPage({ params }: PageProps<"/blog/[slug]">
             description: v.summary ?? undefined,
             inLanguage: v.lang,
             datePublished: post.published_at ?? post.created_at,
-            dateModified: post.updated_at ?? post.published_at ?? post.created_at,
+            dateModified: modifiedAt(post),
             mainEntityOfPage: url,
             url,
             image: post.cover ? [imageUrl(post.cover.path)] : [`${url}/og`],
@@ -136,7 +135,7 @@ export default async function BlogPostPage({ params }: PageProps<"/blog/[slug]">
               {/* eslint-disable-next-line @next/next/no-img-element -- resized WebP from storage; the main image of the page */}
               <img
                 src={imageUrl(post.cover.path)}
-                alt={pickLang(post.cover, "alt", locale)}
+                alt={coverAlt(post, locale)}
                 width={post.cover.width ?? undefined}
                 height={post.cover.height ?? undefined}
                 fetchPriority="high"

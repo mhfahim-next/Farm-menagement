@@ -9,7 +9,13 @@ import { langAlternates } from "@/lib/site";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t, locale } = await getI18n();
-  return { title: { absolute: t("del.title") }, description: t("del.metaDesc"), alternates: langAlternates("/delete-account", locale) };
+  return {
+    title: { absolute: t("del.title") },
+    description: t("del.metaDesc"),
+    alternates: langAlternates("/delete-account", locale),
+    // A help page for Google Play, not something to find in search.
+    robots: { index: false, follow: true },
+  };
 }
 
 /**

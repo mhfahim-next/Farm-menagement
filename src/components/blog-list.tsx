@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BlurFade } from "@/components/velora/blur-fade";
-import { imageUrl, localized, pickLang, readingMinutes, type BlogCategory, type BlogPostFull } from "@/lib/blog";
+import { coverAlt, imageUrl, localized, pickLang, readingMinutes, type BlogCategory, type BlogPostFull } from "@/lib/blog";
 import type { I18n } from "@/lib/i18n/core";
 
 /** Cover image of a post card, or a calm placeholder in the category colour. */
@@ -10,7 +10,7 @@ function CardCover({ post, locale, eager }: { post: BlogPostFull; locale: I18n["
       // eslint-disable-next-line @next/next/no-img-element -- already resized WebP from storage
       <img
         src={imageUrl(post.cover.path)}
-        alt={pickLang(post.cover, "alt", locale)}
+        alt={coverAlt(post, locale)}
         width={post.cover.width ?? 1600}
         height={post.cover.height ?? 900}
         loading={eager ? "eager" : "lazy"}

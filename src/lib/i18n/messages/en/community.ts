@@ -123,4 +123,5 @@ export const community = {
   "admin.community.banned": "Member blocked from the community.",
   "admin.community.unbanned": "Member can post again.",
   "admin.community.done": "Done.",
+  "community.metaExtra": "Answers from farmers and verified vets in the FarmFlows community.",
 } as const;

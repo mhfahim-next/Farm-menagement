@@ -214,4 +214,5 @@ export const tools = {
   "tools.feed.pulse_husk": "ডালের ভুসি",
   "tools.feed.molasses": "চিটাগুড়",
   "tools.feed.ready_feed": "রেডিমেড গরুর ফিড",
+  "tools.metaTitle": "ফ্রি খামার ক্যালকুলেটর: গরুর ওজন, রেশন, কুরবানির দাম",
 } as const;

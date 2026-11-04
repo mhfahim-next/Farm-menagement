@@ -101,6 +101,12 @@ export default function More() {
         <List.Section>
           <List.Subheader>{t("tools.title")}</List.Subheader>
           <List.Item title={t("tools.title")} description={t("tools.menuHint")} left={(p) => <List.Icon {...p} icon="calculator-variant-outline" />} onPress={() => router.push("/tools")} testID="open-tools" />
+          {s.current && s.current.role !== "vet" && (
+            <List.Item title={t("ai.title")} description={t("ai.menuHint")} left={(p) => <List.Icon {...p} icon="microphone-message" />} onPress={() => router.push("/assistant")} testID="open-assistant-more" />
+          )}
+          <List.Item title={t("blog.title")} description={t("blog.menuHint")} left={(p) => <List.Icon {...p} icon="newspaper-variant-outline" />} onPress={() => router.push("/blog")} testID="open-blog" />
+          <List.Item title={t("changelog.nav")} description={t("changelog.menuHint")} left={(p) => <List.Icon {...p} icon="star-shooting-outline" />} onPress={() => router.push("/changelog")} testID="open-changelog" />
+          <List.Item title={t("community.title")} description={t("community.menuHint")} left={(p) => <List.Icon {...p} icon="forum-outline" />} onPress={() => router.push("/community")} testID="open-community" />
           <List.Item title={t("dis.title")} description={t("dis.menuHint")} left={(p) => <List.Icon {...p} icon="medical-bag" />} onPress={() => router.push("/diseases")} testID="open-diseases" />
           {s.current?.role !== "vet" && (
             <List.Item title={t("vets.title")} description={t("vets.menuHint")} left={(p) => <List.Icon {...p} icon="stethoscope" />} onPress={() => router.push("/doctors")} testID="open-doctors" />

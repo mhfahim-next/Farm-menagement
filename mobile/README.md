@@ -161,6 +161,11 @@ The Android app comes first. The same code can later build the iPhone app.
     - Profit per animal for the last 12 months, this year or all time, unless the farm turned it off (`animal_profit_data`, `src/lib/animal-profit.ts`).
     - **Share as PDF or CSV** (Excel) through WhatsApp, email or Drive. Like the website's downloads, this needs a paid plan.
 
+- **AI assistant** (Write tab → AI assistant, or More): type or **speak** what happened ("today 001 gave 6 litres", "gave FMD to 002", "bought feed for 5000 taka"). The assistant prepares the record as a card; nothing is saved until you press **Confirm**, which saves it through the website's own form action (`/api/app/assistant`), so plan limits and permissions still apply. Same monthly prompt allowance as the website. The mic uses the phone's speech-to-text (`expo-speech-recognition`, Bangla or English by the app's language); the app gets only the text. Needs internet.
+- **Community:** questions by topic, search, latest / unanswered / most helpful. Open a question to read answers (best answer first, then verified vets), mark posts **Helpful**, report a post, **answer** with up to 4 photos (made small, WebP), **ask** a question, pick the best answer on your own question, delete your own posts. Everything goes through the same `community_*` database functions as the website.
+- **Blog** (More → Blog): articles by category with search, cover images, and the article itself drawn natively from its Markdown (headings, lists, tables, quotes, library images, links). Share an article's link. Read again offline once loaded.
+- **What's new** (More): the website's release notes and what's coming, built into the app (`src/lib/changelog.ts` is copied).
+
 `tests/copies.test.ts` fails when a copied website file changes on one side only.
 
 For the Play Console's account-deletion question, give: in the app, More → Profile → Delete account; on the web, https://www.farmflows.app/dashboard/profile (sign in, then Delete account).

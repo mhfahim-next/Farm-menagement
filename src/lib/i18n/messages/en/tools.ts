@@ -214,4 +214,5 @@ export const tools = {
   "tools.feed.pulse_husk": "Pulse husk / bran",
   "tools.feed.molasses": "Molasses (chitagur)",
   "tools.feed.ready_feed": "Ready-made cattle feed",
+  "tools.metaTitle": "Free farm calculators: cattle weight, ration, Qurbani",
 } as const;

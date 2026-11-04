@@ -13,10 +13,10 @@ const PATH = "/tools";
 export async function generateMetadata(): Promise<Metadata> {
   const { t, locale } = await getI18n();
   return {
-    title: t("tools.title"),
+    title: t("tools.metaTitle"),
     description: t("tools.desc"),
     alternates: langAlternates(PATH, locale),
-    openGraph: { title: t("tools.title"), description: t("tools.desc"), url: PATH, images: [DEFAULT_OG_IMAGE] },
+    openGraph: { title: t("tools.metaTitle"), description: t("tools.desc"), url: PATH, images: [DEFAULT_OG_IMAGE] },
   };
 }
 

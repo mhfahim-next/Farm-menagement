@@ -1,7 +1,7 @@
 import { router, useFocusEffect } from "expo-router";
 import { useCallback } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
-import { Card, Icon, Text, useTheme } from "react-native-paper";
+import { Avatar, Card, Icon, IconButton, Text, useTheme } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { OfflineNote } from "@/components/offline-note";
 import { SyncBar } from "@/components/sync-bar";
@@ -60,6 +60,17 @@ export default function Entry() {
           </Text>
           <SyncBar />
           {offline && <OfflineNote />}
+          {staff && (
+            <Card mode="contained" style={[styles.card, { backgroundColor: theme.colors.primaryContainer }]} onPress={() => router.push("/assistant")} testID="open-assistant">
+              <Card.Title
+                title={t("ai.title")}
+                subtitle={t("ai.menuHint")}
+                subtitleNumberOfLines={2}
+                left={(p) => <Avatar.Icon {...p} icon="microphone-message" />}
+                right={(p) => <IconButton {...p} icon="chevron-right" onPress={() => router.push("/assistant")} accessibilityLabel={t("ai.open")} />}
+              />
+            </Card>
+          )}
           {vet && (
             <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
               {t("appr.vetNote")}

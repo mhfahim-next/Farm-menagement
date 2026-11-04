@@ -90,12 +90,7 @@ A multi-tenant farm management web app built with **Next.js 16 (App Router)** an
 
 A native Android app (Expo / React Native, Material 3) lives in [`mobile/`](mobile/README.md). It uses the same Supabase project, accounts and security rules as the website.
 
-The first version has:
-- a welcome guide on first launch;
-- sign in (email or Google);
-- account creation, with farm setup and plan choice;
-- a Home screen with today's numbers;
-- a More tab with language, theme, farm switcher and sign out.
+It does almost everything the website does, works without internet, and also has the AI assistant (typed or **spoken** through the phone's speech-to-text; the website route `/api/app/assistant` runs the same assistant and confirm step), the community, the blog and What's new. The full list is in `mobile/README.md`.
 
 See `mobile/README.md` for setup, checks and building the APK / Play Store bundle with EAS.
 
