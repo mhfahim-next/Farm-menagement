@@ -1,6 +1,24 @@
 import { strict as assert } from "node:assert";
 import { test } from "node:test";
-import { convertUnit, dairyRation, doseFor, fatteningRation, fodderPlan, meatValue, milkPrice, mixFor, poultryFeed, pregnancyDates, tapeWeightKg } from "../../src/lib/tools.ts";
+import {
+  convertUnit,
+  dairyRation,
+  defaultFeedChoices,
+  doseFor,
+  fatteningRation,
+  FEEDS,
+  fodderPlan,
+  leastCostRation,
+  meatValue,
+  milkPrice,
+  mixFor,
+  poultryFeed,
+  pregnancyDates,
+  RATION_FEEDS,
+  rationNeeds,
+  tapeWeightKg,
+  TOOL_DEFAULTS as DEFAULTS,
+} from "../../src/lib/tools.ts";
 
 test("tape weight in kg, from cm or inches", () => {
   assert.deepEqual(tapeWeightKg(170, 150), { kg: 400, low: 360, high: 440 });
@@ -78,4 +96,67 @@ test("fodder land and silage", () => {
 
 test("milk price from fat and SNF", () => {
   assert.deepEqual(milkPrice(4, 8.5, 600, 400, 10), { perKg: 58, perLitre: 59.74, total: 597 });
+});
+
+// ---------------------------------------------------------------- least-cost ration
+
+
+const ofDm = (r: NonNullable<ReturnType<typeof leastCostRation>>) => {
+  assert.ok(r && r.error === null);
+  return r;
+};
+
+test("needs: maintenance from kg^0.75, plus milk by fat %, gain and late pregnancy", () => {
+  const dry = rationNeeds({ kind: "dry", weightKg: 400 })!;
+  assert.ok(Math.abs(dry.tdn - 0.0353 * Math.pow(400, 0.75)) < 1e-9);
+  const milking = rationNeeds({ kind: "milking", weightKg: 400, milkL: 10, fatPct: 4 })!;
+  assert.ok(Math.abs(milking.tdn - dry.tdn - 10.3 * 0.322) < 1e-9);
+  assert.ok(Math.abs(milking.cp - dry.cp - 10.3 * 0.09) < 1e-9);
+  assert.ok(rationNeeds({ kind: "milking", weightKg: 400, milkL: 10, fatPct: 6 })!.tdn > milking.tdn);
+  assert.ok(rationNeeds({ kind: "dry", weightKg: 400, pregnant: true })!.tdn > dry.tdn);
+  assert.ok(rationNeeds({ kind: "growing", weightKg: 400, gainKg: 1 })!.cp > dry.cp);
+  assert.equal(rationNeeds({ kind: "dry", weightKg: 0 }), null);
+});
+
+test("least cost: meets energy and protein inside what the cow can eat, enough roughage, safe shares", () => {
+  const animal = { kind: "milking" as const, weightKg: 400, milkL: 10, fatPct: 4 };
+  const r = ofDm(leastCostRation(animal, defaultFeedChoices())!);
+  assert.deepEqual(r.short, { tdn: 0, cp: 0, dm: 0 });
+  assert.ok(r.supply.tdn >= r.need.tdn - 0.01 && r.supply.cp >= r.need.cp - 0.01);
+  assert.ok(r.supply.dm >= r.need.dmMin - 0.1 && r.supply.dm <= r.need.dmMax + 0.1);
+  assert.ok(r.supply.roughPct >= 40);
+  for (const it of r.items) assert.ok((it.dmKg / r.supply.dm) * 100 <= FEEDS[it.id].maxPct + 0.5, `${it.id} share`);
+  const byItems = r.items.reduce((s, it) => s + it.kg * defaultFeedChoices().find((c) => c.id === it.id)!.price, 0) / 10;
+  assert.ok(Math.abs((r.costPerLitre ?? 0) - byItems) < 0.5, "cost per litre");
+});
+
+test("least cost picks the cheaper feed when two give the same, and follows the prices", () => {
+  const animal = { kind: "growing" as const, weightKg: 300, gainKg: 0.8 };
+  const base = [{ id: "rice_straw" as const, price: 8 }, { id: "napier" as const, price: 4 }, { id: "mustard_cake" as const, price: 62 }];
+  const cheapMaize = ofDm(leastCostRation(animal, [...base, { id: "maize", price: 30 }, { id: "broken_rice", price: 60 }])!);
+  const cheapRice = ofDm(leastCostRation(animal, [...base, { id: "maize", price: 60 }, { id: "broken_rice", price: 30 }])!);
+  assert.ok(cheapMaize.items.some((i) => i.id === "maize") && !cheapMaize.items.some((i) => i.id === "broken_rice"));
+  assert.ok(cheapRice.items.some((i) => i.id === "broken_rice"));
+  // A cheaper solution is never more expensive than a forced one.
+  const forced = ofDm(leastCostRation(animal, [...base, { id: "maize", price: 60 }])!);
+  assert.ok(cheapRice.costDay <= forced.costDay);
+});
+
+test("a limit on how much of a feed the farm has is kept", () => {
+  const r = ofDm(leastCostRation({ kind: "milking", weightKg: 400, milkL: 10 }, [{ id: "napier", price: 4, maxKg: 10 }, { id: "rice_straw", price: 8 }, { id: "wheat_bran", price: 52 }, { id: "mustard_cake", price: 62 }])!);
+  assert.ok((r.items.find((i) => i.id === "napier")?.kg ?? 0) <= 10.05);
+});
+
+test("feeds that can't meet a need: the closest ration and what is short", () => {
+  const r = ofDm(leastCostRation({ kind: "milking", weightKg: 450, milkL: 18, fatPct: 4 }, [{ id: "rice_straw", price: 8 }, { id: "maize", price: 38 }])!);
+  assert.ok(r.short.cp > 0, "protein short without a protein feed");
+  assert.deepEqual(leastCostRation({ kind: "dry", weightKg: 300 }, []), { error: "noFeeds" });
+  assert.deepEqual(leastCostRation({ kind: "dry", weightKg: 300 }, [{ id: "wheat_bran", price: 50 }]), { error: "noRoughage" });
+  assert.equal(leastCostRation({ kind: "dry", weightKg: -1 }, defaultFeedChoices()), null);
+});
+
+test("the concentrate mix adds up to 100 % and every feed has a starting price", () => {
+  const r = ofDm(leastCostRation({ kind: "milking", weightKg: 400, milkL: 15 }, defaultFeedChoices())!);
+  if (r.mix.length) assert.ok(Math.abs(r.mix.reduce((s, m) => s + m.pct, 0) - 100) < 0.5);
+  for (const id of RATION_FEEDS) assert.ok(typeof DEFAULTS.feedPrice[id] === "number");
 });

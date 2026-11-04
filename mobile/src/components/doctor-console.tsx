@@ -1,8 +1,9 @@
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
-import { Button, Card, Chip, Dialog, Icon, Portal, Text, TextInput, useTheme } from "react-native-paper";
+import { Button, Card, Chip, Dialog, Icon, Portal, Switch, Text, TextInput, useTheme } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { DistrictPicker } from "@/components/district-picker";
 import { ChoiceChips, Label } from "@/components/fields";
 import { InviteCards } from "@/components/invite-card";
 import { useCached } from "@/lib/cache";
@@ -15,15 +16,19 @@ import { useSession } from "@/lib/session";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/lib/toast";
 
+type Listing = { doctor_district: string | null; doctor_area: string | null; doctor_listed: boolean; doctor_show_phone: boolean };
 type DoctorData = {
   profile: { full_name: string | null; doctor_verified: boolean; doctor_reg_no: string | null; doctor_specialty: string | null } | null;
+  /** Where and how the doctor appears in "Find a vet" (null before that migration is applied). */
+  listing: Listing | null;
   farms: { id: string; name: string; location: string | null; owner: string | null; animals: number; overdue: number }[];
 };
 
 /** A doctor's farms (with animals and overdue vaccines), invitations, and their doctor details. */
 async function fetchDoctor(userId: string): Promise<DoctorData> {
-  const [{ data: profile }, { data: members, error }] = await Promise.all([
+  const [{ data: profile }, { data: listing }, { data: members, error }] = await Promise.all([
     supabase.from("profiles").select("full_name, doctor_verified, doctor_reg_no, doctor_specialty").eq("id", userId).maybeSingle(),
+    supabase.from("profiles").select("doctor_district, doctor_area, doctor_listed, doctor_show_phone").eq("id", userId).maybeSingle(),
     supabase.from("farm_members").select("farms(id, name, location, owner_id, suspended)").eq("user_id", userId).eq("role", "vet"),
   ]);
   if (error) throw new Error(error.message);
@@ -42,6 +47,7 @@ async function fetchDoctor(userId: string): Promise<DoctorData> {
   const ownerName = new Map(((owners.data ?? []) as { id: string; full_name: string | null }[]).map((p) => [p.id, p.full_name]));
   return {
     profile: profile as DoctorData["profile"],
+    listing: (listing as Listing | null) ?? null,
     farms: farms.map((f) => {
       const animals = ((cattle.data ?? []) as { id: string; farm_id: string }[]).filter((c) => c.farm_id === f.id);
       const rows = ((records.data ?? []) as (Parameters<typeof overdueCount>[0][number] & { farm_id: string })[]).filter((r) => r.farm_id === f.id);
@@ -68,6 +74,8 @@ export function DoctorConsole({ standalone }: { standalone?: boolean }) {
   const [regNo, setRegNo] = useState<string | null>(null);
   const [specialty, setSpecialty] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [edit, setEdit] = useState<Partial<Listing>>({});
+  const listing = data?.listing ? { ...data.listing, ...edit } : null;
   const reg = regNo ?? data?.profile?.doctor_reg_no ?? "";
   const spec = specialty ?? data?.profile?.doctor_specialty ?? "";
   const farms = data?.farms ?? [];
@@ -89,7 +97,14 @@ export function DoctorConsole({ standalone }: { standalone?: boolean }) {
     if (!uid) return;
     if (!reg.trim()) return toast(t("doc.regRequired"));
     setSaving(true);
-    const { error } = await supabase.from("profiles").update({ doctor_reg_no: reg.trim(), doctor_specialty: spec || null }).eq("id", uid);
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        doctor_reg_no: reg.trim(),
+        doctor_specialty: spec || null,
+        ...(listing ? { doctor_district: listing.doctor_district || null, doctor_area: listing.doctor_area?.trim().slice(0, 80) || null, doctor_listed: listing.doctor_listed, doctor_show_phone: listing.doctor_show_phone } : {}),
+      })
+      .eq("id", uid);
     setSaving(false);
     toast(error ? `${t("common.error")} ${error.message}` : t("doc.detailsSaved"));
     reload();
@@ -178,6 +193,31 @@ export function DoctorConsole({ standalone }: { standalone?: boolean }) {
               onChange={(v) => setSpecialty(v === spec ? "" : v)}
               testID="doctor-specialty"
             />
+            {listing && (
+              <>
+                <Label>{t("vets.district")}</Label>
+                <DistrictPicker value={listing.doctor_district ?? ""} onChange={(v) => setEdit((e) => ({ ...e, doctor_district: v || null }))} placeholder={t("vets.chooseDistrict")} testID="doctor-district" />
+                <TextInput mode="outlined" label={t("vets.area")} value={listing.doctor_area ?? ""} onChangeText={(v) => setEdit((e) => ({ ...e, doctor_area: v }))} maxLength={80} testID="doctor-area" />
+                <View style={styles.switchRow}>
+                  <Text variant="bodyMedium" style={styles.flex}>
+                    {t("vets.listedLabel")}
+                  </Text>
+                  <Switch value={listing.doctor_listed} onValueChange={(v) => setEdit((e) => ({ ...e, doctor_listed: v }))} testID="doctor-listed" />
+                </View>
+                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                  {t("vets.listedHint")}
+                </Text>
+                <View style={styles.switchRow}>
+                  <Text variant="bodyMedium" style={styles.flex}>
+                    {t("vets.showPhoneLabel")}
+                  </Text>
+                  <Switch value={listing.doctor_show_phone} onValueChange={(v) => setEdit((e) => ({ ...e, doctor_show_phone: v }))} testID="doctor-show-phone" />
+                </View>
+                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                  {t("vets.showPhoneHint")}
+                </Text>
+              </>
+            )}
             <Button mode="contained-tonal" onPress={saveDetails} loading={saving} disabled={saving} testID="doctor-save">
               {t("rec.save")}
             </Button>
@@ -209,6 +249,7 @@ export function DoctorConsole({ standalone }: { standalone?: boolean }) {
 }
 
 const styles = StyleSheet.create({
+  switchRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   flex: { flex: 1 },
   content: { padding: 16, paddingBottom: 40 },
   inner: { width: "100%", maxWidth: 720, alignSelf: "center", gap: 12 },

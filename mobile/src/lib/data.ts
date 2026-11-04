@@ -80,14 +80,25 @@ export const useRules = () => useCached("breedingRules", fetchRules).data;
 /** Owners, managers and workers enter records; vets see them (their changes go through the farm's approval on the website). */
 export const isStaff = (role: string | undefined) => role === "owner" || role === "manager" || role === "worker";
 
-export type SaleRow = { id: string; sale_date: string; product: string; quantity: number; unit: string; amount: number; paid_amount: number; buyer_id: string | null; cattle_id: string | null };
+export type SaleRow = {
+  id: string;
+  sale_date: string;
+  product: string;
+  quantity: number;
+  unit: string;
+  unit_price?: number | null;
+  amount: number;
+  paid_amount: number;
+  buyer_id: string | null;
+  cattle_id: string | null;
+};
 export type PaymentRow = { id: string; pay_date: string; amount: number; method: string; buyer_id: string };
 
 /** The latest sales (and payments, for one buyer). */
 export async function fetchSales(farmId: string, buyerId?: string) {
   let sales = supabase
     .from("sales")
-    .select("id, sale_date, product, quantity, unit, amount, paid_amount, buyer_id, cattle_id")
+    .select("id, sale_date, product, quantity, unit, unit_price, amount, paid_amount, buyer_id, cattle_id")
     .eq("farm_id", farmId)
     .order("sale_date", { ascending: false })
     .order("created_at", { ascending: false })
@@ -102,6 +113,17 @@ export async function fetchSales(farmId: string, buyerId?: string) {
       : Promise.resolve([] as PaymentRow[]),
   ]);
   return { sales: s, payments: p };
+}
+
+/** Every sale and payment of one buyer up to a day (for a month's bill: earlier ones give what was owed when it began). */
+export async function fetchBuyerUntil(farmId: string, buyerId: string, to: string) {
+  const [sales, payments] = await Promise.all([
+    rows<SaleRow>(
+      supabase.from("sales").select("id, sale_date, product, quantity, unit, unit_price, amount, paid_amount, buyer_id, cattle_id").eq("farm_id", farmId).eq("buyer_id", buyerId).lte("sale_date", to).order("sale_date").limit(10000),
+    ),
+    rows<PaymentRow>(supabase.from("buyer_payments").select("id, pay_date, amount, method, buyer_id").eq("farm_id", farmId).eq("buyer_id", buyerId).lte("pay_date", to).order("pay_date").limit(10000)),
+  ]);
+  return { sales, payments };
 }
 
 /** Money in and out (the website's ledger: sales, costs, medicine, salaries…) between two dates. */

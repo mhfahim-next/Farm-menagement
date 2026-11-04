@@ -30,6 +30,7 @@ export async function SiteFooter() {
         { href: "/blog", label: t("blog.nav") },
         { href: "/farm-management-software", label: t("footer.guide") },
         { href: "/community", label: t("community.nav") },
+        { href: "/diseases", label: t("nav.diseases") },
         { href: "/#reviews", label: t("footer.reviews") },
       ],
     },

@@ -2,15 +2,29 @@ import { useState } from "react";
 import { Button, Dialog, IconButton, Menu, Portal, Text } from "react-native-paper";
 import { usePrefs } from "@/lib/prefs";
 
-/** "⋮" on a saved record: Edit and/or Delete (with a confirmation). */
-export function RecordMenu({ onEdit, onDelete, testID }: { onEdit?: () => void; onDelete?: () => Promise<void> | void; testID?: string }) {
+export type MenuExtra = { icon: string; title: string; onPress: () => void; testID?: string };
+
+/** "⋮" on a saved record: Edit and/or Delete (with a confirmation), plus any extra actions. */
+export function RecordMenu({ onEdit, onDelete, extras, testID }: { onEdit?: () => void; onDelete?: () => Promise<void> | void; extras?: MenuExtra[]; testID?: string }) {
   const { t } = usePrefs();
   const [open, setOpen] = useState(false);
   const [confirm, setConfirm] = useState(false);
-  if (!onEdit && !onDelete) return null;
+  if (!onEdit && !onDelete && !extras?.length) return null;
   return (
     <>
       <Menu visible={open} onDismiss={() => setOpen(false)} anchor={<IconButton icon="dots-vertical" onPress={() => setOpen(true)} accessibilityLabel={t("rec.more")} testID={testID} />}>
+        {extras?.map((x) => (
+          <Menu.Item
+            key={x.title}
+            leadingIcon={x.icon}
+            title={x.title}
+            onPress={() => {
+              setOpen(false);
+              x.onPress();
+            }}
+            testID={x.testID}
+          />
+        ))}
         {onEdit && (
           <Menu.Item
             leadingIcon="pencil-outline"

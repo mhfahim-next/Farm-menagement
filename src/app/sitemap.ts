@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { DISEASES } from "@/lib/diseases";
 import { createPublicClient } from "@/lib/supabase/public";
 import { SITE_URL } from "@/lib/site";
 import { TOOLS } from "@/lib/tool-list";
@@ -17,6 +18,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/changelog`, lastModified: now, changeFrequency: "weekly", priority: 0.5 },
     { url: `${SITE_URL}/community`, lastModified: now, changeFrequency: "daily", priority: 0.8 },
     { url: `${SITE_URL}/tools`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${SITE_URL}/diseases`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },
+    ...DISEASES.map((d) => ({ url: `${SITE_URL}/diseases/${d.slug}`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.7 })),
     ...TOOLS.map((tool) => ({ url: `${SITE_URL}/tools/${tool.slug}`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.7 })),
     { url: `${SITE_URL}/contact`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
     { url: `${SITE_URL}/terms`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },

@@ -255,5 +255,67 @@ begin
   if has_function_privilege('authenticated', 'public.delete_account_now(uuid, text)', 'execute') then raise exception 'people can call delete_account_now'; end if;
   if exists (select 1 from pg_proc where proname = 'delete_my_account') then raise exception 'the instant delete is still there'; end if;
 end $$;
+-- 5. Find a vet: only verified, listed doctors; phone only when they chose to show it;
+--    never their email; inviting one needs owner/manager and creates a normal vet invite.
+reset role;
+insert into auth.users (id, instance_id, aud, role, email, raw_user_meta_data, created_at, updated_at) values
+  ('00000000-0000-4000-8000-0000000000d1', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'ci-vet1@example.com', '{"account_type":"doctor","doctor_reg_no":"BVC-1"}', now(), now()),
+  ('00000000-0000-4000-8000-0000000000d2', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'ci-vet2@example.com', '{"account_type":"doctor","doctor_reg_no":"BVC-2"}', now(), now()),
+  ('00000000-0000-4000-8000-0000000000d3', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'ci-vet3@example.com', '{"account_type":"doctor","doctor_reg_no":"BVC-3"}', now(), now());
+update public.profiles set full_name = 'Dr One', phone = '01711111111', doctor_verified = true, doctor_district = 'gazipur', doctor_area = 'Sreepur', doctor_show_phone = true where id = '00000000-0000-4000-8000-0000000000d1';
+update public.profiles set full_name = 'Dr Two', phone = '01722222222', doctor_verified = true, doctor_district = 'dhaka' where id = '00000000-0000-4000-8000-0000000000d2';
+update public.profiles set full_name = 'Dr Three', doctor_verified = false, doctor_district = 'gazipur' where id = '00000000-0000-4000-8000-0000000000d3';
+\o /dev/null
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-0000000000c1","role":"authenticated","email":"ci-farmer@example.com"}', true);
+\o
+set local role authenticated;
+do $$
+declare v_farm uuid; v_names text; v_phone2 text; v_res text;
+begin
+  select string_agg(full_name, ',' order by full_name) into v_names from public.find_doctors('gazipur', null, false, 100) where full_name like 'Dr %' and full_name not like 'Dr. %';
+  if v_names <> 'Dr One,Dr Two' then raise exception 'doctor list wrong: %', v_names; end if;
+  if exists (select 1 from (select full_name, row_number() over () n from public.find_doctors('gazipur', null, false, 100)) x where x.full_name = 'Dr Two' and x.n < (select n from (select full_name, row_number() over () n from public.find_doctors('gazipur', null, false, 100)) y where y.full_name = 'Dr One')) then raise exception 'own district not first'; end if;
+  if exists (select 1 from public.find_doctors('gazipur', null, true, 100) where district <> 'gazipur') or not exists (select 1 from public.find_doctors('gazipur', null, true, 100) where full_name = 'Dr One') then raise exception 'only-district filter wrong'; end if;
+  select phone into v_phone2 from public.find_doctors(null, 'Dr Two', false, 50);
+  if v_phone2 is not null then raise exception 'a hidden phone number was shown'; end if;
+  if (select phone from public.find_doctors(null, 'Sreepur', false, 100) where full_name = 'Dr One') is distinct from '01711111111' then raise exception 'search by area / shown phone failed'; end if;
+  select id into v_farm from public.farms where name = 'CI farm';
+  v_res := public.invite_listed_doctor(v_farm, '00000000-0000-4000-8000-0000000000d1');
+  if v_res <> 'invited' then raise exception 'invite result %', v_res; end if;
+  if public.invite_listed_doctor(v_farm, '00000000-0000-4000-8000-0000000000d1') <> 'pending' then raise exception 'second invite not reported as pending'; end if;
+  if not exists (select 1 from public.farm_invites where farm_id = v_farm and email = 'ci-vet1@example.com' and role = 'vet' and status = 'pending') then raise exception 'no vet invite made'; end if;
+  begin
+    perform public.invite_listed_doctor(v_farm, '00000000-0000-4000-8000-0000000000d3');
+    raise exception 'an unverified doctor could be invited';
+  exception when others then if sqlerrm not like 'DOCTOR_NOT_FOUND%' then raise; end if;
+  end;
+end $$;
+reset role;
+do $$
+begin
+  if has_function_privilege('anon', 'public.find_doctors(text, text, boolean, integer)', 'execute') then raise exception 'visitors can list doctors'; end if;
+  if has_function_privilege('anon', 'public.invite_listed_doctor(uuid, uuid)', 'execute') then raise exception 'visitors can invite doctors'; end if;
+end $$;
+-- A doctor (no farm of their own) can't browse other doctors, and a worker can't invite.
+\o /dev/null
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-0000000000d2","role":"authenticated"}', true);
+\o
+set local role authenticated;
+do $$
+declare v_ok boolean := false;
+begin
+  begin
+    perform public.find_doctors(null, null, false, 50);
+  exception when insufficient_privilege then v_ok := true;
+  end;
+  if not v_ok then raise exception 'a doctor could browse the doctor list'; end if;
+  v_ok := false;
+  begin
+    perform public.invite_listed_doctor((select id from public.farms limit 1), '00000000-0000-4000-8000-0000000000d1');
+  exception when insufficient_privilege then v_ok := true;
+  end;
+  if not v_ok then raise exception 'a non-member could invite to a farm'; end if;
+end $$;
+reset role;
 rollback;
 \echo 'database checks passed'

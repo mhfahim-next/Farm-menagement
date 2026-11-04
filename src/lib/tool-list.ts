@@ -3,6 +3,7 @@ import type { MessageKey } from "@/lib/i18n/core";
 /** The farm tools: one page each, public at /tools/<slug> and in the dashboard at /dashboard/tools/<slug>. */
 export const TOOLS = [
   { slug: "cattle-weight", key: "weight", icon: "📏" },
+  { slug: "least-cost-ration", key: "lcr", icon: "🧮" },
   { slug: "feed-ration", key: "ration", icon: "🌾" },
   { slug: "poultry-feed", key: "poultry", icon: "🐔" },
   { slug: "calving-date", key: "preg", icon: "📅" },
