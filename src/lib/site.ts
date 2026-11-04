@@ -23,6 +23,15 @@ export const SITE_NAME = "FarmFlows";
  * The site's share image (src/app/opengraph-image.tsx). A page that sets its own
  * openGraph replaces the inherited one, image included, so it adds this back.
  */
+/** Who runs FarmFlows, for the Organization structured data. */
+export const ORGANIZATION = {
+  sameAs: ["https://www.facebook.com/farmflows"],
+  email: "support@farmflows.app",
+  phone: "+880 1768-850989",
+  locality: "Netrokona",
+  country: "BD",
+} as const;
+
 export const DEFAULT_OG_IMAGE = { url: "/opengraph-image", width: 1200, height: 630, alt: "FarmFlows — dairy, cattle and layer farm management" };
 
 /**

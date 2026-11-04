@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { BlogCards, CategoryChips } from "@/components/blog-list";
+import { JsonLd } from "@/components/json-ld";
 import { PublicFooter, PublicHeader } from "@/components/public-header";
 import { ScrollProgress } from "@/components/velora/scroll-progress";
 import { getBlogCategories, getPublishedPosts } from "@/lib/blog-data";
 import { getI18n } from "@/lib/i18n/server";
-import { langAlternates } from "@/lib/site";
+import { localized, modifiedAt } from "@/lib/blog";
+import { langAlternates, SITE_NAME, SITE_URL } from "@/lib/site";
 
 export async function generateMetadata({ searchParams }: PageProps<"/blog">): Promise<Metadata> {
   const { t, locale } = await getI18n();
@@ -25,8 +27,27 @@ export default async function BlogIndexPage({ searchParams }: PageProps<"/blog">
   const q = typeof rawQ === "string" ? rawQ.trim() : "";
   const [posts, categories] = await Promise.all([getPublishedPosts({ q }), getBlogCategories()]);
 
+  const { locale } = i18n;
   return (
     <div className="flex flex-1 flex-col">
+      {!q && (
+        <JsonLd
+          data={{
+            "@context": "https://schema.org",
+            "@type": ["Blog", "CollectionPage"],
+            "@id": `${SITE_URL}/blog#blog`,
+            name: t("blog.metaTitle"),
+            description: t("blog.desc"),
+            url: `${SITE_URL}/blog`,
+            inLanguage: locale,
+            publisher: { "@type": "Organization", "@id": `${SITE_URL}/#organization`, name: SITE_NAME, url: SITE_URL },
+            blogPost: posts.slice(0, 30).map((p) => {
+              const v = localized(p, locale);
+              return { "@type": "BlogPosting", headline: v.title, url: `${SITE_URL}/blog/${p.slug}`, datePublished: p.published_at ?? p.created_at, dateModified: modifiedAt(p) };
+            }),
+          }}
+        />
+      )}
       <ScrollProgress />
       <PublicHeader />
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-10 sm:py-14">
