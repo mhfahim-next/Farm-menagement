@@ -222,4 +222,5 @@ export const tools = {
   "tguide.read": "পুরো গাইড পড়ুন",
   "tguide.tryTitle": "ফ্রি টুল দিয়ে হিসাব করুন",
   "tguide.tryOpen": "টুল খুলুন",
+  "tools.metaExtra": "বাংলা ও ইংরেজিতে, যেকোনো ফোনে চলে এমন FarmFlows-এর বিনামূল্যের ক্যালকুলেটর।",
 } as const;

@@ -61,6 +61,14 @@ export default async function EditBlogPostPage({ params }: PageProps<"/admin/blo
             <Input name="author_name" defaultValue={post.author_name ?? ""} maxLength={100} />
           </Field>
           <div className="grid gap-3 sm:grid-cols-2">
+            <Field label={t("admin.blog.authorJobTitle")}>
+              <Input name="author_job_title" defaultValue={post.author_job_title ?? ""} maxLength={120} data-testid="credits-author-job" />
+            </Field>
+            <Field label={t("admin.blog.authorUrl")} hint={t("admin.blog.authorUrlHint")}>
+              <Input type="url" name="author_url" defaultValue={post.author_url ?? ""} maxLength={300} placeholder="https://" data-testid="credits-author-url" />
+            </Field>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
             <Field label={t("admin.blog.reviewerName")} hint={t("admin.blog.reviewerHint")}>
               <Input name="reviewer_name" defaultValue={post.reviewer_name ?? ""} maxLength={100} data-testid="credits-reviewer" />
             </Field>

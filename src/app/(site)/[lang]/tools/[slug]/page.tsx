@@ -9,7 +9,7 @@ import { ButtonLink } from "@/components/ui";
 import { ForViewer } from "@/components/viewer";
 import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
-import { DEFAULT_OG_IMAGE, langAlternates, SITE_NAME, SITE_URL, siteUrl } from "@/lib/site";
+import { DEFAULT_OG_IMAGE, fitDescription, langAlternates, SITE_NAME, SITE_URL, siteUrl } from "@/lib/site";
 import { TOOL_GUIDES } from "@/lib/tool-guides";
 import { TOOLS, toolBySlug, toolName, toolShort } from "@/lib/tool-list";
 import { getToolParams } from "@/lib/tool-params";
@@ -29,7 +29,8 @@ export async function generateMetadata({ params }: PageProps<"/[lang]/tools/[slu
   const path = `/tools/${tool.slug}`;
   return {
     title: t(toolName(tool.key)),
-    description: `${t(toolShort(tool.key))}. ${t("tools.desc")}`,
+    // 120–155 characters: what the tool does, then one line about FarmFlows' calculators.
+    description: fitDescription(t(toolShort(tool.key)), t("tools.metaExtra")),
     alternates: langAlternates(path, locale),
     openGraph: { title: t(toolName(tool.key)), description: t(toolShort(tool.key)), url: path, images: [DEFAULT_OG_IMAGE] },
   };

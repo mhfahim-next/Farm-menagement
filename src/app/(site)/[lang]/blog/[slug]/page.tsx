@@ -127,7 +127,15 @@ export default async function BlogPostPage({ params }: PageProps<"/[lang]/blog/[
             keywords: post.tags.map((x) => pickLang(x.tag, "name", locale)).join(", ") || undefined,
             wordCount: v.body.split(/\s+/).filter(Boolean).length,
             timeRequired: `PT${minutes}M`,
-            author: post.author_name ? { "@type": "Person", name: post.author_name } : { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
+            // A named author is a Person (with job title and profile when known); otherwise the FarmFlows team.
+            author: post.author_name
+              ? {
+                  "@type": "Person",
+                  name: post.author_name,
+                  ...(post.author_job_title ? { jobTitle: post.author_job_title } : {}),
+                  ...(post.author_url ? { url: post.author_url, sameAs: [post.author_url] } : {}),
+                }
+              : { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
             ...(post.reviewer_name
               ? { reviewedBy: { "@type": "Person", name: post.reviewer_name, ...(post.reviewer_credentials ? { description: post.reviewer_credentials } : {}) }, ...(post.reviewed_on ? { lastReviewed: post.reviewed_on } : {}) }
               : {}),
@@ -148,7 +156,17 @@ export default async function BlogPostPage({ params }: PageProps<"/[lang]/blog/[
           </p>
           {(post.health_topic || post.author_name) && (
             <p className="mt-2 text-sm text-stone-600" data-testid="blog-byline">
-              {t("blog.writtenBy", { name: post.author_name || t("blog.team") })}
+              {post.author_name && post.author_url ? (
+                <>
+                  {t("blog.writtenByLabel")}{" "}
+                  <a href={post.author_url} rel="author noopener" target="_blank" className="font-medium text-stone-800 underline-offset-2 hover:underline" data-testid="blog-author">
+                    {post.author_name}
+                  </a>
+                </>
+              ) : (
+                t("blog.writtenBy", { name: post.author_name || t("blog.team") })
+              )}
+              {post.author_name && post.author_job_title ? `, ${post.author_job_title}` : ""}
               {post.reviewer_name && (
                 <span className="block font-medium text-emerald-800" data-testid="blog-reviewer">
                   ✓{" "}

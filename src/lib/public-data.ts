@@ -65,6 +65,8 @@ export type PublicReview = {
   body: string;
   lang: "bn" | "en";
   approved_at: string | null;
+  /** The founder's own review: labelled, and not counted as a customer rating. */
+  is_founder?: boolean;
 };
 
 export const getSitePage = unstable_cache(
@@ -91,14 +93,14 @@ export const getApprovedReviews = unstable_cache(
   async (): Promise<PublicReview[]> => {
     const { data, error } = await createPublicClient()
       .from("reviews")
-      .select("id, name, role, rating, body, lang, approved_at")
+      .select("id, name, role, rating, body, lang, approved_at, is_founder")
       .eq("status", "approved")
       .order("approved_at", { ascending: false })
       .limit(40);
     if (error) throw new Error(error.message);
     return (data ?? []) as PublicReview[];
   },
-  ["reviews-v1"],
+  ["reviews-v2"],
   { tags: [REVIEWS_TAG], revalidate: 3600 },
 );
 

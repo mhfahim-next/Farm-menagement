@@ -306,4 +306,5 @@ export const farmops: Record<keyof typeof en, string> = {
   "health.confirmDelete": "এই স্বাস্থ্যের রেকর্ড মুছবেন? এটা আর ফেরানো যাবে না।",
   "breeding.deleted": "প্রজননের রেকর্ড মুছে ফেলা হয়েছে।",
   "breeding.confirmDelete": "এই প্রজননের রেকর্ড মুছবেন? আগে খামারে যোগ করা বাছুর থেকে যাবে। এটা আর ফেরানো যাবে না।",
+  "reviews.founder": "প্রতিষ্ঠাতা, FarmFlows",
 };
