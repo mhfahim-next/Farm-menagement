@@ -705,7 +705,6 @@ export const CLIENT_KEYS: readonly string[] = [
   "rem.vaccine",
   "review.rating",
   "review.stars",
-  "reviews.founder",
   "reviews.kicker",
   "reviews.none",
   "reviews.summary",

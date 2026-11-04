@@ -307,5 +307,4 @@ export const farmops = {
   "health.confirmDelete": "Delete this health record? This cannot be undone.",
   "breeding.deleted": "Breeding record deleted.",
   "breeding.confirmDelete": "Delete this breeding record? A calf already added to the herd stays. This cannot be undone.",
-  "reviews.founder": "Founder, FarmFlows",
 } as const;

@@ -1,8 +1,10 @@
 import Link from "@/components/local-link";
 import { Stars } from "@/components/star-input";
 import { BlurFade } from "@/components/velora/blur-fade";
+import { Marquee } from "@/components/velora/marquee";
 import type { I18n } from "@/lib/i18n/core";
 import type { PublicReview } from "@/lib/public-data";
+import { cn } from "@/lib/utils";
 
 const initials = (name: string) =>
   name
@@ -27,14 +29,7 @@ function ReviewCard({ r, t }: { r: PublicReview; t: I18n["t"] }) {
           {initials(r.name)}
         </span>
         <div className="min-w-0 text-sm">
-          <div className="flex min-w-0 items-center gap-2">
-            <span className="truncate font-semibold text-stone-900">{r.name}</span>
-            {r.is_founder && (
-              <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-900" data-testid="review-founder">
-                {t("reviews.founder")}
-              </span>
-            )}
-          </div>
+          <div className="truncate font-semibold text-stone-900">{r.name}</div>
           {r.role && <div className="truncate text-stone-500">{r.role}</div>}
         </div>
       </figcaption>
@@ -42,14 +37,11 @@ function ReviewCard({ r, t }: { r: PublicReview; t: I18n["t"] }) {
   );
 }
 
-/**
- * Approved reviews, each exactly once in the page (no repeated copies for an
- * animation): a row that scrolls sideways on small screens. The founder's own
- * review carries a "Founder" label and is left out of the customer rating.
- */
+/** Velora "testimonials-marquee": approved customer reviews in two rows drifting in opposite directions. */
 export function ReviewsSection({ reviews, t }: { reviews: PublicReview[]; t: I18n["t"] }) {
-  const customers = reviews.filter((r) => !r.is_founder);
-  const avg = customers.reduce((s, r) => s + r.rating, 0) / Math.max(1, customers.length);
+  const half = Math.ceil(reviews.length / 2);
+  const rows = reviews.length >= 4 ? [reviews.slice(0, half), reviews.slice(half)] : [reviews];
+  const avg = reviews.reduce((s, r) => s + r.rating, 0) / Math.max(1, reviews.length);
 
   return (
     <section id="reviews" className="relative isolate scroll-mt-20 overflow-hidden py-20">
@@ -58,28 +50,33 @@ export function ReviewsSection({ reviews, t }: { reviews: PublicReview[]; t: I18
         <BlurFade>
           <p className="text-sm font-semibold text-emerald-700">{t("reviews.kicker")}</p>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-balance sm:text-4xl">{t("reviews.title")}</h2>
-          {customers.length > 0 ? (
+          {reviews.length > 0 ? (
             <p className="mx-auto mt-4 flex items-center justify-center gap-2 text-stone-600">
               <Stars rating={Math.round(avg)} label={t("review.stars", { n: Math.round(avg) })} />
-              {t("reviews.summary", { avg: avg.toFixed(1), n: customers.length })}
+              {t("reviews.summary", { avg: avg.toFixed(1), n: reviews.length })}
             </p>
-          ) : reviews.length > 0 ? null : (
+          ) : (
             <p className="mx-auto mt-4 max-w-xl text-stone-600">{t("reviews.none")}</p>
           )}
         </BlurFade>
       </div>
 
       {reviews.length > 0 && (
-        <ul
-          className="mx-auto mt-12 flex max-w-6xl snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-4 [scrollbar-width:thin] lg:flex-wrap lg:justify-center lg:overflow-visible"
-          data-testid="reviews-list"
-        >
-          {reviews.map((r) => (
-            <li key={r.id} className="snap-start">
-              <ReviewCard r={r} t={t} />
-            </li>
+        <div className="mt-12 flex flex-col gap-5">
+          {rows.map((row, i) => (
+            <Marquee
+              key={i}
+              pauseOnHover
+              reverse={i === 1}
+              repeat={row.length < 3 ? 4 : 2}
+              className={cn("py-1 [--gap:1.25rem]", i === 1 ? "[--duration:70s]" : "[--duration:60s]")}
+            >
+              {row.map((r) => (
+                <ReviewCard key={r.id} r={r} t={t} />
+              ))}
+            </Marquee>
           ))}
-        </ul>
+        </div>
       )}
 
       <p className="mt-10 text-center text-sm text-stone-500">
