@@ -70,3 +70,19 @@ export function localePath(href: string, locale: Locale) {
 export function rememberLocale(locale: Locale) {
   document.cookie = `locale=${locale}; path=/; max-age=31536000; samesite=lax`;
 }
+
+/** Public pages that are made per request (they read the address or the session). */
+const DYNAMIC_SITE_PAGES = new Set(["/login", "/signup", "/doctor/signup", "/community/ask", "/community/list", "/blog/search"]);
+
+/**
+ * True for pages rendered on the server for every visit: the signed-in app and
+ * a few public pages. Links to them are prefetched only when a visitor shows
+ * intent (hover, touch, focus), not whenever the link scrolls into view: a
+ * list of 100 animals would otherwise render 100 animal pages on each visit,
+ * and every page's header would render /login and /signup.
+ */
+export function isDynamicPath(href: string) {
+  if (!href.startsWith("/") || href.startsWith("//")) return false;
+  const { path } = splitLocale(pathOnly(href));
+  return !isSitePath(path) || DYNAMIC_SITE_PAGES.has(path.replace(/\/$/, "") || "/");
+}

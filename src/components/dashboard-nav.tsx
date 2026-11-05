@@ -3,7 +3,7 @@
 import Link, { useLinkStatus } from "next/link";
 import { NAV_ICONS, type NavIconName } from "./nav-icons";
 import { Spinner } from "./ui";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 export type NavItem = {
   href: string;
@@ -28,6 +28,7 @@ function PendingHint() {
 
 export function DashboardNav({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
+  const router = useRouter();
 
   return (
     <nav aria-label="Main" className="flex flex-col gap-1">
@@ -41,6 +42,11 @@ export function DashboardNav({ items }: { items: NavItem[] }) {
           <Link
             key={item.href}
             href={item.href}
+            // Menu pages are made per request: prefetch on intent, not for every item on every page view.
+            prefetch={false}
+            onMouseEnter={() => router.prefetch(item.href)}
+            onTouchStart={() => router.prefetch(item.href)}
+            onFocus={() => router.prefetch(item.href)}
             aria-current={active ? "page" : undefined}
             className={`group flex items-center gap-2.5 whitespace-nowrap rounded-lg px-3 py-2.5 text-sm font-medium transition-colors md:py-2 ${
               active

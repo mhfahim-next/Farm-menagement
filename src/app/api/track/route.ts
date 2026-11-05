@@ -41,7 +41,9 @@ export async function POST(request: NextRequest) {
   });
 
   const res = new NextResponse(null, { status: 204 });
-  if (!request.cookies.get(SEEN_COOKIE)) {
+  // Last-seen location for signed-in people only; visitors have no session cookie.
+  const hasSession = request.cookies.getAll().some((c) => c.name.startsWith("sb-") && c.name.includes("-auth-token"));
+  if (hasSession && !request.cookies.get(SEEN_COOKIE)) {
     const { data } = await supabase.auth.getUser();
     if (data.user) {
       await recordPresence(supabase, "seen");
