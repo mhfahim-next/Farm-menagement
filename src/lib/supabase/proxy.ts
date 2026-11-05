@@ -95,27 +95,29 @@ export async function updateSession(request: NextRequest) {
   };
   let response = next();
 
-  const supabase = createServerClient(SUPABASE_URL, SUPABASE_KEY, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
-      },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) =>
-          request.cookies.set(name, value),
-        );
-        response = next();
-        cookiesToSet.forEach(({ name, value, options }) =>
-          response.cookies.set(name, value, options),
-        );
-      },
-    },
-  });
+  // Visitors and search engines carry no Supabase session cookie: there is no
+  // token to refresh and nobody to check, so skip the Supabase client entirely
+  // (this proxy runs on every request, so that work added up).
+  const hasSession = request.cookies.getAll().some((c) => c.name.startsWith("sb-") && c.name.includes("-auth-token"));
+  const supabase = hasSession
+    ? createServerClient(SUPABASE_URL, SUPABASE_KEY, {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+            response = next();
+            cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+          },
+        },
+      })
+    : null;
 
   // Refreshes the auth token if needed. Do not run code between
   // createServerClient and getClaims().
-  const { data } = await supabase.auth.getClaims();
-  const isSignedIn = Boolean(data?.claims);
+  const claims = supabase ? (await supabase.auth.getClaims()).data?.claims : null;
+  const isSignedIn = Boolean(claims);
   const { pathname } = request.nextUrl;
   const page = splitLocale(pathname).path;
 
@@ -129,7 +131,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (isSignedIn && AUTH_PAGES.includes(page)) {
+  if (supabase && isSignedIn && AUTH_PAGES.includes(page)) {
     // The token's signature can stay valid after the session was revoked (e.g.
     // an admin suspended the user), so confirm with the auth server before
     // bouncing to the dashboard. Otherwise a revoked session loops forever:

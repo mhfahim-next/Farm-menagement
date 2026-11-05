@@ -1,6 +1,6 @@
 import { strict as assert } from "node:assert";
 import { test } from "node:test";
-import { isMissingFile, isSitePath, localePath, splitLocale } from "../../src/lib/i18n/paths.ts";
+import { isDynamicPath, isMissingFile, isSitePath, localePath, splitLocale } from "../../src/lib/i18n/paths.ts";
 
 test("public pages get /bn in Bangla and no prefix in English", () => {
   assert.equal(localePath("/", "bn"), "/bn");
@@ -32,4 +32,9 @@ test("splitLocale reads the language prefix only as a whole segment", () => {
 test("addresses that look like files but are not ours go to the 404 page", () => {
   for (const p of ["/xyz.a", "/abc.df", "/x.y.z", "/blog/x.y", "/community/q/a.b"]) assert.equal(isMissingFile(p), true, p);
   for (const p of ["/robots.txt", "/sitemap.xml", "/llms.txt", "/llms-full.txt", "/sw.js", "/icons/icon-192.png", "/brand/logo.svg", "/api/x.json", "/dashboard/a.b", "/blog", "/"]) assert.equal(isMissingFile(p), false, p);
+});
+
+test("pages made per request are prefetched on intent only", () => {
+  for (const p of ["/login", "/bn/signup", "/doctor/signup", "/community/ask", "/community/list?q=x", "/blog/search?q=x", "/dashboard", "/dashboard/cattle/1", "/admin"]) assert.equal(isDynamicPath(p), true, p);
+  for (const p of ["/", "/bn", "/blog", "/bn/blog/x", "/tools/cattle-weight", "/community", "/community/q/1", "https://x.org", "#a"]) assert.equal(isDynamicPath(p), false, p);
 });
