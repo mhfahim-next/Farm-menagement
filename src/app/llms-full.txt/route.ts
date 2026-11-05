@@ -75,8 +75,14 @@ export async function GET() {
     .select("slug, title_en, body_en, published, published_at, created_at, updated_at, content_updated_at")
     .eq("published", true)
     .order("published_at", { ascending: false });
-  // A failed read must not be cached as an empty file: the last good one stays.
-  if (error) throw new Error(`llms-full.txt: ${error.message}`);
+  if (error) {
+    // While serving, a failed read must not replace the cached file: the last
+    // good one stays. During `next build` without a database (CI) the build
+    // must not fail: the file is made without articles, and the first
+    // revalidation on the live site fills them in.
+    if (process.env.NEXT_PHASE !== "phase-production-build") throw new Error(`llms-full.txt: ${error.message}`);
+    console.warn(`llms-full.txt: articles left out at build time (${error.message})`);
+  }
 
   const posts = ((data ?? []) as BlogPost[]).filter((p) => p.published && p.title_en && p.body_en);
   const articles = posts.map((p) =>
