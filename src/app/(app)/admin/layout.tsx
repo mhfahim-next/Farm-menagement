@@ -29,6 +29,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
     { href: "/admin/requests", label: t("nav.adminRequests"), icon: "requests", badge: counts.requests ?? 0 },
     { href: "/admin/blog", label: t("nav.adminBlog"), icon: "blog" },
     { href: "/admin/community", label: t("nav.adminCommunity"), icon: "community" },
+    { href: "/admin/promos", label: t("nav.adminPromos"), icon: "promo" },
     { href: "/admin/reviews", label: t("nav.adminReviews"), icon: "review" },
     { href: "/admin/messages", label: t("nav.adminMessages"), icon: "messages", badge: counts.messages ?? 0 },
     { href: "/admin/reminders", label: t("nav.adminReminders"), icon: "reminders" },

@@ -7,6 +7,9 @@ import { ButtonLink } from "@/components/ui";
 import { BlogCards } from "@/components/blog-list";
 import { BLOG_IMAGE_PREFIX, coverAlt, imageUrl, localized, modifiedAt, type BlogSource, pickLang, POST_SELECT, readingMinutes, type BlogImage, type BlogPostFull } from "@/lib/blog";
 import { getRelatedPosts } from "@/lib/blog-data";
+import { PromoBox } from "@/components/promo-box";
+import { pickPromo, splitArticle } from "@/lib/promos";
+import { getPromos } from "@/lib/public-data";
 import { getI18n } from "@/lib/i18n/server";
 import { toolsForPost } from "@/lib/tool-guides";
 import { TOOLS, toolName } from "@/lib/tool-list";
@@ -80,12 +83,17 @@ export default async function BlogPostPage({ params }: PageProps<"/[lang]/blog/[
   const i18n = await getI18n();
   const { t, f, locale } = i18n;
   const v = localized(post, locale);
-  const [images, related] = await Promise.all([embeddedImages(v.body), post.published ? getRelatedPosts(post) : []]);
+  const [images, related, promos] = await Promise.all([embeddedImages(v.body), post.published ? getRelatedPosts(post) : [], getPromos()]);
   const minutes = readingMinutes(v.body);
   const sources = (Array.isArray(post.sources) ? post.sources : []).filter((s): s is BlogSource => !!s && typeof s.url === "string" && /^https?:\/\//.test(s.url));
   const tools = toolsForPost(post.slug).map((s) => TOOLS.find((x) => x.slug === s)!).filter(Boolean);
   const categoryName = post.category ? pickLang(post.category, "name", locale) : null;
   const url = siteUrl(`/blog/${post.slug}`, locale);
+  // Promo boxes: one in the middle of long articles, one at the end (instead of the plain sign-up box).
+  const promoOpts = { key: post.slug, category: post.category?.slug, health: post.health_topic };
+  const halves = splitArticle(v.body);
+  const midPromo = halves ? pickPromo(promos, "blog_mid", promoOpts) : null;
+  const endPromo = pickPromo(promos, "blog_end", { ...promoOpts, exclude: midPromo ? [midPromo.id] : [] });
 
   return (
     <div className="flex flex-1 flex-col">
@@ -196,7 +204,15 @@ export default async function BlogPostPage({ params }: PageProps<"/[lang]/blog/[
             </figure>
           )}
           <div className="mt-6 border-t border-stone-200 pt-2">
-            <Markdown source={v.body} images={images} locale={locale} />
+            {halves && midPromo ? (
+              <>
+                <Markdown source={halves[0]} images={images} locale={locale} />
+                <PromoBox promo={midPromo} locale={locale} t={t} className="my-8" />
+                <Markdown source={halves[1]} images={images} locale={locale} />
+              </>
+            ) : (
+              <Markdown source={v.body} images={images} locale={locale} />
+            )}
           </div>
           {tools.length > 0 && (
             <aside className="mt-8 rounded-xl border border-emerald-200 bg-emerald-50 p-5" data-testid="blog-tools">
@@ -243,11 +259,15 @@ export default async function BlogPostPage({ params }: PageProps<"/[lang]/blog/[
           )}
         </article>
 
-        <div className="mt-12 rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-center">
-          <p className="text-lg font-semibold text-stone-900">{t("blog.ctaTitle")}</p>
-          <p className="mt-1 text-stone-600">{t("blog.ctaBody")}</p>
-          <ButtonLink href="/signup" className="mt-4">{t("landing.startFree")}</ButtonLink>
-        </div>
+        {endPromo ? (
+          <PromoBox promo={endPromo} locale={locale} t={t} className="mt-12" />
+        ) : (
+          <div className="mt-12 rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-center">
+            <p className="text-lg font-semibold text-stone-900">{t("blog.ctaTitle")}</p>
+            <p className="mt-1 text-stone-600">{t("blog.ctaBody")}</p>
+            <ButtonLink href="/signup" className="mt-4">{t("landing.startFree")}</ButtonLink>
+          </div>
+        )}
 
         {related.length > 0 && (
           <section aria-labelledby="related" className="mt-12">

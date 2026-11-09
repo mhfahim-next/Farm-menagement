@@ -10,6 +10,10 @@ import { getI18n } from "@/lib/i18n/server";
 import { localePath } from "@/lib/i18n/paths";
 import { notFound } from "next/navigation";
 import { langAlternates, siteUrl } from "@/lib/site";
+import { PromoBox } from "@/components/promo-box";
+import { pickPromo } from "@/lib/promos";
+import { getPromos } from "@/lib/public-data";
+import { Fragment } from "react";
 
 export type ListQuery = { topic?: string; q?: string; sort?: string; page?: string | number };
 
@@ -58,7 +62,10 @@ export async function CommunityList(query: ListQuery) {
   if (query.topic && !topic) notFound();
 
   const { questions, total } = await listQuestions({ topicId: topic?.id, q, sort, page });
-  const authors = await getAuthors(questions.map((x) => x.author_id));
+  const [authors, promos] = await Promise.all([getAuthors(questions.map((x) => x.author_id)), getPromos()]);
+  // One promo box in the list, after the fifth question (or after the last when fewer).
+  const promo = questions.length ? pickPromo(promos, "community_list", { key: `${topic?.slug ?? ""}:${page}` }) : null;
+  const promoAfter = Math.min(5, questions.length) - 1;
   const topicById = new Map(topics.map((x) => [x.id, x]));
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -139,10 +146,17 @@ export async function CommunityList(query: ListQuery) {
           </div>
         ) : (
           <ul className="mt-5 grid gap-3">
-            {questions.map((x) => (
-              <li key={x.id}>
-                <QuestionCard q={x} topic={x.topic_id ? topicById.get(x.topic_id) : undefined} author={authors.get(x.author_id)} i18n={i18n} />
-              </li>
+            {questions.map((x, n) => (
+              <Fragment key={x.id}>
+                <li>
+                  <QuestionCard q={x} topic={x.topic_id ? topicById.get(x.topic_id) : undefined} author={authors.get(x.author_id)} i18n={i18n} />
+                </li>
+                {promo && n === promoAfter && (
+                  <li>
+                    <PromoBox promo={promo} locale={locale} t={t} />
+                  </li>
+                )}
+              </Fragment>
             ))}
           </ul>
         )}
