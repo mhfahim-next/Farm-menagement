@@ -3,6 +3,7 @@ import { unstable_cache } from "next/cache";
 import type { OptionRow } from "@/lib/options";
 import { createPublicClient } from "@/lib/supabase/public";
 import type { Plan } from "@/lib/plan-utils";
+import { PROMO_SELECT, type Promo } from "@/lib/promos";
 
 /**
  * Public, rarely-changing data shared by every visitor, cached across
@@ -133,3 +134,26 @@ export const getCachedToolRows = unstable_cache(
   ["tool-settings-v1"],
   { tags: [TOOLS_TAG], revalidate: 3600 },
 );
+
+export const PROMOS_TAG = "promos";
+
+/** Switched-on promo boxes (the page picks one per place and checks the dates). */
+const cachedPromos = unstable_cache(
+  async (): Promise<Promo[]> => {
+    const { data, error } = await createPublicClient().from("promos").select(PROMO_SELECT).eq("active", true);
+    if (error) throw new Error(error.message);
+    return (data ?? []) as Promo[];
+  },
+  ["promos-v1"],
+  { tags: [PROMOS_TAG], revalidate: 3600 },
+);
+
+/** Boxes are extras: if they cannot be read, the page is shown without them. */
+export async function getPromos(): Promise<Promo[]> {
+  try {
+    return await cachedPromos();
+  } catch (e) {
+    console.warn(`promos: ${(e as Error).message}`);
+    return [];
+  }
+}

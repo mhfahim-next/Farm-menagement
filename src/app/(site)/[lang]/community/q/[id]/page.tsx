@@ -17,6 +17,9 @@ import { getI18n } from "@/lib/i18n/server";
 import { localePath } from "@/lib/i18n/paths";
 import { DEFAULT_OG_IMAGE, fitDescription, langAlternates, SITE_URL, siteUrl } from "@/lib/site";
 import { postAnswer, setBestAnswer } from "../../actions";
+import { PromoBox } from "@/components/promo-box";
+import { pickPromo } from "@/lib/promos";
+import { getPromos } from "@/lib/public-data";
 
 const UUID = /^[0-9a-f-]{36}$/i;
 
@@ -76,7 +79,8 @@ export default async function QuestionPage({ params }: PageProps<"/[lang]/commun
   const { question: q } = data;
   const i18n = await getI18n();
   const { t, f, locale } = i18n;
-  const topics = await getTopics();
+  const [topics, promos] = await Promise.all([getTopics(), getPromos()]);
+  const promo = pickPromo(promos, "community_question", { key: q.id });
 
   // Best answer first, then vets, then the most helpful, then oldest.
   const authors = await getAuthors([q.author_id, ...data.answers.map((a) => a.author_id)]);
@@ -217,6 +221,8 @@ export default async function QuestionPage({ params }: PageProps<"/[lang]/commun
             })}
           </ol>
         </section>
+
+        {promo && <PromoBox promo={promo} locale={locale} t={t} className="mt-10" />}
 
         <section aria-labelledby="your-answer" className="mt-10">
           <h2 id="your-answer" className="text-lg font-bold text-stone-900">{t("community.yourAnswer")}</h2>
