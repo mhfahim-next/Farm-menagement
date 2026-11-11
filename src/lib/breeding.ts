@@ -172,8 +172,10 @@ export function reproStatus(
     daysSinceCalving !== null &&
     daysSinceCalving > rules.voluntaryWaitDays;
 
-  // Goats and sheep are not dried off (dryOffDays = 0).
-  const dryOffDue = expectedCalving && rules.dryOffDays > 0 ? addDays(expectedCalving, -rules.dryOffDays) : null;
+  // Goats and sheep are not dried off (dryOffDays = 0). Once she has been
+  // dried off in this pregnancy there is nothing left to remind about.
+  const driedOff = !!lastInsem && cycle.some((e) => e.event_type === "dry_off" && e.event_date >= lastInsem.event_date);
+  const dryOffDue = expectedCalving && rules.dryOffDays > 0 && !driedOff ? addDays(expectedCalving, -rules.dryOffDays) : null;
 
   return {
     state,
