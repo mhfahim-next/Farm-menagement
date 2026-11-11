@@ -25,6 +25,21 @@ test("gestation and heat cycle by species; goats and sheep are not dried off", (
   assert.equal(cow.dryOffDue, addDays("2026-10-01", 283 - 60));
 });
 
+test("no dry-off reminder once she has been dried off in this pregnancy", () => {
+  const events = [
+    { event_type: "insemination" as const, event_date: "2026-01-10", result: null, expected_calving_date: null },
+    { event_type: "pregnancy_check" as const, event_date: "2026-02-25", result: "positive", expected_calving_date: null },
+  ];
+  const due = addDays("2026-01-10", 283 - 60);
+  assert.equal(reproStatus(events, "2026-09-01").dryOffDue, due);
+  const dried = [...events, { event_type: "dry_off" as const, event_date: due, result: null, expected_calving_date: null }];
+  assert.equal(reproStatus(dried, "2026-09-01").dryOffDue, null);
+  assert.equal(reproStatus(dried, "2026-09-01").state, "pregnant");
+  // A dry-off from an earlier pregnancy does not count.
+  const old = [{ event_type: "dry_off" as const, event_date: "2025-11-01", result: null, expected_calving_date: null }, ...events];
+  assert.equal(reproStatus(old, "2026-09-01").dryOffDue, due);
+});
+
 test("farm kinds decide pages and money sections", () => {
   const f = { has_dairy: false, has_layer: false, has_goat: true, has_broiler: true };
   assert.equal(keepsAnimals(f), true);
