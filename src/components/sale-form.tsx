@@ -7,6 +7,7 @@ import { eggCount, PRODUCT_DEFAULTS, PRODUCTS, SALE_UNITS, type Product, type Sa
 import { ActionForm } from "./action-form";
 import { useI18n } from "./i18n-provider";
 import { Field, Input, Select } from "./ui";
+import { DateInput } from "@/components/date-input";
 
 type BuyerOpt = { id: string; name: string; milk_rate: number | null; egg_rate: number | null; due: number };
 
@@ -82,7 +83,7 @@ export function SaleForm({
           />
         </Field>
         <Field label={t("common.date")}>
-          <Input name="sale_date" type="date" defaultValue={today} max={today} required />
+          <DateInput name="sale_date" defaultValue={today} max={today} required />
         </Field>
       </div>
 

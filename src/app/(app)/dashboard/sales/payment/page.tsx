@@ -6,6 +6,7 @@ import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import { PAY_METHODS } from "@/lib/trade";
 import { addPayment } from "../actions";
+import { DateInput } from "@/components/date-input";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -52,7 +53,7 @@ export default async function PaymentPage({ searchParams }: PageProps<"/dashboar
                 <Input name="amount" type="number" min="0.01" step="0.01" inputMode="decimal" required />
               </Field>
               <Field label={t("common.date")}>
-                <Input name="pay_date" type="date" defaultValue={today()} max={today()} required />
+                <DateInput name="pay_date" defaultValue={today()} max={today()} required />
               </Field>
             </div>
             <Field label={t("sales.method")}>

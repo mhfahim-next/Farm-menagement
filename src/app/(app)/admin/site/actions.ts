@@ -7,6 +7,7 @@ import { getI18n } from "@/lib/i18n/server";
 import { REVIEWS_TAG, SITE_TAG } from "@/lib/public-data";
 import type { ActionState } from "@/lib/types";
 import { revalidateSite } from "@/lib/revalidate-site";
+import { youtubeId } from "@/lib/youtube";
 
 /** Raw text (keeps line breaks and leading spaces, unlike str()). */
 const text = (fd: FormData, key: string) => {
@@ -81,4 +82,26 @@ export async function deleteReview(_: ActionState, formData: FormData): Promise<
   revalidatePath("/admin", "layout");
   revalidateSite("/");
   return { success: t("admin.actionDone") };
+}
+
+export async function saveHomeVideo(_: ActionState, formData: FormData): Promise<ActionState> {
+  const { supabase } = await requireSuperAdmin();
+  const { t } = await getI18n();
+  const link = str(formData, "youtube") ?? "";
+  const id = link ? youtubeId(link) : null;
+  if (link && !id) return { error: t("video.err.link") };
+  const { error } = await supabase.rpc("admin_save_home_video", {
+    p_slug: str(formData, "slug"),
+    p_label_en: str(formData, "label_en") ?? "",
+    p_label_bn: str(formData, "label_bn") ?? "",
+    p_title_en: str(formData, "title_en") ?? "",
+    p_title_bn: str(formData, "title_bn") ?? "",
+    p_youtube_id: id ?? "",
+    p_active: formData.get("active") === "on",
+  });
+  if (error) return { error: error.code === "23514" ? t("video.err.text") : error.message };
+  revalidateTag(SITE_TAG, { expire: 0 });
+  revalidateSite("/");
+  revalidatePath("/admin/site");
+  return { success: t("video.saved") };
 }

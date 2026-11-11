@@ -11,6 +11,7 @@ import { getI18n } from "@/lib/i18n/server";
 import { daysInMonth, isMonth, payroll, workDaysSoFar, type AttendanceStatus } from "@/lib/staff";
 import { addStaffPayment, deleteStaffPayment, updateStaff } from "../actions";
 import { moduleChoices } from "../module-choices";
+import { DateInput } from "@/components/date-input";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -136,7 +137,7 @@ export default async function StaffDetailPage({ params, searchParams }: PageProp
                   <Input name="pay_month" type="month" defaultValue={month} required />
                 </Field>
                 <Field label={t("staff.colPaidOn")}>
-                  <Input name="paid_on" type="date" defaultValue={today()} max={today()} />
+                  <DateInput name="paid_on" defaultValue={today()} max={today()} />
                 </Field>
               </div>
               <Field label={t("common.notes")}>

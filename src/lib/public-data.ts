@@ -157,3 +157,29 @@ export async function getPromos(): Promise<Promo[]> {
     return [];
   }
 }
+
+export type HomeVideo = {
+  slug: string;
+  label_en: string;
+  label_bn: string;
+  title_en: string;
+  title_bn: string;
+  youtube_id: string;
+  sort_order: number;
+};
+
+/** The home page's demo videos that have a YouTube link and are switched on. */
+export const getHomeVideos = unstable_cache(
+  async (): Promise<HomeVideo[]> => {
+    const { data, error } = await createPublicClient()
+      .from("home_videos")
+      .select("slug, label_en, label_bn, title_en, title_bn, youtube_id, sort_order")
+      .eq("active", true)
+      .not("youtube_id", "is", null)
+      .order("sort_order");
+    if (error) throw new Error(error.message);
+    return (data ?? []) as HomeVideo[];
+  },
+  ["home-videos-v1"],
+  { tags: [SITE_TAG], revalidate: 3600 },
+);

@@ -8,6 +8,7 @@ import type { I18n } from "@/lib/i18n/core";
 import { getI18n } from "@/lib/i18n/server";
 import { PLACEMENTS, todayBd, type Promo } from "@/lib/promos";
 import { deletePromo, savePromo, setPromoActive } from "./actions";
+import { DateInput } from "@/components/date-input";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -69,10 +70,10 @@ function PromoForm({ p, categories, images, i18n }: { p?: Row; categories: Categ
           />
         </Field>
         <Field label={t("promo.starts")} hint={t("promo.datesHint")}>
-          <Input name="starts_on" type="date" defaultValue={p?.starts_on ?? ""} />
+          <DateInput name="starts_on" defaultValue={p?.starts_on ?? ""} />
         </Field>
         <Field label={t("promo.ends")}>
-          <Input name="ends_on" type="date" defaultValue={p?.ends_on ?? ""} />
+          <DateInput name="ends_on" defaultValue={p?.ends_on ?? ""} />
         </Field>
         <Field label={t("promo.priority")} hint={t("promo.priorityHint")}>
           <Input name="priority" type="number" min={-100} max={100} step={1} defaultValue={p?.priority ?? 0} />

@@ -6,6 +6,7 @@ import type { ActionState, FlockHealthRecord, HealthRecordType } from "@/lib/typ
 import { ActionForm } from "./action-form";
 import { useI18n } from "./i18n-provider";
 import { Field, Input, Select } from "./ui";
+import { DateInput } from "@/components/date-input";
 
 export type PickerFlock = { id: string; label: string };
 
@@ -104,7 +105,7 @@ export function FlockHealthForm({
           <Select name="record_type" value={type} onChange={(ev) => setType(ev.target.value as HealthRecordType)} options={options("health_type")} />
         </Field>
         <Field label={t("health.dateGiven")}>
-          <Input name="record_date" type="date" value={date} max={today} onChange={(ev) => setDate(ev.target.value)} required />
+          <DateInput name="record_date" value={date} max={today} onChange={setDate} required />
         </Field>
       </div>
 
@@ -133,7 +134,7 @@ export function FlockHealthForm({
 
       {(type === "treatment" || type === "parasite_control") && (
         <Field label={t("flockHealth.withdrawalUntil")} hint={t("flockHealth.withdrawalHint")}>
-          <Input name="withdrawal_until" type="date" defaultValue={record?.withdrawal_until ?? ""} />
+          <DateInput name="withdrawal_until" defaultValue={record?.withdrawal_until ?? ""} />
         </Field>
       )}
 

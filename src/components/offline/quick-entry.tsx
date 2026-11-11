@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { ActionForm, type OfflineOptions } from "@/components/action-form";
 import { useI18n } from "@/components/i18n-provider";
 import { Card, EmptyState, Field, Input, Select, Table, Td } from "@/components/ui";
@@ -8,6 +8,7 @@ import { today } from "@/lib/format";
 import { removeEntry, type OutboxKind } from "@/lib/offline/outbox";
 import { OUTBOX_ACTIONS } from "./actions";
 import { useOnline, useOutbox } from "./offline-sync";
+import { DateInput } from "@/components/date-input";
 
 export type QuickData = {
   farmId: string;
@@ -31,17 +32,17 @@ export type QuickData = {
  * so "today" is worked out on the phone rather than taken from the page.
  */
 function DateField({ name, label, serverToday }: { name: string; label: string; serverToday: string }) {
-  const ref = useRef<HTMLInputElement>(null);
   const [max, setMax] = useState(serverToday);
+  const [value, setValue] = useState(serverToday);
   useEffect(() => {
     const now = today();
     // eslint-disable-next-line react-hooks/set-state-in-effect -- the phone's date is only known after mount
     setMax(now);
-    if (ref.current && ref.current.value === serverToday) ref.current.value = now;
+    setValue((v) => (v === serverToday ? now : v));
   }, [serverToday]);
   return (
     <Field label={label}>
-      <Input ref={ref} name={name} type="date" defaultValue={serverToday} max={max} required />
+      <DateInput name={name} value={value} onChange={setValue} max={max} required />
     </Field>
   );
 }

@@ -8,6 +8,7 @@ import { requireSuperAdmin } from "@/lib/auth";
 import type { BlogCategory, BlogImage, BlogPost, BlogTag } from "@/lib/blog";
 import { getI18n } from "@/lib/i18n/server";
 import { saveBlogCredits, updateBlogPost } from "../actions";
+import { DateInput } from "@/components/date-input";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -77,7 +78,7 @@ export default async function EditBlogPostPage({ params }: PageProps<"/admin/blo
             </Field>
           </div>
           <Field label={t("admin.blog.reviewedOn")}>
-            <Input type="date" name="reviewed_on" defaultValue={post.reviewed_on ?? ""} className="max-w-48" />
+            <DateInput name="reviewed_on" defaultValue={post.reviewed_on ?? ""} className="max-w-48" />
           </Field>
           <Field label={t("admin.blog.sourcesField")} hint={t("admin.blog.sourcesHint")}>
             <Textarea

@@ -11,6 +11,7 @@ import { planName } from "@/lib/plan-utils";
 import { getPlanContext } from "@/lib/plans";
 import { addFlock } from "../actions";
 import { keepsPoultry } from "@/lib/modules";
+import { DateInput } from "@/components/date-input";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -91,7 +92,7 @@ export default async function NewFlockPage({ searchParams }: PageProps<"/dashboa
               )}
             </div>
             <Field label={meat ? t("broiler.placedOn") : t("flocks.placedOn")}>
-              <Input name="placed_date" type="date" defaultValue={today()} required />
+              <DateInput name="placed_date" defaultValue={today()} required />
             </Field>
             <Field label={t("common.notes")}>
               <Textarea name="notes" rows={2} />
