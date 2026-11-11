@@ -5,7 +5,8 @@ import { Card, Field, Input, PageHeader, Textarea } from "@/components/ui";
 import { requireSuperAdmin } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
 import type { SiteInfo, SitePage } from "@/lib/public-data";
-import { saveSiteInfo, saveSitePage } from "./actions";
+import { saveHomeVideo, saveSiteInfo, saveSitePage } from "./actions";
+import { youtubeThumb, youtubeWatch } from "@/lib/youtube";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -15,16 +16,68 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function AdminSitePage() {
   const { supabase } = await requireSuperAdmin();
   const { t } = await getI18n();
-  const [pagesRes, infoRes] = await Promise.all([
+  const [pagesRes, infoRes, videosRes] = await Promise.all([
     supabase.from("site_pages").select("*").order("slug", { ascending: false }),
     supabase.from("site_info").select("*").eq("id", 1).maybeSingle(),
+    supabase.from("home_videos").select("*").order("sort_order"),
   ]);
+  type Video = { slug: string; label_en: string; label_bn: string; title_en: string; title_bn: string; youtube_id: string | null; active: boolean };
+  const videos = (videosRes.data ?? []) as Video[];
   const pages = (pagesRes.data ?? []) as SitePage[];
   const info = infoRes.data as SiteInfo | null;
 
   return (
     <>
       <PageHeader title={t("site.title")} description={t("site.desc")} />
+
+      <Card title={t("video.adminTitle")} description={t("video.adminDesc")} className="mb-6 max-w-3xl">
+        <div className="grid gap-4">
+          {videos.map((v) => (
+            <details key={v.slug} className="rounded-xl border border-stone-200 p-4" open={!v.youtube_id}>
+              <summary className="flex cursor-pointer flex-wrap items-center gap-2 font-semibold text-stone-900">
+                {v.label_bn} · {v.label_en}
+                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${v.youtube_id && v.active ? "bg-emerald-100 text-emerald-800" : "bg-stone-100 text-stone-600"}`}>
+                  {v.youtube_id ? (v.active ? t("video.showing") : t("video.off")) : t("video.noLink")}
+                </span>
+              </summary>
+              <div className="mt-4 flex flex-col gap-4 sm:flex-row">
+                {v.youtube_id && (
+                  <a href={youtubeWatch(v.youtube_id)} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- YouTube thumbnail preview */}
+                    <img src={youtubeThumb(v.youtube_id)} alt="" width={160} height={120} className="w-40 rounded-lg border border-stone-200" />
+                  </a>
+                )}
+                <div className="min-w-0 flex-1">
+                  <ActionForm action={saveHomeVideo} submitLabel={t("common.save")}>
+                    <input type="hidden" name="slug" value={v.slug} />
+                    <Field label={t("video.link")} hint={t("video.linkHint")}>
+                      <Input name="youtube" defaultValue={v.youtube_id ? youtubeWatch(v.youtube_id) : ""} placeholder="https://youtu.be/…" />
+                    </Field>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <Field label={t("video.tabBn")}>
+                        <Input name="label_bn" required maxLength={40} defaultValue={v.label_bn} />
+                      </Field>
+                      <Field label={t("video.tabEn")}>
+                        <Input name="label_en" required maxLength={40} defaultValue={v.label_en} />
+                      </Field>
+                      <Field label={t("video.titleBn")}>
+                        <Input name="title_bn" required maxLength={120} defaultValue={v.title_bn} />
+                      </Field>
+                      <Field label={t("video.titleEn")}>
+                        <Input name="title_en" required maxLength={120} defaultValue={v.title_en} />
+                      </Field>
+                    </div>
+                    <label className="flex items-center gap-2 text-sm">
+                      <input type="checkbox" name="active" defaultChecked={v.active} className="accent-emerald-700" />
+                      {t("video.active")}
+                    </label>
+                  </ActionForm>
+                </div>
+              </div>
+            </details>
+          ))}
+        </div>
+      </Card>
 
       <Card title={t("site.contactTitle")} description={t("site.contactDesc")} className="max-w-3xl">
         <ActionForm action={saveSiteInfo} submitLabel={t("common.save")}>

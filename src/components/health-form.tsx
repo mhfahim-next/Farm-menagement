@@ -6,6 +6,7 @@ import type { ActionState, HealthRecord, HealthRecordType } from "@/lib/types";
 import { ActionForm } from "./action-form";
 import { useI18n } from "./i18n-provider";
 import { Field, Input, Select } from "./ui";
+import { DateInput } from "@/components/date-input";
 
 export type PickerAnimal = { id: string; label: string; milking: boolean };
 
@@ -129,7 +130,7 @@ export function HealthForm({
           />
         </Field>
         <Field label={t("health.dateGiven")}>
-          <Input name="record_date" type="date" value={date} max={today} onChange={(ev) => setDate(ev.target.value)} required />
+          <DateInput name="record_date" value={date} max={today} onChange={setDate} required />
         </Field>
       </div>
 
@@ -161,7 +162,7 @@ export function HealthForm({
 
       {(type === "treatment" || type === "parasite_control") && (
         <Field label={t("health.withdrawalUntil")} hint={t("health.withdrawalHint")}>
-          <Input name="withdrawal_until" type="date" defaultValue={record?.withdrawal_until ?? ""} />
+          <DateInput name="withdrawal_until" defaultValue={record?.withdrawal_until ?? ""} />
         </Field>
       )}
 

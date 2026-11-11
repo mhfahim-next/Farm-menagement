@@ -5,6 +5,7 @@ import { SentryTest } from "@/components/sentry-test";
 import { requireSuperAdmin } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
 import { saveAnnouncement, saveBreedingRules, saveLivestockRules, saveOfflineDays } from "../actions";
+import { DateInput } from "@/components/date-input";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -86,7 +87,7 @@ export default async function AdminSettingsPage() {
               <Input name="sheep_gestation_days" type="number" min="130" max="170" required defaultValue={(data as Record<string, number> | null)?.sheep_gestation_days ?? 147} />
             </Field>
             <Field label={t("adminlive.qurbani")}>
-              <Input name="qurbani_date" type="date" defaultValue={(data as Record<string, string> | null)?.qurbani_date ?? ""} />
+              <DateInput name="qurbani_date" defaultValue={(data as Record<string, string> | null)?.qurbani_date ?? ""} />
             </Field>
           </div>
         </ActionForm>

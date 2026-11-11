@@ -20,7 +20,8 @@ import { GeoPrice } from "@/components/visitor-country";
 import { ForViewer } from "@/components/viewer";
 import { JsonLd } from "@/components/json-ld";
 import { ReviewsSection } from "@/components/reviews-section";
-import { getApprovedReviews, getPublicStats, safe } from "@/lib/public-data";
+import { getApprovedReviews, getHomeVideos, getPublicStats, safe } from "@/lib/public-data";
+import { HomeVideos } from "@/components/home-videos";
 import { langAlternates, ORGANIZATION, SITE_NAME, SITE_URL, siteUrl } from "@/lib/site";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -37,10 +38,11 @@ export const revalidate = 3600;
 export default async function Home() {
   const i18n = await getI18n();
   const { t, f, locale } = i18n;
-  const [allPlans, reviews, live] = await Promise.all([
+  const [allPlans, reviews, live, videos] = await Promise.all([
     getPlans(),
     safe(() => getApprovedReviews(), []),
     safe(() => getPublicStats(), null),
+    safe(() => getHomeVideos(), []),
   ]);
   const plans = allPlans.filter((p) => p.active);
   // Prices in taka for Bangladesh, dollars elsewhere (chosen in the browser);
@@ -245,6 +247,24 @@ export default async function Home() {
             </Link>
           </div>
         </section>
+
+        {videos.length > 0 && (
+          <section id="video" aria-labelledby="video-title" className="scroll-mt-20 border-t border-stone-200 bg-white">
+            <div className="mx-auto max-w-6xl px-4 py-20">
+              <BlurFade>
+                <h2 id="video-title" className="text-center text-3xl font-bold tracking-tight">{t("video.title")}</h2>
+                <p className="mx-auto mt-3 max-w-2xl text-center text-stone-600">{t("video.desc")}</p>
+              </BlurFade>
+              <div className="mt-8">
+                <HomeVideos
+                  videos={videos.map((v) => ({ slug: v.slug, id: v.youtube_id, label: locale === "bn" ? v.label_bn : v.label_en, title: locale === "bn" ? v.title_bn : v.title_en }))}
+                  playLabel={t("video.play")}
+                  tabsLabel={t("video.tabs")}
+                />
+              </div>
+            </div>
+          </section>
+        )}
 
         <section id="tools" aria-labelledby="tools-title" className="scroll-mt-20 border-t border-stone-200 bg-emerald-50/60" data-testid="home-tools">
           <div className="mx-auto max-w-6xl px-4 py-20">

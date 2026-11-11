@@ -6,6 +6,7 @@ import { tapeWeight } from "@/lib/weights";
 import { ActionForm } from "./action-form";
 import { useI18n } from "./i18n-provider";
 import { Field, Input, Select } from "./ui";
+import { DateInput } from "@/components/date-input";
 
 /** Add a weighing: from a scale, from a measuring tape (weight is calculated) or an estimate. */
 export function WeightForm({
@@ -34,7 +35,7 @@ export function WeightForm({
       <input type="hidden" name="cattle_id" value={cattleId} />
       <div className="grid grid-cols-2 gap-3">
         <Field label={t("common.date")}>
-          <Input name="weigh_date" type="date" defaultValue={today} max={today} required />
+          <DateInput name="weigh_date" defaultValue={today} max={today} required />
         </Field>
         <Field label={t("weight.method")}>
           <Select

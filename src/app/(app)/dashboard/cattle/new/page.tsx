@@ -11,6 +11,7 @@ import { planName } from "@/lib/plan-utils";
 import { getPlanContext } from "@/lib/plans";
 import { addCattle } from "../actions";
 import { fattens, keepsAnimals, keepsCattle } from "@/lib/modules";
+import { DateInput } from "@/components/date-input";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -82,12 +83,12 @@ export default async function NewCattlePage({ searchParams }: PageProps<"/dashbo
               <Select name="breed" options={breeds} />
             </Field>
             <Field label={t("cattle.dob")}>
-              <Input name="date_of_birth" type="date" />
+              <DateInput name="date_of_birth" />
             </Field>
             <ParentsFields candidates={mothers} i18n={i18n} />
             <div className="grid grid-cols-2 gap-3">
               <Field label={t("cattle.purchaseDate")}>
-                <Input name="purchase_date" type="date" />
+                <DateInput name="purchase_date" />
               </Field>
               <Field label={t("cattle.price", { cur: farm.currency })}>
                 <Input name="purchase_price" type="number" min="0" step="0.01" />

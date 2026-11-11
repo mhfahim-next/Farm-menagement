@@ -113,12 +113,13 @@ export function createI18n(locale: Locale, messages: Messages, optionRows: Optio
       if (value.length > 10 && /[T ]\d{2}:\d{2}/.test(value)) {
         const at = new Date(value);
         if (!Number.isNaN(at.getTime()))
-          return at.toLocaleDateString(dateLocale, { day: "2-digit", month: "short", year: "numeric", timeZone: APP_TIME_ZONE });
+          return at.toLocaleDateString(dateLocale, { day: "2-digit", month: "2-digit", year: "numeric", timeZone: APP_TIME_ZONE });
       }
       const [y, m, d] = value.slice(0, 10).split("-").map(Number);
+      // dd/mm/yyyy (in Bangla digits on Bangla pages).
       return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(dateLocale, {
         day: "2-digit",
-        month: "short",
+        month: "2-digit",
         year: "numeric",
         timeZone: "UTC",
       });
@@ -138,7 +139,7 @@ export function createI18n(locale: Locale, messages: Messages, optionRows: Optio
       if (!value) return "—";
       return new Date(value).toLocaleString(dateLocale, {
         day: "2-digit",
-        month: "short",
+        month: "2-digit",
         year: "numeric",
         hour: "2-digit",
         minute: "2-digit",

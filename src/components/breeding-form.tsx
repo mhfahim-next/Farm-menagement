@@ -5,6 +5,7 @@ import type { ActionState, BreedingEvent } from "@/lib/types";
 import { ActionForm } from "./action-form";
 import { useI18n } from "./i18n-provider";
 import { Field, Input, Select, Textarea } from "./ui";
+import { DateInput } from "@/components/date-input";
 
 
 export function BreedingForm({
@@ -80,7 +81,7 @@ export function BreedingForm({
           {record && <input type="hidden" name="event_type" value={record.event_type} />}
         </Field>
         <Field label={t("common.date")}>
-          <Input name="event_date" type="date" defaultValue={record?.event_date ?? today} max={today} required />
+          <DateInput name="event_date" defaultValue={record?.event_date ?? today} max={today} required />
         </Field>
         <Field label={t("breeding.time")}>
           <span className="flex gap-2">
@@ -132,7 +133,7 @@ export function BreedingForm({
           </div>
           {record ? (
             <Field label={t("breeding.expectedCalving")} hint={t("breeding.expectedCalvingHint")}>
-              <Input name="expected_calving_date" type="date" defaultValue={record.expected_calving_date ?? ""} />
+              <DateInput name="expected_calving_date" defaultValue={record.expected_calving_date ?? ""} />
             </Field>
           ) : (
             <p className="rounded-lg bg-stone-50 px-3 py-2 text-xs text-stone-600">{t("breeding.aiHint", { days: checkDays, gestation: gestationDays })}</p>

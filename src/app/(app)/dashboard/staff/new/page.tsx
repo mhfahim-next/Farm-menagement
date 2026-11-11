@@ -6,6 +6,7 @@ import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import { addStaff } from "../actions";
 import { moduleChoices } from "../module-choices";
+import { DateInput } from "@/components/date-input";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -43,7 +44,7 @@ export default async function NewStaffPage() {
               <Input name="monthly_salary" type="number" min="0" step="0.01" inputMode="decimal" required />
             </Field>
             <Field label={t("staff.joinDate")}>
-              <Input name="join_date" type="date" defaultValue={today()} />
+              <DateInput name="join_date" defaultValue={today()} />
             </Field>
           </div>
           <Field label={t("common.notes")}>

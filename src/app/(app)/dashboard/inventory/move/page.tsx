@@ -10,6 +10,7 @@ import { MOVE_TYPES, type MoveType, type StockItem } from "@/lib/trade";
 import { addMove } from "../actions";
 import { moduleAllowed } from "@/lib/modules";
 import { keepsPoultry } from "@/lib/modules";
+import { DateInput } from "@/components/date-input";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -77,7 +78,7 @@ export default async function StockMovePage({ searchParams }: PageProps<"/dashbo
               />
             </Field>
             <Field label={t("common.date")}>
-              <Input name="move_date" type="date" defaultValue={today()} max={today()} required />
+              <DateInput name="move_date" defaultValue={today()} max={today()} required />
             </Field>
 
             {type === "purchase" && (

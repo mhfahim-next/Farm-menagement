@@ -1,7 +1,8 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Input, Select } from "./ui";
+import { Select } from "./ui";
+import { DateInput } from "@/components/date-input";
 
 /**
  * A date or choice field of a sheet form that also decides which day's data the
@@ -41,6 +42,6 @@ export function AutoLoad({
   return options ? (
     <Select name={name} defaultValue={defaultValue} options={options} className={className} onChange={(e) => go(e.target.value)} />
   ) : (
-    <Input name={name} type="date" defaultValue={defaultValue} max={max} required className={className} onChange={(e) => go(e.target.value)} />
+    <DateInput name={name} defaultValue={defaultValue} max={max} required className={className} onChange={go} />
   );
 }

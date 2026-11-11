@@ -11,6 +11,7 @@ import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import { fattens, keepsCattle } from "@/lib/modules";
 import { saveFatteningSettings, startFattening } from "./actions";
+import { DateInput } from "@/components/date-input";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -134,7 +135,7 @@ export default async function FatteningPage() {
           <ActionForm action={saveFatteningSettings} submitLabel={t("fatten.saveSettings")} submitVariant="secondary">
             <fieldset disabled={!canSet} className="grid gap-3 disabled:opacity-70">
               <Field label={t("fatten.targetDate")} hint={settings.qurbaniDate ? t("fatten.targetDateHint", { date: f.date(settings.qurbaniDate) }) : undefined}>
-                <Input name="target_date" type="date" defaultValue={settings.raw.target_date ?? ""} data-testid="target-date" />
+                <DateInput name="target_date" defaultValue={settings.raw.target_date ?? ""} data-testid="target-date" />
               </Field>
               {keepsCattle(farm) && (
                 <div className="grid grid-cols-2 gap-3">
@@ -175,7 +176,7 @@ export default async function FatteningPage() {
                 ))}
               </div>
               <Field label={t("fatten.startDate")}>
-                <Input name="start_date" type="date" defaultValue={today()} max={today()} className="max-w-48" />
+                <DateInput name="start_date" defaultValue={today()} max={today()} className="max-w-48" />
               </Field>
             </ActionForm>
           )}

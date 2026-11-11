@@ -33,6 +33,7 @@ import type { ActionState } from "@/lib/types";
 import { ActionForm } from "./action-form";
 import { useI18n } from "./i18n-provider";
 import { Field, Input, Select } from "./ui";
+import { DateInput } from "@/components/date-input";
 
 /** A typed number: Bangla digits and a decimal comma work too. */
 const num = (v: string) => {
@@ -453,7 +454,7 @@ function PregTool({ today, p }: { today: string; p: ToolParams }) {
       <Choice label={t("tools.preg.species")} value={species} onChange={setSpecies} testId="species" options={(["cattle", "buffalo", "goat", "sheep"] as const).map((k) => ({ value: k, label: t(`tools.preg.${k}`) }))} />
       <div className="max-w-xs">
         <Field label={t("tools.preg.date")}>
-          <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} data-testid="bred-on" />
+          <DateInput value={date} onChange={setDate} data-testid="bred-on" />
         </Field>
       </div>
       {r ? (

@@ -26,14 +26,16 @@ export function contentSecurityPolicy(env: { supabaseUrl?: string; sentryDsn?: s
     "default-src": "'self'",
     "script-src": list("'self'", "'unsafe-inline'", env.dev && "'unsafe-eval'"),
     "style-src": "'self' 'unsafe-inline'",
-    // Photos come from Supabase Storage; Google sign-in photos from googleusercontent; previews are blob:/data:.
-    "img-src": list("'self'", "data:", "blob:", supabase, "https://*.googleusercontent.com"),
+    // Photos come from Supabase Storage; Google sign-in photos from googleusercontent; previews are blob:/data:;
+    // video thumbnails of the home page from YouTube.
+    "img-src": list("'self'", "data:", "blob:", supabase, "https://*.googleusercontent.com", "https://i.ytimg.com"),
     "font-src": "'self' data:",
     "connect-src": list("'self'", supabase, supabaseWs, sentry, env.dev && "ws:"),
     "media-src": "'self' blob:",
     "worker-src": "'self' blob:",
     "manifest-src": "'self'",
-    "frame-src": "'self'",
+    // The home page's demo videos play from YouTube's privacy-enhanced player, only after a click.
+    "frame-src": "'self' https://www.youtube-nocookie.com",
     "object-src": "'none'",
     "base-uri": "'self'",
     // Payment pages are reached by redirects, not form posts; the gateways are allowed in case one posts back.

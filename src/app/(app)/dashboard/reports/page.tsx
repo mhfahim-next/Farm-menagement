@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "@/components/local-link";
-import { ButtonLink, Card, Field, Input, PageHeader } from "@/components/ui";
+import { ButtonLink, Card, Field, PageHeader } from "@/components/ui";
 import { requireRole, STAFF } from "@/lib/auth";
 import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import { getPlanContext } from "@/lib/plans";
 import { keepsAnimals, keepsPoultry } from "@/lib/modules";
+import { DateInput } from "@/components/date-input";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -54,10 +55,10 @@ export default async function ReportsPage() {
               {r.dated && (
                 <div className="grid grid-cols-2 gap-3">
                   <Field label={t("reports.from")}>
-                    <Input name="from" type="date" defaultValue={today(-29)} disabled={!allowed} />
+                    <DateInput name="from" defaultValue={today(-29)} disabled={!allowed} />
                   </Field>
                   <Field label={t("reports.to")}>
-                    <Input name="to" type="date" defaultValue={today()} disabled={!allowed} />
+                    <DateInput name="to" defaultValue={today()} disabled={!allowed} />
                   </Field>
                 </div>
               )}

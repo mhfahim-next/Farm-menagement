@@ -7,6 +7,7 @@ import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import { addTransaction } from "../actions";
 import { moduleAllowed } from "@/lib/modules";
+import { DateInput } from "@/components/date-input";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -38,7 +39,7 @@ export default async function NewTransactionPage() {
                 />
               </Field>
               <Field label={t("common.date")}>
-                <Input name="txn_date" type="date" defaultValue={today()} required />
+                <DateInput name="txn_date" defaultValue={today()} required />
               </Field>
             </div>
             <Field label={t("common.category")}>

@@ -28,6 +28,7 @@ import { deleteBreedingEvent, logBreedingEvent } from "../../breeding/actions";
 import { deleteHealth, recordHealth } from "../../health/actions";
 import { addWeight, archiveCattle, deleteCattle, deleteWeight, restoreCattle, updateCattle } from "../actions";
 import { startFatteningOne, stopFattening } from "../../fattening/actions";
+import { DateInput } from "@/components/date-input";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -549,7 +550,7 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
               </Field>
             </div>
             <Field label={t("cattle.dob")}>
-              <Input name="date_of_birth" type="date" defaultValue={cow.date_of_birth ?? ""} />
+              <DateInput name="date_of_birth" defaultValue={cow.date_of_birth ?? ""} />
             </Field>
             <ParentsFields
               candidates={females}
