@@ -4,6 +4,9 @@ import type { EnMessages } from "./messages/en";
 
 export const LOCALES = ["en", "bn"] as const;
 export type Locale = (typeof LOCALES)[number];
+
+/** Times are shown in Bangladesh time (servers run in UTC). */
+export const APP_TIME_ZONE = "Asia/Dhaka";
 export const DEFAULT_LOCALE: Locale = "en";
 export const LOCALE_COOKIE = "locale";
 
@@ -106,6 +109,12 @@ export function createI18n(locale: Locale, messages: Messages, optionRows: Optio
   const f = {
     date(value: string | null | undefined) {
       if (!value) return "—";
+      // A moment (timestamp): the day it was in Bangladesh, not in UTC.
+      if (value.length > 10 && /[T ]\d{2}:\d{2}/.test(value)) {
+        const at = new Date(value);
+        if (!Number.isNaN(at.getTime()))
+          return at.toLocaleDateString(dateLocale, { day: "2-digit", month: "short", year: "numeric", timeZone: APP_TIME_ZONE });
+      }
       const [y, m, d] = value.slice(0, 10).split("-").map(Number);
       return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(dateLocale, {
         day: "2-digit",
@@ -133,6 +142,8 @@ export function createI18n(locale: Locale, messages: Messages, optionRows: Optio
         year: "numeric",
         hour: "2-digit",
         minute: "2-digit",
+        // Servers run in UTC: show Bangladesh time, the same for everyone.
+        timeZone: APP_TIME_ZONE,
       });
     },
     /** "YYYY-MM[-DD]" as a month name and year, e.g. "Oct 2026". */

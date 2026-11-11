@@ -147,15 +147,25 @@ export function StatCard({
   value,
   hint,
   tone = "default",
+  href,
 }: {
   label: string;
   value: ReactNode;
   hint?: ReactNode;
   tone?: "default" | "good" | "bad";
+  /** Makes the whole card a link to the page behind the number. */
+  href?: string;
 }) {
-  return (
-    <div className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
-      <p className="text-sm text-stone-500">{label}</p>
+  const body = (
+    <>
+      <p className="flex items-center justify-between gap-2 text-sm text-stone-500">
+        <span>{label}</span>
+        {href && (
+          <span aria-hidden className="text-stone-400 transition group-hover:translate-x-0.5 group-hover:text-emerald-700">
+            →
+          </span>
+        )}
+      </p>
       <p
         className={cx(
           "mt-1 text-xl font-bold tabular-nums sm:text-2xl",
@@ -167,7 +177,18 @@ export function StatCard({
         {value}
       </p>
       {hint && <p className="mt-1 text-xs text-stone-500">{hint}</p>}
-    </div>
+    </>
+  );
+  const box = "rounded-xl border border-stone-200 bg-white p-5 shadow-sm";
+  return href ? (
+    <Link
+      href={href}
+      className={cx(box, "group block transition hover:border-emerald-300 hover:shadow-md focus-visible:outline-2 focus-visible:outline-emerald-600")}
+    >
+      {body}
+    </Link>
+  ) : (
+    <div className={box}>{body}</div>
   );
 }
 

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "@/components/local-link";
 import { Badge, ButtonLink, Card, EmptyState, PageHeader, StatCard } from "@/components/ui";
 import { redirect } from "next/navigation";
-import { requireFarm } from "@/lib/auth";
+import { requireFarm, STAFF } from "@/lib/auth";
 import { loadBreedingBoard } from "@/lib/breeding-data";
 import { milkingCategories } from "@/lib/cattle";
 import { monthStart, today } from "@/lib/format";
@@ -143,6 +143,9 @@ export default async function OverviewPage() {
     value: eggs.filter((x) => x.log_date === d).reduce((s, x) => s + x.eggs_collected, 0),
   }));
 
+  // Cards open the page behind the number; pages only farm staff may open stay plain cards for others.
+  const staffHref = (path: string) => (STAFF.includes(role) ? path : undefined);
+
   return (
     <>
       <PageHeader title={t("overview.meta")} description={t("overview.today", { farm: farm.name })} />
@@ -150,40 +153,40 @@ export default async function OverviewPage() {
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {keepsCattle(farm) && (
           <StatCard
+            href="/dashboard/cattle"
             label={t("overview.activeCattle")}
             value={f.number(cattle.length)}
             hint={farm.has_dairy ? t("overview.cows", { n: milkingCows }) : undefined}
           />
         )}
-        {farm.has_dairy && <StatCard label={t("overview.milkToday")} value={t("common.litersShort", { n: f.number(milkToday, 1) })} />}
-        {farm.has_goat && <StatCard label={t("nav.goats")} value={f.number(smallCount)} />}
+        {farm.has_dairy && <StatCard href={staffHref("/dashboard/milk")} label={t("overview.milkToday")} value={t("common.litersShort", { n: f.number(milkToday, 1) })} />}
+        {farm.has_goat && <StatCard href="/dashboard/goats" label={t("nav.goats")} value={f.number(smallCount)} />}
         {fattens(farm) && (
-          <Link href="/dashboard/fattening" className="contents">
-            <StatCard label={t("fatten.onFeed")} value={f.number(fatteningCount)} />
-          </Link>
+          <StatCard href="/dashboard/fattening" label={t("fatten.onFeed")} value={f.number(fatteningCount)} />
         )}
         {farm.has_broiler && (
-          <Link href="/dashboard/broilers" className="contents">
-            <StatCard label={t("broiler.liveBirds")} value={f.number(meatBirds)} hint={t("broiler.runningCount", { n: f.number(meatIds.size) })} />
-          </Link>
+          <StatCard href="/dashboard/broilers" label={t("broiler.liveBirds")} value={f.number(meatBirds)} hint={t("broiler.runningCount", { n: f.number(meatIds.size) })} />
         )}
         {farm.has_layer && (
           <>
             <StatCard
+              href={staffHref("/dashboard/flocks")}
               label={t("overview.liveBirds")}
               value={f.number(birds)}
               hint={t("overview.activeFlocks", { n: activeFlockIds.size })}
             />
             <StatCard
+              href={staffHref("/dashboard/flocks")}
               label={t("overview.eggsToday")}
               value={f.number(eggsToday)}
               hint={birds > 0 ? t("overview.henDay", { pct: f.number((eggsToday / birds) * 100, 1) }) : undefined}
             />
           </>
         )}
-        <StatCard label={t("overview.incomeMonth")} value={f.money(income, farm.currency)} tone="good" />
-        <StatCard label={t("overview.expensesMonth")} value={f.money(expense, farm.currency)} tone="bad" />
+        <StatCard href={staffHref("/dashboard/finance")} label={t("overview.incomeMonth")} value={f.money(income, farm.currency)} tone="good" />
+        <StatCard href={staffHref("/dashboard/finance")} label={t("overview.expensesMonth")} value={f.money(expense, farm.currency)} tone="bad" />
         <StatCard
+          href={staffHref("/dashboard/profit")}
           label={t("overview.profitMonth")}
           value={f.money(income - expense, farm.currency)}
           tone={income - expense >= 0 ? "good" : "bad"}

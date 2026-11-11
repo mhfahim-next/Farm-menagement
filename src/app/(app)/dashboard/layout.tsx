@@ -83,11 +83,6 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
       ]
     : [
         { href: "/dashboard", label: t("nav.overview"), icon: "overview" },
-        ...(isStaff ? [{ href: "/dashboard/quick", label: t("nav.quick"), icon: "quick" as const }] : []),
-        { href: "/dashboard/notifications", label: t("nav.reminders"), icon: "reminders" },
-        { href: "/dashboard/tools", label: t("nav.tools"), icon: "tools" },
-        { href: "/dashboard/diseases", label: t("nav.diseases"), icon: "flockHealth" },
-        { href: "/dashboard/doctors", label: t("nav.doctors"), icon: "doctor" },
         ...(keepsAnimals(farm)
           ? [
               ...(keepsCattle(farm) ? [{ href: "/dashboard/cattle", label: t("nav.cattle"), icon: "cattle" as const }] : []),
@@ -129,8 +124,13 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
           ...(isManager ? [{ href: "/dashboard/plan", label: t("nav.plan"), icon: "plan" as const }] : []),
           { href: "/dashboard/settings", label: t("nav.settings"), icon: "settings" as const },
         ].map((i) => ({ ...i, group: t("nav.group.farm") })),
-        // Everything else, used now and then.
+        // Everything else: quick entry, reminders, tools, the disease guide, vets, the community.
         ...[
+          ...(isStaff ? [{ href: "/dashboard/quick", label: t("nav.quick"), icon: "quick" as const }] : []),
+          { href: "/dashboard/notifications", label: t("nav.reminders"), icon: "reminders" as const },
+          { href: "/dashboard/tools", label: t("nav.tools"), icon: "tools" as const },
+          { href: "/dashboard/diseases", label: t("nav.diseases"), icon: "flockHealth" as const },
+          { href: "/dashboard/doctors", label: t("nav.doctors"), icon: "doctor" as const },
           { href: "/community", label: t("community.nav"), icon: "community" as const },
           { href: "/changelog", label: t("changelog.nav"), icon: "changelog" as const },
           { href: "/dashboard/review", label: t("nav.review"), icon: "review" as const },
