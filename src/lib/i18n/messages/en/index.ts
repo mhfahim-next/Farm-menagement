@@ -27,6 +27,7 @@ import { deleteaccount } from "./deleteaccount";
 import { vetguide } from "./vetguide";
 import { promos } from "./promos";
 import { video } from "./video";
+import { feed } from "./feed";
 
-export const en = { ...common, ...auth, ...landing, ...farm, ...dairy, ...account, ...plans, ...team, ...adminplans, ...blog, ...ai, ...farmops, ...community, ...trade, ...changelog, ...offline, ...importing, ...printing, ...analyticsplus, ...payments, ...livestock, ...reminders, ...animalprofit, ...tools, ...toolsadmin, ...deleteaccount, ...vetguide, ...promos, ...video } as const;
+export const en = { ...common, ...auth, ...landing, ...farm, ...dairy, ...account, ...plans, ...team, ...adminplans, ...blog, ...ai, ...farmops, ...community, ...trade, ...changelog, ...offline, ...importing, ...printing, ...analyticsplus, ...payments, ...livestock, ...reminders, ...animalprofit, ...tools, ...toolsadmin, ...deleteaccount, ...vetguide, ...promos, ...video, ...feed } as const;
 export type EnMessages = typeof en;

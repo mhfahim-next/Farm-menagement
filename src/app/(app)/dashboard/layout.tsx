@@ -89,6 +89,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
               ...(farm.has_goat ? [{ href: "/dashboard/goats", label: t("nav.goats"), icon: "goats" as const }] : []),
               ...(farm.has_dairy ? [{ href: "/dashboard/milk", label: t("nav.milk"), icon: "milk" as const }] : []),
               { href: "/dashboard/health", label: t("nav.health"), icon: "health" as const },
+              ...(keepsCattle(farm) ? [{ href: "/dashboard/feed", label: t("nav.feed"), icon: "feed" as const }] : []),
               ...(breedsAnimals(farm) ? [{ href: "/dashboard/breeding", label: t("nav.breeding"), icon: "breeding" as const }] : []),
               ...(fattens(farm) ? [{ href: "/dashboard/fattening", label: t("nav.fattening"), icon: "fattening" as const }] : []),
             ].map((i) => ({

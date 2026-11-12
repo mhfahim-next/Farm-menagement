@@ -29,6 +29,10 @@ import { deleteHealth, recordHealth } from "../../health/actions";
 import { addWeight, archiveCattle, deleteCattle, deleteWeight, restoreCattle, updateCattle } from "../actions";
 import { startFatteningOne, stopFattening } from "../../fattening/actions";
 import { DateInput } from "@/components/date-input";
+import { loadFeedPlans } from "@/lib/feed-data";
+import { kindLabel, ruleSummary } from "@/lib/feed-labels";
+import { mixFor } from "@/lib/tools";
+import type { MessageKey } from "@/lib/i18n/core";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -94,6 +98,12 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
   const milkTotal = milk.reduce((s, m) => s + Number(m.quantity_liters), 0);
   const milkDays = new Set(milk.map((m) => m.record_date)).size;
   const withdrawal = health.find((h) => h.withdrawal_until && h.withdrawal_until >= today());
+  // Today's feed suggestion (cattle that are on the farm).
+  const feed =
+    (cow.species ?? "cattle") === "cattle" && cow.status === "active"
+      ? await loadFeedPlans({ supabase, farm }).then((x) => ({ row: x.rows.find((r) => r.id === cow.id), rule: x.rule }))
+      : null;
+  const feedMix = feed?.row ? mixFor(feed.row.plan.kind === "fattening" ? "fattening" : "dairy", feed.row.plan.concentrateKg, {}, (await getToolParams()).params).rows.filter((r) => r.kg > 0) : [];
   const rules = rulesFor(cow.species);
   const group = groupOf(cow.species);
   const backHref = listHref(cow.species);
@@ -309,6 +319,39 @@ export default async function CattleDetailPage({ params }: PageProps<"/dashboard
           )}
         </Card>
 
+        )}
+        {feed?.row && (
+          <Card
+            title={t("feed.cardTitle")}
+            description={`${kindLabel(feed.row.plan, feed.row.daysToCalving, i18n)} · ${f.number(feed.row.plan.weightKg)} ${t("feed.kgShort")}${feed.row.plan.weightGuessed ? ` (${t("feed.guess")})` : ""}`}
+            action={<ButtonLink href="/dashboard/feed" variant="secondary">{t("feed.cardMore")}</ButtonLink>}
+          >
+            <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4" data-testid="cow-feed">
+              {(
+                [
+                  [t("feed.concentrate"), t("feed.kg", { n: f.number(feed.row.plan.concentrateKg, 1) }), t("feed.meals", { n: f.number(feed.row.plan.concentrateKg / 2, 1) })],
+                  [t("feed.green"), t("feed.kg", { n: f.number(feed.row.plan.greenKg, 1) }), null],
+                  [t("feed.straw"), t("feed.kg", { n: f.number(feed.row.plan.strawKg, 1) }), null],
+                  [t("feed.water"), t("feed.litres", { n: f.number(feed.row.plan.waterL) }), null],
+                ] as const
+              ).map(([label, value, hint]) => (
+                <div key={label} className="rounded-lg bg-stone-50 p-3">
+                  <dt className="text-xs text-stone-500">{label}</dt>
+                  <dd className="text-lg font-bold text-stone-900">{value}</dd>
+                  {hint && <dd className="text-xs text-stone-500">{hint}</dd>}
+                </div>
+              ))}
+            </dl>
+            {feedMix.length > 0 && (
+              <p className="mt-3 text-sm text-stone-600">
+                <span className="font-medium text-stone-800">{t("feed.cardMix")}:</span>{" "}
+                {feedMix.map((m) => `${t(`tools.ing.${m.ingredient}` as MessageKey)} ${f.number(m.kg, 2)}`).join(" · ")} {t("feed.kgShort")}
+              </p>
+            )}
+            <p className="mt-2 text-xs text-stone-500">
+              {t("feed.ruleNow")}: {ruleSummary(feed.rule, i18n)}. {t("feed.care1")}
+            </p>
+          </Card>
         )}
         <Card title={t("weight.title")} description={t("weight.desc")}>
           {canWrite && (
