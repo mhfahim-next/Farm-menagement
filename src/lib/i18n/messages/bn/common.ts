@@ -113,6 +113,7 @@ export const common: Record<keyof typeof en, string> = {
   "enum.manager": "ম্যানেজার",
   "enum.worker": "কর্মী",
   "enum.vet": "পশু চিকিৎসক",
+  "enum.viewer": "শুধু দেখবেন",
 
   "currency.BDT": "BDT — বাংলাদেশি টাকা",
   "currency.INR": "INR — ভারতীয় রুপি",

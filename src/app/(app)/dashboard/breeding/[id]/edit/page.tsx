@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { BreedingForm } from "@/components/breeding-form";
 import { ConfirmForm } from "@/components/confirm-form";
 import { Card, PageHeader } from "@/components/ui";
-import { MANAGERS, requireFarm } from "@/lib/auth";
+import { MANAGERS, requireWriter } from "@/lib/auth";
 import { animalLabel } from "@/lib/cattle";
 import { getBreedingRules } from "@/lib/breeding-data";
 import { today } from "@/lib/format";
@@ -19,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function EditBreedingPage({ params }: PageProps<"/dashboard/breeding/[id]/edit">) {
   const { id } = await params;
-  const { supabase, farm, role } = await requireFarm();
+  const { supabase, farm, role } = await requireWriter();
   const { t } = await getI18n();
 
   const { data } = await supabase.from("breeding_events").select("*").eq("id", id).eq("farm_id", farm.id).maybeSingle();

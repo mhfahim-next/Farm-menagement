@@ -5,7 +5,7 @@ import { ActionForm } from "@/components/action-form";
 import { ConfirmForm } from "@/components/confirm-form";
 import { StockItemFields } from "@/components/stock-item-fields";
 import { Badge, ButtonLink, Card, EmptyState, PageHeader, StatCard, Table, Td } from "@/components/ui";
-import { MANAGERS, requireRole, STAFF } from "@/lib/auth";
+import { MANAGERS, requireRole, READERS } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
 import { daysLeft, isLow, type StockItem, type StockMove } from "@/lib/trade";
 import { deleteMove, updateItem } from "../actions";
@@ -19,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function StockItemPage({ params }: PageProps<"/dashboard/inventory/[id]">) {
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
-  const { supabase, farm, role } = await requireRole(STAFF);
+  const { supabase, farm, role } = await requireRole(READERS);
   const i18n = await getI18n();
   const { t, f, o, options } = i18n;
 

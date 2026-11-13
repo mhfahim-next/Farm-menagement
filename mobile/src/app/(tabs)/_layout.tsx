@@ -33,6 +33,8 @@ export default function TabsLayout() {
   const birdsOnly = Boolean(farm && !farm.has_dairy && !farm.has_fattening && !farm.has_goat);
   // Doctors write only vaccines and breeding (sent for approval): no sales.
   if (current?.role === "vet") hidden.add("sales");
+  // View-only members: no entry tab.
+  if (current?.role === "viewer") hidden.add("entry");
   return (
     <Tabs
       screenOptions={{ headerShown: false }}

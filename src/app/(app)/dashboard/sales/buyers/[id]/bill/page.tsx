@@ -3,7 +3,7 @@ import Link from "@/components/local-link";
 import { notFound } from "next/navigation";
 import { Logo } from "@/components/logo";
 import { PrintButton } from "@/components/print-button";
-import { requireRole, STAFF } from "@/lib/auth";
+import { requireRole, READERS } from "@/lib/auth";
 import { addMonths, monthBill, monthBounds } from "@/lib/bill";
 import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
@@ -22,7 +22,7 @@ export default async function BuyerBillPage({ params, searchParams }: PageProps<
   const sp = await searchParams;
   const month = typeof sp.month === "string" && monthBounds(sp.month) ? sp.month : today().slice(0, 7);
   const { to } = monthBounds(month)!;
-  const { supabase, farm } = await requireRole(STAFF);
+  const { supabase, farm } = await requireRole(READERS);
   const { t, f } = await getI18n();
   // Everything up to the month's end: earlier entries give the opening balance.
   const [{ data: buyerRow }, { data: saleRows }, { data: payRows }] = await Promise.all([

@@ -327,6 +327,7 @@ export const CLIENT_KEYS: readonly string[] = [
   "enum.uncertain",
   "enum.vaccination",
   "enum.vet",
+  "enum.viewer",
   "enum.worker",
   "error.body",
   "error.code",

@@ -3,7 +3,7 @@ import Link from "@/components/local-link";
 import { ClickRow } from "@/components/click-row";
 import { ConfirmForm } from "@/components/confirm-form";
 import { Badge, ButtonLink, Card, EmptyState, Input, PageHeader, StatCard, Table, Td } from "@/components/ui";
-import { MANAGERS, requireRole, STAFF } from "@/lib/auth";
+import { MANAGERS, requireRole, READERS } from "@/lib/auth";
 import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import { eggCount, type Buyer, type Sale } from "@/lib/trade";
@@ -15,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function SalesPage({ searchParams }: PageProps<"/dashboard/sales">) {
-  const { supabase, farm, role } = await requireRole(STAFF);
+  const { supabase, farm, role } = await requireRole(READERS);
   const { t, f } = await getI18n();
   const sp = await searchParams;
   const month = typeof sp.month === "string" && /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : today().slice(0, 7);

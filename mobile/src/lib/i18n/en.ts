@@ -991,6 +991,7 @@ export const en = {
   "role.manager": "Manager",
   "role.worker": "Worker",
   "role.vet": "Vet",
+  "role.viewer": "Viewer (view only)",
   "tools.lcr.name": "Least-cost feed ration",
   "tools.lcr.short": "The cheapest balanced daily feed from the feeds you have, at your prices",
   "tools.lcr.kind": "Animal (cow or buffalo)",

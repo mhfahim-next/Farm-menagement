@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useTransition, type ReactNode } from "react";
 import type { ActionState } from "@/lib/types";
 import { useI18n } from "./i18n-provider";
+import { useReadOnly } from "./read-only";
 import { announceNavigation } from "./nav-progress";
 import { useToast } from "./toast";
 import { Button, Spinner, type ButtonVariant } from "./ui";
@@ -34,6 +35,7 @@ export function ConfirmForm({
   const [pending, startTransition] = useTransition();
   const { toast } = useToast();
   const router = useRouter();
+  if (useReadOnly()) return null;
 
   return (
     <form

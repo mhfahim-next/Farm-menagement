@@ -1,4 +1,7 @@
+"use client";
+
 import type { ReactNode } from "react";
+import { useReadOnly } from "./read-only";
 
 /**
  * A big, clearly clickable button that opens a form right below it
@@ -17,6 +20,7 @@ export function ActionDisclosure({
   tone?: "primary" | "secondary";
   testId?: string;
 }) {
+  if (useReadOnly()) return null;
   return (
     <details className="group mb-4" open={open}>
       <summary
