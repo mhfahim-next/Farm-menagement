@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { HealthForm } from "@/components/health-form";
 import { ButtonLink, Card, EmptyState, PageHeader } from "@/components/ui";
-import { requireFarm } from "@/lib/auth";
+import { requireWriter } from "@/lib/auth";
 import { milkingCategories } from "@/lib/cattle";
 import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
@@ -15,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function NewHealthPage() {
-  const { supabase, farm } = await requireFarm();
+  const { supabase, farm } = await requireWriter();
   if (!keepsAnimals(farm)) notFound();
   const { t, rows } = await getI18n();
   const { data } = await supabase

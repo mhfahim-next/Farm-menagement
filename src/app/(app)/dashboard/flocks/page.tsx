@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "@/components/local-link";
 import { notFound, redirect } from "next/navigation";
 import { Badge, ButtonLink, EmptyState, PageHeader } from "@/components/ui";
-import { requireRole, STAFF } from "@/lib/auth";
+import { requireRole, READERS } from "@/lib/auth";
 import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import type { Flock, FlockStats } from "@/lib/types";
@@ -15,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function FlocksPage() {
-  const { supabase, farm } = await requireRole(STAFF);
+  const { supabase, farm } = await requireRole(READERS);
   if (!keepsPoultry(farm)) notFound();
   if (!farm.has_layer) redirect("/dashboard/broilers");
   const { t, f, o } = await getI18n();

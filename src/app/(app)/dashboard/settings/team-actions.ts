@@ -15,7 +15,7 @@ export async function inviteMember(_: ActionState, formData: FormData): Promise<
   const email = str(formData, "email")?.toLowerCase();
   const role = str(formData, "role");
   if (!email || !EMAIL.test(email)) return { error: t("team.err.email") };
-  if (!role || !["manager", "worker", "vet"].includes(role)) return { error: t("common.errorGeneric") };
+  if (!role || !["manager", "worker", "viewer", "vet"].includes(role)) return { error: t("common.errorGeneric") };
 
   const { error } = await supabase.from("farm_invites").insert({ farm_id: farm.id, email, role });
   if (error) {
@@ -59,6 +59,19 @@ export async function removeMember(_: ActionState, formData: FormData): Promise<
 
   revalidatePath("/", "layout");
   return { success: t("team.removed") };
+}
+
+/** The owner switches a member between manager, worker and view-only. */
+export async function setMemberRole(_: ActionState, formData: FormData): Promise<ActionState> {
+  const { supabase, farm, role } = await requireFarm();
+  const { t } = await getI18n();
+  const userId = str(formData, "user_id");
+  const next = str(formData, "role");
+  if (role !== "owner" || !userId || !next || !["manager", "worker", "viewer"].includes(next)) return { error: t("team.err.forbidden") };
+  const { error } = await supabase.rpc("set_member_role", { p_farm: farm.id, p_user: userId, p_role: next });
+  if (error) return { error: t("team.err.forbidden") };
+  revalidatePath("/dashboard/settings");
+  return { success: t("team.roleChanged") };
 }
 
 /** A non-owner leaves the farm they are viewing. */

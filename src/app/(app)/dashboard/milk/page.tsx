@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ClickRow } from "@/components/click-row";
 import { ButtonLink, Card, EmptyState, PageHeader, StatCard, Table, Td } from "@/components/ui";
-import { requireRole, STAFF } from "@/lib/auth";
+import { requireRole, READERS } from "@/lib/auth";
 import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 
@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function MilkPage() {
-  const { supabase, farm } = await requireRole(STAFF);
+  const { supabase, farm } = await requireRole(READERS);
   if (!farm.has_dairy) notFound();
   const { t, f } = await getI18n();
   const [historyRes] = await Promise.all([

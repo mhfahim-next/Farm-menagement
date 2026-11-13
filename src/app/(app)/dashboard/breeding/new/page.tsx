@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BreedingForm } from "@/components/breeding-form";
 import { ButtonLink, Card, EmptyState, PageHeader } from "@/components/ui";
-import { requireFarm } from "@/lib/auth";
+import { requireWriter } from "@/lib/auth";
 import { loadBreedingBoard } from "@/lib/breeding-data";
 import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
@@ -15,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function NewBreedingPage() {
-  const { supabase, farm } = await requireFarm();
+  const { supabase, farm } = await requireWriter();
   if (!breedsAnimals(farm)) notFound();
   const { t, o } = await getI18n();
   const { cows, rules, checkDays } = await loadBreedingBoard({ supabase, farm });

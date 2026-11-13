@@ -1,7 +1,7 @@
 // Row types mirroring supabase/migrations. Regenerate with
 // `npx supabase gen types typescript` once the project is linked.
 
-export type Role = "owner" | "manager" | "worker" | "vet";
+export type Role = "owner" | "manager" | "worker" | "vet" | "viewer";
 
 export type Farm = {
   id: string;

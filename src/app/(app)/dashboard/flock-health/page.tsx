@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { ClickRow } from "@/components/click-row";
 import { ConfirmForm } from "@/components/confirm-form";
 import { Badge, ButtonLink, Card, EmptyState, PageHeader, Select, StatCard, Table, Td } from "@/components/ui";
-import { requireRole, STAFF } from "@/lib/auth";
+import { requireRole, READERS } from "@/lib/auth";
 import { flockDueItems } from "@/lib/flock-health";
 import { today } from "@/lib/format";
 import { dueLabel } from "@/lib/health";
@@ -21,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
 const typeTone = { vaccination: "blue", parasite_control: "amber", deworming: "amber", treatment: "default", checkup: "default" } as const;
 
 export default async function FlockHealthPage({ searchParams }: PageProps<"/dashboard/flock-health">) {
-  const { supabase, farm } = await requireRole(STAFF);
+  const { supabase, farm } = await requireRole(READERS);
   if (!keepsPoultry(farm)) notFound();
   const { t, f, o, options } = await getI18n();
 

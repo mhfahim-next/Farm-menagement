@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { ActionForm } from "@/components/action-form";
 import { ClickRow } from "@/components/click-row";
 import { ButtonLink, Card, EmptyState, PageHeader, Select, StatCard, Table, Td } from "@/components/ui";
-import { requireRole, STAFF } from "@/lib/auth";
+import { requireRole, READERS } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
 import type { Flock, FlockDailyLog, FlockHealthRecord } from "@/lib/types";
 import { updateFlockStatus } from "../actions";
@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function FlockDetailPage({ params }: PageProps<"/dashboard/flocks/[id]">) {
   const { id } = await params;
-  const { supabase, farm } = await requireRole(STAFF);
+  const { supabase, farm } = await requireRole(READERS);
   const i18n = await getI18n();
   const { t, f, o, options } = i18n;
 
