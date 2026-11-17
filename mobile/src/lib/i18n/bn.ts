@@ -993,6 +993,7 @@ export const bn: Record<MessageKey, string> = {
   "role.manager": "ম্যানেজার",
   "role.worker": "কর্মী",
   "role.vet": "ডাক্তার",
+  "role.viewer": "শুধু দেখবেন",
   "tools.lcr.name": "সবচেয়ে কম খরচের রেশন",
   "tools.lcr.short": "আপনার কাছে যে খাবার আছে, আপনার দামে, সবচেয়ে কম খরচে সুষম দৈনিক খাবার",
   "tools.lcr.kind": "পশু (গরু বা মহিষ)",

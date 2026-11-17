@@ -6,6 +6,7 @@ import { getProfile, requireUser } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
 import { DELETE_REASONS } from "@/lib/delete-reasons";
 import { changePassword, deleteAccount, updateProfile } from "./actions";
+import { AllowWrites } from "@/components/read-only";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -18,7 +19,7 @@ export default async function ProfilePage() {
   const { t } = await getI18n();
 
   return (
-    <>
+    <AllowWrites>
       <PageHeader title={t("profile.title")} description={t("profile.desc")} />
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -71,6 +72,6 @@ export default async function ProfilePage() {
           </ActionForm>
         </Card>
       </div>
-    </>
+    </AllowWrites>
   );
 }

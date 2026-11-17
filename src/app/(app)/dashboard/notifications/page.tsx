@@ -10,6 +10,7 @@ import { emailReady } from "@/lib/notify";
 import { kindsForRole, REMINDER_GROUPS, reminderText, type ReminderGroup } from "@/lib/reminders";
 import { loadMyReminders } from "@/lib/reminders-data";
 import { dismissReminder, saveReminderPrefs, undoReminder } from "./actions";
+import { AllowWrites } from "@/components/read-only";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -35,7 +36,7 @@ export default async function NotificationsPage() {
   const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY?.trim() || null;
 
   return (
-    <>
+    <AllowWrites>
       <PageHeader title={t("notif.title")} description={t("notif.desc")} />
 
       <Card className="mb-6">
@@ -120,6 +121,6 @@ export default async function NotificationsPage() {
           </fieldset>
         </ActionForm>
       </Card>
-    </>
+    </AllowWrites>
   );
 }

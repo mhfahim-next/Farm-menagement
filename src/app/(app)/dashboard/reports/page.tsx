@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "@/components/local-link";
 import { ButtonLink, Card, Field, PageHeader } from "@/components/ui";
-import { requireRole, STAFF } from "@/lib/auth";
+import { requireRole, READERS } from "@/lib/auth";
 import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
 import { getPlanContext } from "@/lib/plans";
@@ -26,7 +26,7 @@ const reports = [
 ] as const;
 
 export default async function ReportsPage() {
-  const { farm, role } = await requireRole(STAFF);
+  const { farm, role } = await requireRole(READERS);
   const { t } = await getI18n();
   const { plan } = await getPlanContext();
   const allowed = Boolean(plan?.can_export);

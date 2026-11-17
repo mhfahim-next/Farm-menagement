@@ -10,7 +10,7 @@ export const KIND_ICON: Record<FarmKind, string> = {
   has_broiler: "food-drumstick-outline",
 };
 
-export type Role = "owner" | "manager" | "worker" | "vet";
+export type Role = "owner" | "manager" | "worker" | "vet" | "viewer";
 
 export type Farm = {
   id: string;

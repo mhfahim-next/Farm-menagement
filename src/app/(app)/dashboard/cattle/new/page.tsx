@@ -4,7 +4,7 @@ import { ActionForm } from "@/components/action-form";
 import { LimitNotice } from "@/components/limit-notice";
 import { ParentsFields } from "@/components/parents-fields";
 import { ButtonLink, Card, Field, Input, PageHeader, Select, Textarea } from "@/components/ui";
-import { MANAGERS, requireFarm } from "@/lib/auth";
+import { MANAGERS, requireWriter } from "@/lib/auth";
 import { breedOptions, categoryOptions, GROUP_SPECIES, typeSexHint, type AnimalGroup, type MotherCandidate } from "@/lib/cattle";
 import { getI18n } from "@/lib/i18n/server";
 import { planName } from "@/lib/plan-utils";
@@ -19,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function NewCattlePage({ searchParams }: PageProps<"/dashboard/cattle/new">) {
-  const { supabase, farm, role } = await requireFarm();
+  const { supabase, farm, role } = await requireWriter();
   if (!keepsAnimals(farm)) notFound();
   if (role === "vet") redirect("/dashboard/cattle");
   const i18n = await getI18n();

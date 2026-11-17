@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "@/components/local-link";
 import { ClickRow } from "@/components/click-row";
 import { Badge, ButtonLink, Card, EmptyState, PageHeader, StatCard, Table, Td } from "@/components/ui";
-import { requireRole, STAFF } from "@/lib/auth";
+import { requireRole, READERS } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
 import { daysLeft, isLow, type StockItem } from "@/lib/trade";
 
@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function InventoryPage({ searchParams }: PageProps<"/dashboard/inventory">) {
-  const { supabase, farm } = await requireRole(STAFF);
+  const { supabase, farm } = await requireRole(READERS);
   const { t, f, o } = await getI18n();
   const { archived } = await searchParams;
   const showArchived = archived === "1";

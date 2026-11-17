@@ -4,10 +4,11 @@ import { Suspense } from "react";
 import { AppShell } from "@/components/app-shell";
 import type { NavItem } from "@/components/dashboard-nav";
 import { LazyAiAssistant as AiAssistant } from "@/components/ai-assistant-lazy";
+import { ReadOnlyProvider } from "@/components/read-only";
 import { FarmSwitcher } from "@/components/farm-switcher";
 import { BellLink, NotificationBell } from "@/components/notification-bell";
 import { OfflineSync } from "@/components/offline/offline-sync";
-import { getProfile, MANAGERS, requireFarm, STAFF } from "@/lib/auth";
+import { MANAGERS, READERS, STAFF, getProfile, requireFarm } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
 import { breedsAnimals, fattens, keepsAnimals, keepsCattle, keepsPoultry } from "@/lib/modules";
 import { farmQuota, planName } from "@/lib/plan-utils";
@@ -21,6 +22,9 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
   const isManager = MANAGERS.includes(role);
   const isStaff = STAFF.includes(role);
   const isVet = role === "vet";
+  // View-only members see the records (money included) but no way to change them.
+  const canRead = READERS.includes(role);
+  const isViewer = role === "viewer";
 
   // Everything the frame needs, in one round trip to the database.
   const [{ data: settings }, { data: invites }, plans, planCtx, pending, ai, { data: restored }] = await Promise.all([
@@ -101,14 +105,14 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
           ? [
               ...(farm.has_layer ? [{ href: "/dashboard/flocks", label: t("nav.flocks"), icon: "flocks" as const }] : []),
               ...(farm.has_broiler ? [{ href: "/dashboard/broilers", label: t("nav.broilers"), icon: "broilers" as const }] : []),
-              ...(isStaff ? [{ href: "/dashboard/flock-health", label: t("nav.flockHealth"), icon: "flockHealth" as const }] : []),
+              ...(canRead ? [{ href: "/dashboard/flock-health", label: t("nav.flockHealth"), icon: "flockHealth" as const }] : []),
             ].map((i) => ({
               ...i,
               group: t(farm.has_layer && farm.has_broiler ? "nav.group.poultry" : farm.has_broiler ? "nav.group.broiler" : "nav.group.layer"),
             }))
           : []),
         // Money: what comes in and goes out.
-        ...(isStaff
+        ...(canRead
           ? [
               { href: "/dashboard/finance", label: t("nav.finance"), icon: "finance" as const },
               { href: "/dashboard/sales", label: t("nav.sales"), icon: "sales" as const },
@@ -118,7 +122,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
           : []),
         // Running the farm: stock, people, approvals and settings.
         ...[
-          ...(isStaff ? [{ href: "/dashboard/inventory", label: t("nav.inventory"), icon: "inventory" as const }] : []),
+          ...(canRead ? [{ href: "/dashboard/inventory", label: t("nav.inventory"), icon: "inventory" as const }] : []),
           ...(isManager ? [{ href: "/dashboard/staff", label: t("nav.staff"), icon: "staff" as const }] : []),
           ...(isManager ? [{ href: "/dashboard/approvals", label: t("nav.approvals"), icon: "approvals" as const, badge: pendingApprovals }] : []),
           ...(isManager ? [{ href: "/dashboard/import", label: t("nav.import"), icon: "import" as const }] : []),
@@ -215,12 +219,21 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
         </>
       }
     >
+      {isViewer && (
+        <p role="status" className="mb-5 rounded-lg bg-stone-100 px-4 py-2.5 text-sm text-stone-700" data-testid="viewer-notice">
+          👁 {t("viewer.notice", { farm: farm.name })}
+        </p>
+      )}
+      {isViewer && (
+        // Links to pages that only add or change records are hidden too (those pages also refuse viewers).
+        <style>{`main a[href$="/new"],main a[href*="/new?"],main a[href*="/edit"],main a[href$="/log"],main a[href*="/log?"],main a[href*="/inventory/move"],main a[href*="/sales/payment"],main a[href^="/dashboard/quick"],main a[href^="/dashboard/import"],main a[href^="/dashboard/approvals"]{display:none!important}`}</style>
+      )}
       {isVet && (
         <p className="mb-5 rounded-lg bg-sky-100 px-4 py-2.5 text-sm text-sky-800">
           {t("doctor.vetNotice", { farm: farm.name })}
         </p>
       )}
-      {children}
+      <ReadOnlyProvider value={isViewer}>{children}</ReadOnlyProvider>
       {aiStatus && <AiAssistant initial={aiStatus} />}
     </AppShell>
   );

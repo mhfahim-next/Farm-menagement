@@ -109,6 +109,8 @@ export const FARM_COOKIE = "farm_id";
 /** Roles by what they may do. Vets are read-mostly (health and breeding only). */
 export const MANAGERS: Role[] = ["owner", "manager"];
 export const STAFF: Role[] = ["owner", "manager", "worker"];
+/** Who may see the farm's records, money included (staff plus view-only members). Writing stays with STAFF. */
+export const READERS: Role[] = [...STAFF, "viewer"];
 
 export type FarmSummary = {
   id: string;
@@ -186,6 +188,13 @@ export async function requireDoctor() {
 }
 
 /** Like requireFarm, but 404s unless the user's role in the current farm is allowed. */
+/** Pages that only add or change records: every member except view-only ones (vets send changes for approval). */
+export async function requireWriter() {
+  const ctx = await requireFarm();
+  if (ctx.role === "viewer") notFound();
+  return ctx;
+}
+
 export async function requireRole(allowed: Role[]) {
   const ctx = await requireFarm();
   if (!allowed.includes(ctx.role)) notFound();

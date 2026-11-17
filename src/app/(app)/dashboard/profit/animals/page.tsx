@@ -3,7 +3,7 @@ import Link from "@/components/local-link";
 import { notFound } from "next/navigation";
 import { ClickRow } from "@/components/click-row";
 import { Badge, ButtonLink, Card, EmptyState, PageHeader, StatCard, Table, Td } from "@/components/ui";
-import { MANAGERS, requireRole, STAFF } from "@/lib/auth";
+import { MANAGERS, requireRole, READERS } from "@/lib/auth";
 import { animalLabel } from "@/lib/cattle";
 import { isProfitPeriod, loadAnimalProfits, PROFIT_PERIODS } from "@/lib/animal-profit-data";
 import { getI18n } from "@/lib/i18n/server";
@@ -15,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function AnimalProfitPage({ searchParams }: PageProps<"/dashboard/profit/animals">) {
-  const { supabase, farm, role } = await requireRole(STAFF);
+  const { supabase, farm, role } = await requireRole(READERS);
   if (!keepsAnimals(farm)) notFound();
   const { t, f, o } = await getI18n();
   const money = (n: number) => f.money(n, farm.currency);

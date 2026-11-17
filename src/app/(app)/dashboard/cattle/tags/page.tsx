@@ -3,7 +3,7 @@ import Link from "@/components/local-link";
 import { notFound } from "next/navigation";
 import { PrintButton } from "@/components/print-button";
 import { Card, PageHeader, Select } from "@/components/ui";
-import { requireRole, STAFF } from "@/lib/auth";
+import { requireRole, READERS } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
 import { animalUrl, qrSvg } from "@/lib/qr";
 import { keepsAnimals } from "@/lib/modules";
@@ -25,7 +25,7 @@ const GRID = {
 const PRINT_COLS = { small: "print:grid-cols-4", medium: "print:grid-cols-3", large: "print:grid-cols-2" } as const;
 
 export default async function AnimalTagsPage({ searchParams }: PageProps<"/dashboard/cattle/tags">) {
-  const { supabase, farm } = await requireRole(STAFF);
+  const { supabase, farm } = await requireRole(READERS);
   if (!keepsAnimals(farm)) notFound();
   const { t, e, o } = await getI18n();
 

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "@/components/local-link";
 import { ClickRow } from "@/components/click-row";
 import { Badge, ButtonLink, Card, EmptyState, Input, PageHeader, StatCard, Table, Td } from "@/components/ui";
-import { requireRole, STAFF } from "@/lib/auth";
+import { requireRole, READERS } from "@/lib/auth";
 import { ledgerHref, ledgerTotals, type LedgerRow, type LedgerView } from "@/lib/finance";
 import { today } from "@/lib/format";
 import { farmModules } from "@/lib/modules";
@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function FinancePage({ searchParams }: PageProps<"/dashboard/finance">) {
-  const { supabase, farm } = await requireRole(STAFF);
+  const { supabase, farm } = await requireRole(READERS);
   const { t, f, o } = await getI18n();
   const sp = await searchParams;
   const month = typeof sp.month === "string" && /^\d{4}-\d{2}$/.test(sp.month) ? sp.month : today().slice(0, 7);

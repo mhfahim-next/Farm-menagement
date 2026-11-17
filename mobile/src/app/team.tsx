@@ -35,7 +35,7 @@ export default function Team() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [leaving, setLeaving] = useState(false);
-  const roles = (role === "owner" ? ["manager", "worker", "vet"] : ["worker", "vet"]) as ("manager" | "worker" | "vet")[];
+  const roles = (role === "owner" ? ["manager", "worker", "viewer", "vet"] : ["worker", "viewer", "vet"]) as ("manager" | "worker" | "viewer" | "vet")[];
   const back = () => (router.canGoBack() ? router.back() : router.replace("/more"));
 
   const invite = async () => {

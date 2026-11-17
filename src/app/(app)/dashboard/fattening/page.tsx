@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { ActionForm } from "@/components/action-form";
 import { ClickRow } from "@/components/click-row";
 import { Badge, ButtonLink, Card, EmptyState, Field, Input, PageHeader, StatCard, Table, Td } from "@/components/ui";
-import { MANAGERS, requireRole, STAFF } from "@/lib/auth";
+import { MANAGERS, requireRole, READERS } from "@/lib/auth";
 import { animalLabel } from "@/lib/cattle";
 import { loadFattening } from "@/lib/fattening-data";
 import { today } from "@/lib/format";
@@ -19,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function FatteningPage() {
-  const { supabase, farm, role } = await requireRole(STAFF);
+  const { supabase, farm, role } = await requireRole(READERS);
   if (!fattens(farm)) notFound();
   const { t, f, o } = await getI18n();
   const canSet = MANAGERS.includes(role);

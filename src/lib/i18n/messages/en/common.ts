@@ -111,6 +111,7 @@ export const common = {
   "enum.manager": "Manager",
   "enum.worker": "Worker",
   "enum.vet": "Vet",
+  "enum.viewer": "Viewer",
 
   "currency.BDT": "BDT — Bangladeshi Taka",
   "currency.INR": "INR — Indian Rupee",

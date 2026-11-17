@@ -3,7 +3,7 @@ import Link from "@/components/local-link";
 import { notFound } from "next/navigation";
 import { Logo } from "@/components/logo";
 import { PrintButton } from "@/components/print-button";
-import { requireRole, STAFF } from "@/lib/auth";
+import { requireRole, READERS } from "@/lib/auth";
 import { memoNo } from "@/lib/bill";
 import { getI18n } from "@/lib/i18n/server";
 import { SITE_URL } from "@/lib/site";
@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function SaleMemoPage({ params }: PageProps<"/dashboard/sales/memo/[id]">) {
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
-  const { supabase, farm } = await requireRole(STAFF);
+  const { supabase, farm } = await requireRole(READERS);
   const { t, f } = await getI18n();
   const { data } = await supabase.from("sales").select("*").eq("id", id).eq("farm_id", farm.id).maybeSingle();
   const sale = data as Sale | null;

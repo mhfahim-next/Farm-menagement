@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { HealthForm } from "@/components/health-form";
 import { ConfirmForm } from "@/components/confirm-form";
 import { Card, PageHeader } from "@/components/ui";
-import { MANAGERS, requireFarm } from "@/lib/auth";
+import { MANAGERS, requireWriter } from "@/lib/auth";
 import { animalLabel } from "@/lib/cattle";
 import { today } from "@/lib/format";
 import { getI18n } from "@/lib/i18n/server";
@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function EditHealthPage({ params }: PageProps<"/dashboard/health/[id]/edit">) {
   const { id } = await params;
-  const { supabase, farm, role } = await requireFarm();
+  const { supabase, farm, role } = await requireWriter();
   const { t } = await getI18n();
 
   const { data } = await supabase.from("health_records").select("*").eq("id", id).eq("farm_id", farm.id).maybeSingle();

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "@/components/local-link";
 import { notFound } from "next/navigation";
 import { Badge, ButtonLink, EmptyState, PageHeader, StatCard } from "@/components/ui";
-import { requireRole, STAFF } from "@/lib/auth";
+import { requireRole, READERS } from "@/lib/auth";
 import { loadBatchStats } from "@/lib/broiler-data";
 import { getI18n } from "@/lib/i18n/server";
 import type { Flock } from "@/lib/types";
@@ -13,7 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function BroilersPage() {
-  const { supabase, farm } = await requireRole(STAFF);
+  const { supabase, farm } = await requireRole(READERS);
   if (!farm.has_broiler) notFound();
   const { t, f, o } = await getI18n();
 

@@ -5,12 +5,13 @@ import { ActionForm } from "@/components/action-form";
 import { LimitNotice } from "@/components/limit-notice";
 import { ConfirmForm } from "@/components/confirm-form";
 import { Badge, Button, ButtonLink, Card, Field, Input, PageHeader, Select, Table, Td } from "@/components/ui";
-import { MANAGERS, requireRole, STAFF } from "@/lib/auth";
+import { MANAGERS, requireRole, READERS } from "@/lib/auth";
 import { getI18n } from "@/lib/i18n/server";
 import { planName } from "@/lib/plan-utils";
 import { getPlanContext } from "@/lib/plans";
 import { updateFarm } from "./actions";
-import { inviteMember, leaveFarm, removeMember, revokeInvite } from "./team-actions";
+import { inviteMember, leaveFarm, removeMember, revokeInvite, setMemberRole } from "./team-actions";
+import { AllowWrites } from "@/components/read-only";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -18,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function SettingsPage() {
-  const { supabase, farm, role, user } = await requireRole(STAFF);
+  const { supabase, farm, role, user } = await requireRole(READERS);
   const { t, o, f, options, locale } = await getI18n();
   const canEdit = MANAGERS.includes(role);
   const { plan, usage, limits, states } = await getPlanContext();
@@ -34,7 +35,8 @@ export default async function SettingsPage() {
     .select("id, full_name, account_type, doctor_verified, doctor_reg_no")
     .in("id", (members ?? []).map((m) => m.user_id));
   const people = new Map((profiles ?? []).map((p) => [p.id, p]));
-  const inviteRoles = options("member_role").filter((r) => ["manager", "worker", "vet"].includes(r.value) && (r.value !== "manager" || role === "owner"));
+  const inviteRoles = options("member_role").filter((r) => ["manager", "worker", "viewer", "vet"].includes(r.value) && (r.value !== "manager" || role === "owner"));
+  const changeRoles = options("member_role").filter((r) => ["manager", "worker", "viewer"].includes(r.value));
 
   return (
     <>
@@ -96,7 +98,9 @@ export default async function SettingsPage() {
                 <Button variant="secondary" type="submit">{t("menu.logout")}</Button>
               </form>
               {role !== "owner" && (
-                <ConfirmForm action={leaveFarm} fields={{}} confirm={t("team.confirmLeave", { farm: farm.name })} label={t("team.leave")} variant="danger" />
+                <AllowWrites>
+                  <ConfirmForm action={leaveFarm} fields={{}} confirm={t("team.confirmLeave", { farm: farm.name })} label={t("team.leave")} variant="danger" />
+                </AllowWrites>
               )}
             </div>
           </Card>
@@ -122,7 +126,14 @@ export default async function SettingsPage() {
                       )}
                     </Td>
                     <Td>
-                      <Badge tone={m.role === "owner" ? "green" : m.role === "vet" ? "blue" : "default"}>{o("member_role", m.role)}</Badge>
+                      {role === "owner" && ["manager", "worker", "viewer"].includes(m.role) ? (
+                        <ActionForm action={setMemberRole} submitLabel={t("team.changeRole")} className="flex flex-wrap items-center gap-2">
+                          <input type="hidden" name="user_id" value={m.user_id} />
+                          <Select name="role" defaultValue={m.role} options={changeRoles} aria-label={t("team.colRole")} className="w-auto" />
+                        </ActionForm>
+                      ) : (
+                        <Badge tone={m.role === "owner" ? "green" : m.role === "vet" ? "blue" : m.role === "viewer" ? "amber" : "default"}>{o("member_role", m.role)}</Badge>
+                      )}
                     </Td>
                     <Td className="text-right">
                       {role === "owner" && m.role !== "owner" && (

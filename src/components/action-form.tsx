@@ -8,6 +8,7 @@ import { useI18n } from "./i18n-provider";
 import { announceNavigation } from "./nav-progress";
 import { useResultToast } from "./toast";
 import { Button, Spinner, type ButtonVariant } from "./ui";
+import { useReadOnly } from "./read-only";
 
 export function SubmitButton({
   children,
@@ -72,6 +73,7 @@ export function ActionForm({
 }) {
   const router = useRouter();
   const { t } = useI18n();
+  const readOnly = useReadOnly();
   const [state, dispatch, pending] = useActionState<State, FormData>(async (prev, formData) => {
     const saves = prev?.saves ?? 0;
     if (offline) {
@@ -113,6 +115,7 @@ export function ActionForm({
 
   useResultToast(state);
 
+  if (readOnly) return null;
   return (
     <form
       className={className}

@@ -35,12 +35,14 @@ export const REMINDER_GROUPS = {
 export type ReminderGroup = keyof typeof REMINDER_GROUPS;
 export const isReminderGroup = (v: unknown): v is ReminderGroup => typeof v === "string" && v in REMINDER_GROUPS;
 
-/** Who gets which reminders: owners and managers everything, workers daily work, vets health and breeding. */
+/** Who gets which reminders: owners and managers everything, workers daily work, vets and viewers health and breeding. */
 const ROLE_KINDS: Record<Role, readonly ReminderKind[] | "all"> = {
   owner: "all",
   manager: "all",
   worker: ["vaccine", "flock_vaccine", "milk_missing", "eggs_missing", "broiler_weigh", "fatten_weigh"],
   vet: ["vaccine", "flock_vaccine", "breeding"],
+  // View-only members: what is due, for their information.
+  viewer: ["vaccine", "flock_vaccine", "breeding"],
 };
 export function kindsForRole(role: Role): readonly ReminderKind[] {
   const k = ROLE_KINDS[role];

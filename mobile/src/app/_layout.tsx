@@ -79,6 +79,7 @@ function App({ fontsReady }: { fontsReady: boolean }) {
   if (!ready) return null;
 
   const signedIn = Boolean(s.session);
+  const viewOnly = s.current?.role === "viewer";
   const hasFarm = s.memberships.length > 0;
   return (
     <PaperProvider theme={theme}>
@@ -104,42 +105,45 @@ function App({ fontsReady }: { fontsReady: boolean }) {
               <Stack.Screen name="(tabs)" />
               <Stack.Screen name="animal/[id]" options={{ animation: "slide_from_right" }} />
               <Stack.Screen name="buyer/[id]" options={{ animation: "slide_from_right" }} />
-              <Stack.Screen name="record/health" />
-              <Stack.Screen name="record/breeding" />
-              <Stack.Screen name="record/sale" />
-              <Stack.Screen name="record/payment" />
-              <Stack.Screen name="record/buyer" />
-              <Stack.Screen name="record/animal" />
-              <Stack.Screen name="record/weight" />
               <Stack.Screen name="fattening" options={{ animation: "slide_from_right" }} />
               <Stack.Screen name="flocks" options={{ animation: "slide_from_right" }} />
               <Stack.Screen name="flock/[id]" options={{ animation: "slide_from_right" }} />
-              <Stack.Screen name="record/flock" />
-              <Stack.Screen name="record/flock-health" />
               <Stack.Screen name="profile" />
               <Stack.Screen name="settings" />
               <Stack.Screen name="record/farm" />
               <Stack.Screen name="reminders" options={{ animation: "slide_from_right" }} />
-              <Stack.Screen name="scan" />
-              <Stack.Screen name="record/expense" />
               <Stack.Screen name="profit" options={{ animation: "slide_from_right" }} />
               <Stack.Screen name="stock/index" options={{ animation: "slide_from_right" }} />
               <Stack.Screen name="stock/[id]" options={{ animation: "slide_from_right" }} />
-              <Stack.Screen name="record/stock-item" />
-              <Stack.Screen name="record/stock-move" />
               <Stack.Screen name="staff/index" options={{ animation: "slide_from_right" }} />
               <Stack.Screen name="staff/[id]" options={{ animation: "slide_from_right" }} />
-              <Stack.Screen name="staff/attendance" />
-              <Stack.Screen name="record/staff" />
-              <Stack.Screen name="record/staff-pay" />
               <Stack.Screen name="team" options={{ animation: "slide_from_right" }} />
               <Stack.Screen name="reports" options={{ animation: "slide_from_right" }} />
-              <Stack.Screen name="approvals" options={{ animation: "slide_from_right" }} />
               <Stack.Screen name="doctor" options={{ animation: "slide_from_right" }} />
               <Stack.Screen name="tools/index" options={{ animation: "slide_from_right" }} />
               <Stack.Screen name="tools/[slug]" options={{ animation: "slide_from_right" }} />
-              <Stack.Screen name="entry/milk" />
-              <Stack.Screen name="entry/birds" />
+              {/* View-only members never open a screen that adds or changes records. */}
+              <Stack.Protected guard={!viewOnly}>
+                <Stack.Screen name="record/health" />
+                <Stack.Screen name="record/breeding" />
+                <Stack.Screen name="record/sale" />
+                <Stack.Screen name="record/payment" />
+                <Stack.Screen name="record/buyer" />
+                <Stack.Screen name="record/animal" />
+                <Stack.Screen name="record/weight" />
+                <Stack.Screen name="record/flock" />
+                <Stack.Screen name="record/flock-health" />
+                <Stack.Screen name="record/expense" />
+                <Stack.Screen name="record/stock-item" />
+                <Stack.Screen name="record/stock-move" />
+                <Stack.Screen name="record/staff" />
+                <Stack.Screen name="record/staff-pay" />
+                <Stack.Screen name="staff/attendance" />
+                <Stack.Screen name="approvals" options={{ animation: "slide_from_right" }} />
+                <Stack.Screen name="entry/milk" />
+                <Stack.Screen name="entry/birds" />
+                <Stack.Screen name="scan" />
+              </Stack.Protected>
             </Stack.Protected>
           </Stack>
         </ThemeProvider>
